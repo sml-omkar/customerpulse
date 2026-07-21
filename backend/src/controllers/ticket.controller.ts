@@ -10,7 +10,7 @@ import { isRequesterOnly } from "../utils/rbac";
 import { parsePagination, paginatedResponse } from "../utils/pagination";
 import { AppError } from "../middleware/errorHandler";
 import { minutesFromNow, addMinutes, diffInMinutes } from "../utils/time";
-import { computeSlaClockUpdate, computeTurnOverTimeSeconds } from "../services/slaClock.service";
+import { computeSlaClockUpdate, computeAgentTurnOverTimeSeconds, computeTicketTurnOverTimeSeconds } from "../services/slaClock.service";
 import { prismaVersion } from "../generated/prisma/internal/prismaNamespace";
 import { notificationService } from "../services/notification.service";
 import { priorityService } from "../services/priority.service";
@@ -483,6 +483,8 @@ export const ticketController = {
         slaRemainingMinutes: true,
         holdStartedAt: true,
         totalHoldMinutes: true,
+        resolvedStartedAt: true,
+        totalResolvedMinutes: true,
         category:{
           select :{
             defaultPriority: true,
@@ -493,12 +495,13 @@ export const ticketController = {
      });
 
     const now = new Date();
-    // Ticket is put ON_HOLD or RESOLVED -> SLA clock pauses (deadline banked
-    // into slaRemainingMinutes) and the wall-clock pause window that TAT
-    // subtracts opens too (now covering RESOLVED time as well as ON_HOLD).
-    // Coming back off either one resumes the deadline - and TAT - from the
-    // banked remainder rather than granting a fresh window. No-op when
-    // status isn't actually changing.
+    // Ticket is put ON_HOLD or RESOLVED -> SLA deadline pauses (banked into
+    // slaRemainingMinutes). Agent TAT's pause window opens for ON_HOLD *or*
+    // RESOLVED (it tracks time an agent can actively work the ticket).
+    // Ticket TAT's pause window only opens for RESOLVED - it keeps ticking
+    // through a hold. Coming back off either one resumes each clock from
+    // its own banked remainder rather than granting a fresh window. No-op
+    // when status isn't actually changing.
     const slaClockUpdate = status !== undefined && status !== previous.status
       ? computeSlaClockUpdate(previous, status, now)
       : {};
@@ -520,7 +523,8 @@ export const ticketController = {
           status,
           slaDeadline : resumedDeadline,
           resolvedAt: null,
-          turnOverTime: computeTurnOverTimeSeconds({ ...previous, ...slaClockUpdate, status }, now),
+          turnOverTime: computeAgentTurnOverTimeSeconds({ ...previous, ...slaClockUpdate, status }, now),
+          ticketTurnOverTime: computeTicketTurnOverTimeSeconds({ ...previous, ...slaClockUpdate, status }, now),
         }
       })
 
@@ -541,10 +545,11 @@ export const ticketController = {
           ...slaClockUpdate,
           status,
           resolvedAt: now,
-          // TAT is computed server-side from the ticket's own timestamps
-          // (age minus banked ON_HOLD time) rather than trusting whatever
-          // the client sent, so it stays correct across reopen cycles.
-          turnOverTime: computeTurnOverTimeSeconds({ ...previous, ...slaClockUpdate, status }, now),
+          // Both TAT flavors are computed server-side from the ticket's own
+          // timestamps rather than trusting whatever the client sent, so
+          // they stay correct across reopen cycles.
+          turnOverTime: computeAgentTurnOverTimeSeconds({ ...previous, ...slaClockUpdate, status }, now),
+          ticketTurnOverTime: computeTicketTurnOverTimeSeconds({ ...previous, ...slaClockUpdate, status }, now),
         },select:{
           id : true,
           requester : true,
@@ -585,7 +590,10 @@ export const ticketController = {
         ...slaClockUpdate,
         status,
         ...(status !== undefined && status !== previous.status
-          ? { turnOverTime: computeTurnOverTimeSeconds({ ...previous, ...slaClockUpdate, status }, now) }
+          ? {
+              turnOverTime: computeAgentTurnOverTimeSeconds({ ...previous, ...slaClockUpdate, status }, now),
+              ticketTurnOverTime: computeTicketTurnOverTimeSeconds({ ...previous, ...slaClockUpdate, status }, now),
+            }
           : {}),
       },
     });
