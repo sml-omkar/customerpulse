@@ -1,13 +1,19 @@
 import { TicketStatus } from "../generated/prisma/client";
 import { addMinutes, diffInMinutes, diffInSeconds } from "../utils/time";
 
-// The SLA clock is "paused" whenever the ticket isn't actively being
-// worked - ON_HOLD, or RESOLVED (which may still get reopened). While
-// paused the deadline is cleared (so the SLA sweep cron leaves it alone)
-// and whatever time was left gets banked in slaRemainingMinutes. Coming
-// back to an active status (off hold, or REOPENED) resumes the deadline
-// from that banked remainder instead of granting a fresh window.
-const SLA_PAUSED_STATUSES: TicketStatus[] = [TicketStatus.ON_HOLD, TicketStatus.RESOLVED];
+// A ticket isn't "actively being worked" while ON_HOLD or RESOLVED (the
+// latter may still get reopened). Both the SLA deadline and the TAT
+// hold-accumulator pause for exactly this same set of statuses, so it's
+// shared between the two calculations below instead of tracked twice.
+// While paused, the SLA deadline is cleared (so the sweep cron leaves it
+// alone) and whatever time was left gets banked in slaRemainingMinutes;
+// coming back to an active status resumes the deadline from that banked
+// remainder instead of granting a fresh window. Likewise, holdStartedAt
+// marks when the current pause began and totalHoldMinutes accumulates
+// completed pause windows - now covering RESOLVED time too, so TAT stops
+// ticking while a ticket sits resolved and resumes exactly where it left
+// off if the ticket is reopened.
+const PAUSED_STATUSES: TicketStatus[] = [TicketStatus.ON_HOLD, TicketStatus.RESOLVED];
 
 export type TicketClockFields = {
   status: TicketStatus;
@@ -29,9 +35,9 @@ export type SlaClockUpdate = {
 /**
  * Given a ticket's current clock state and the status it's moving to,
  * returns the fields that need updating on the Ticket row. Handles two
- * independent things that both key off ON_HOLD/RESOLVED transitions:
- *   - the SLA deadline pause/resume (paused by ON_HOLD *or* RESOLVED)
- *   - the ON_HOLD wall-clock accumulator (only ON_HOLD, used by TAT)
+ * things that both key off the same ON_HOLD/RESOLVED pause boundary:
+ *   - the SLA deadline pause/resume
+ *   - the wall-clock pause accumulator used by TAT
  */
 export function computeSlaClockUpdate(
   previous: Pick<TicketClockFields, "status" | "slaDeadline" | "slaRemainingMinutes" | "holdStartedAt" | "totalHoldMinutes">,
@@ -40,18 +46,20 @@ export function computeSlaClockUpdate(
 ): SlaClockUpdate {
   const data: SlaClockUpdate = {};
 
-  // Close out / open the ON_HOLD window itself - independent of the SLA
-  // pause below, since TAT only cares about ON_HOLD time, not RESOLVED time.
-  if (previous.status === TicketStatus.ON_HOLD && nextStatus !== TicketStatus.ON_HOLD) {
-    const holdMinutes = previous.holdStartedAt ? diffInMinutes(previous.holdStartedAt, now) : 0;
-    data.totalHoldMinutes = previous.totalHoldMinutes + holdMinutes;
+  const wasPaused = PAUSED_STATUSES.includes(previous.status);
+  const willBePaused = PAUSED_STATUSES.includes(nextStatus);
+
+  // Open / close the pause window used by TAT. Only fires on a boundary
+  // crossing (active -> paused or paused -> active) - going ON_HOLD -> RESOLVED
+  // or RESOLVED -> ON_HOLD stays paused throughout, so holdStartedAt is left
+  // running rather than reset, and no minutes are banked mid-transition.
+  if (wasPaused && !willBePaused) {
+    const pausedMinutes = previous.holdStartedAt ? diffInMinutes(previous.holdStartedAt, now) : 0;
+    data.totalHoldMinutes = previous.totalHoldMinutes + pausedMinutes;
     data.holdStartedAt = null;
-  } else if (nextStatus === TicketStatus.ON_HOLD && previous.status !== TicketStatus.ON_HOLD) {
+  } else if (!wasPaused && willBePaused) {
     data.holdStartedAt = now;
   }
-
-  const wasPaused = SLA_PAUSED_STATUSES.includes(previous.status);
-  const willBePaused = SLA_PAUSED_STATUSES.includes(nextStatus);
 
   if (!wasPaused && willBePaused) {
     // Entering ON_HOLD or RESOLVED: bank whatever SLA time is left (0 if
@@ -71,17 +79,17 @@ export function computeSlaClockUpdate(
 /**
  * TAT (turnOverTime): wall-clock age of the ticket *since the issue
  * actually occurred* (dateOfOccurance) - not since it was filed in the
- * system (createdAt) - minus time spent ON_HOLD. Unlike the SLA clock, a
- * RESOLVED period is NOT subtracted - if the ticket gets reopened, the
- * time it sat resolved still counts toward turnaround time. Editing
- * dateOfOccurance (e.g. a global admin correcting a wrong date) naturally
- * shifts this calculation since it's still measuring from the same
- * anchor point each time - it is not "restarted"; only the accumulated
- * ON_HOLD time and the current moment ever change what's subtracted/used.
+ * system (createdAt) - minus time spent paused (ON_HOLD or RESOLVED). A
+ * resolved ticket stops accumulating TAT the moment it's resolved; if it's
+ * later reopened, TAT resumes from exactly where it left off rather than
+ * counting the resolved interval or restarting. Editing dateOfOccurance
+ * (e.g. a global admin correcting a wrong date) naturally shifts this
+ * calculation since it's still measuring from the same anchor point each
+ * time - it is not "restarted"; only the accumulated paused time and the
+ * current moment ever change what's subtracted/used.
  */
 export function computeTurnOverTimeSeconds(ticket: Pick<TicketClockFields, "status" | "dateOfOccurance" | "holdStartedAt" | "totalHoldMinutes">, now: Date = new Date()) {
-  const ongoingHoldMinutes = ticket.status === TicketStatus.ON_HOLD && ticket.holdStartedAt ? diffInMinutes(ticket.holdStartedAt, now) : 0;
-  const totalHoldSeconds = (ticket.totalHoldMinutes + ongoingHoldMinutes) * 60;
-  return Math.max(0, diffInSeconds(ticket.dateOfOccurance, now) - totalHoldSeconds);
+  const ongoingPausedMinutes = PAUSED_STATUSES.includes(ticket.status) && ticket.holdStartedAt ? diffInMinutes(ticket.holdStartedAt, now) : 0;
+  const totalPausedSeconds = (ticket.totalHoldMinutes + ongoingPausedMinutes) * 60;
+  return Math.max(0, diffInSeconds(ticket.dateOfOccurance, now) - totalPausedSeconds);
 }
-
