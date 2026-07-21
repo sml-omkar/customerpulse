@@ -31,10 +31,12 @@ const STATES = [
 ];
 
 // Onboarding now collects a Zone from the person filling the form (instead
-// of asking them to pick one of the individual states above) and maps that
-// Zone to its underlying state(s) internally, per the company's Region List
-// (State / UT -> Zone) mapping. Only zones that are actually reachable via
-// the STATES list above are exposed here.
+// of asking them to pick one of the individual states above). The Zone is
+// sent to the API as-is - the mapping of Zone -> underlying state(s), per
+// the company's Region List (State / UT -> Zone), now happens server-side
+// (see backend/src/utils/zoneStateMap.ts). ZONE_STATE_MAP below is kept
+// only to drive the picker/reference sheet and the "Covers: ..." preview
+// text; it is never used to resolve what gets sent to the API anymore.
 const ZONE_STATE_MAP: Record<string, string[]> = {
   "North": ["Delhi"],
   "West 1": ["Maharashtra"],
@@ -45,9 +47,9 @@ const ZONE_STATE_MAP: Record<string, string[]> = {
 
 const ZONES = Object.keys(ZONE_STATE_MAP);
 
-// Given a Zone name, resolve it to the comma-separated list of states it
-// covers (what actually gets stored/sent) - this is the "map the mentioned
-// states to the zone internally" step.
+// Display-only helper - shows the person filling the form which states a
+// Zone covers. Not used to build the API payload; the backend resolves
+// this itself from the Zone name.
 const statesForZone = (zone: string): string => (ZONE_STATE_MAP[zone] || []).join(", ");
 
 
@@ -160,9 +162,11 @@ export const InvitationComponent: React.FC<InvitationComponentProps> = ({
         departmentIds: isExecutiveRole ? inviteDeptIds : [],
         categoryIds: !isExecutiveRole ? inviteCategoryIds : [],
         supportLevel: inviteRole == UserRole.AGENT ? SupportLevel.L1 : SupportLevel.L2,
-        state:
+        // Send the selected Zone as-is - the backend maps it to the
+        // state(s) it covers.
+        zone:
           inviteRole === UserRole.AGENT && selectedZone
-            ? statesForZone(selectedZone)
+            ? selectedZone
             : null,
         windCategory:
           inviteRole === UserRole.AGENT && selectedWindCategory
@@ -468,16 +472,16 @@ export const InvitationComponent: React.FC<InvitationComponentProps> = ({
               return null;
             }
 
-            let state: string | null = null;
+            let zone: string | null = null;
             if (r.rawZone) {
               const matchedZone = zoneByName.get(r.rawZone.toLowerCase());
               if (!matchedZone) {
                 parseSkips.push({ name, email, reason: `Unrecognized zone: "${r.rawZone}"` });
                 return null;
               }
-              // Internally map the Zone to the state(s) it covers - this is
-              // what actually gets stored for the agent.
-              state = statesForZone(matchedZone);
+              // Send the matched Zone name as-is - the backend maps it to
+              // the state(s) it covers.
+              zone = matchedZone;
             }
 
             const catNames = r.rawCategories.split(/[,;|]/).map((c) => c.trim()).filter(Boolean);
@@ -505,9 +509,9 @@ export const InvitationComponent: React.FC<InvitationComponentProps> = ({
               return null;
             }
 
-            return { name, email, departmentId, categoryIds, state, windCategory };
+            return { name, email, departmentId, categoryIds, zone, windCategory };
           })
-          .filter((r): r is { name: string; email: string; departmentId: string; categoryIds: string[]; state: string | null; windCategory: WindCategory } => r !== null);
+          .filter((r): r is { name: string; email: string; departmentId: string; categoryIds: string[]; zone: string | null; windCategory: WindCategory } => r !== null);
       } else if (isExecutiveRole) {
         requestorsPayload = normalizedRows
           .map((r) => {
@@ -568,12 +572,12 @@ export const InvitationComponent: React.FC<InvitationComponentProps> = ({
         departmentId: !isExecutiveRole ? (inviteDeptId || null) : null,
         // Kept as a fallback only - each HOD/CXO row now carries its own
         // departmentIds, and each AGENT row now carries its own
-        // departmentId/categoryIds/state (mapped from its Zone)/windCategory,
-        // resolved above.
+        // departmentId/categoryIds/zone/windCategory, resolved above. The
+        // backend maps each zone to its state(s).
         departmentIds: isExecutiveRole ? inviteDeptIds : [],
         categoryIds: !isExecutiveRole ? inviteCategoryIds : [],
         supportLevel: inviteRole == UserRole.AGENT ? SupportLevel.L1 : SupportLevel.L2,
-        state: inviteRole === UserRole.AGENT && selectedZone ? statesForZone(selectedZone) : null,
+        zone: inviteRole === UserRole.AGENT && selectedZone ? selectedZone : null,
         windCategory: inviteRole === UserRole.AGENT && selectedWindCategory ? selectedWindCategory : null,
       };
 
