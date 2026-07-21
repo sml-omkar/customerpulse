@@ -28,6 +28,8 @@ import {
   Settings,
   Menu,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   ArrowLeft,
   RefreshCw,
   Eye,
@@ -164,6 +166,38 @@ const AuthShell = ({ children }: { children: React.ReactNode }) => (
   </div>
 );
 
+// Single sidebar navigation entry. Shows icon + label expanded, icon only
+// (centered, with a hover tooltip via `title`) when the sidebar is
+// collapsed.
+const NavItem = ({
+  icon,
+  label,
+  active,
+  collapsed,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  active: boolean;
+  collapsed: boolean;
+  onClick: () => void;
+}) => (
+  <button
+    onClick={onClick}
+    title={collapsed ? label : undefined}
+    className={`w-full text-left py-2.5 flex items-center cursor-pointer ${
+      collapsed ? "px-0 justify-center" : "px-5 gap-3"
+    } ${
+      active
+        ? "bg-slate-100 text-slate-900 border-l-4 border-slate-900 font-semibold"
+        : "hover:bg-slate-50 hover:text-slate-900 text-slate-500 transition-colors"
+    }`}
+  >
+    {icon}
+    {!collapsed && <span>{label}</span>}
+  </button>
+);
+
 export default function App() {
   // Session State
   const [user, setUser] = useState<UserType | null>(null);
@@ -200,6 +234,22 @@ export default function App() {
   // Navigation State
   const [currentView, setCurrentView] = useState<string>(PAGES.DASHBOARD);
   const [selectedTicketId, setSelectedTicketId] = useState<string>("");
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem("sidebarCollapsed") === "true";
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("sidebarCollapsed", String(sidebarCollapsed));
+    } catch {
+      // localStorage unavailable (e.g. private browsing) - collapse state
+      // just won't persist across reloads, which is fine.
+    }
+  }, [sidebarCollapsed]);
 
   // Data Lists State
   const [tickets, setTickets] = useState<TicketType[]>([]);
@@ -1373,196 +1423,154 @@ export default function App() {
       {/* Main Body: Sidebar + Content panel */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left Side Corporate Sidebar navigation */}
-        <nav className="w-64 bg-white text-slate-600 flex flex-col border-r border-slate-200 select-none shrink-0 font-sans text-xs">
-          <div className="p-4 uppercase text-[10px] font-semibold text-slate-400 tracking-wider border-b border-slate-200">
-            Navigation
+        <nav
+          className={`${sidebarCollapsed ? "w-16" : "w-64"} bg-white text-slate-600 flex flex-col border-r border-slate-200 select-none shrink-0 font-sans text-xs transition-[width] duration-200 ease-in-out`}
+        >
+          <div className="p-4 flex items-center justify-between border-b border-slate-200">
+            {!sidebarCollapsed && (
+              <span className="uppercase text-[10px] font-semibold text-slate-400 tracking-wider">
+                Navigation
+              </span>
+            )}
+            <button
+              onClick={() => setSidebarCollapsed((prev) => !prev)}
+              className={`p-1 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-slate-100 cursor-pointer transition-all ${sidebarCollapsed ? "mx-auto" : ""}`}
+              title={sidebarCollapsed ? "Expand navigation" : "Collapse navigation"}
+              aria-label={sidebarCollapsed ? "Expand navigation" : "Collapse navigation"}
+            >
+              {sidebarCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+            </button>
           </div>
 
-          <div className="flex-1 py-2 space-y-0.5 overflow-y-auto">
-            <button
+          <div className="flex-1 py-2 space-y-0.5 overflow-y-auto overflow-x-hidden">
+            <NavItem
+              icon={<Activity size={15} />}
+              label="Home"
+              active={currentView === PAGES.DASHBOARD}
+              collapsed={sidebarCollapsed}
               onClick={() => setCurrentView(PAGES.DASHBOARD)}
-              className={`w-full text-left px-5 py-2.5 flex items-center gap-3 cursor-pointer ${
-                currentView === PAGES.DASHBOARD
-                  ? "bg-slate-100 text-slate-900 border-l-4 border-slate-900 font-semibold"
-                  : "hover:bg-slate-50 hover:text-slate-900 text-slate-500 transition-colors"
-              }`}
-            >
-              <Activity size={15} />
-              <span>Home</span>
-            </button>
+            />
 
-
-            {isManager ? (
-              <button
+            {isManager && (
+              <NavItem
+                icon={<Users size={15} />}
+                label="Manager Dashboard"
+                active={currentView === PAGES.HOD_DASHBOARD}
+                collapsed={sidebarCollapsed}
                 onClick={() => setCurrentView(PAGES.HOD_DASHBOARD)}
-                className={`w-full text-left px-5 py-2.5 flex items-center gap-3 cursor-pointer ${
-                  currentView === PAGES.HOD_DASHBOARD
-                    ? "bg-slate-100 text-slate-900 border-l-4 border-slate-900 font-semibold"
-                    : "hover:bg-slate-50 hover:text-slate-900 text-slate-500 transition-colors"
-                }`}
-              >
-                <Users size={15} />
-                <span>Manager Dashboard</span>
-              </button>
-            ) : null}
+              />
+            )}
 
-
-            {isManager ? (
-              <button
+            {isManager && (
+              <NavItem
+                icon={<Layers size={15} />}
+                label="Department Analytics"
+                active={currentView === PAGES.HOD_ANALYTICS}
+                collapsed={sidebarCollapsed}
                 onClick={() => setCurrentView(PAGES.HOD_ANALYTICS)}
-                className={`w-full text-left px-5 py-2.5 flex items-center gap-3 cursor-pointer ${
-                  currentView === PAGES.HOD_ANALYTICS
-                    ? "bg-slate-100 text-slate-900 border-l-4 border-slate-900 font-semibold"
-                    : "hover:bg-slate-50 hover:text-slate-900 text-slate-500 transition-colors"
-                }`}
-              >
-                <Layers size={15} />
-                <span>Department Analytics</span>
-              </button>
-            ) : null}
+              />
+            )}
 
-            
-
-            {isCxo ? (
-              <button
+            {isCxo && (
+              <NavItem
+                icon={<Layers size={15} />}
+                label="Executive Dashboard"
+                active={currentView === PAGES.CXO_DASHBOARD}
+                collapsed={sidebarCollapsed}
                 onClick={() => setCurrentView(PAGES.CXO_DASHBOARD)}
-                className={`w-full text-left px-5 py-2.5 flex items-center gap-3 cursor-pointer ${
-                  currentView === PAGES.CXO_DASHBOARD
-                    ? "bg-slate-100 text-slate-900 border-l-4 border-slate-900 font-semibold"
-                    : "hover:bg-slate-50 hover:text-slate-900 text-slate-500 transition-colors"
-                }`}
-              >
-                <Layers size={15} />
-                <span>Executive Dashboard</span>
-              </button>
-            ) : null}
-            
+              />
+            )}
 
-            {isCxo ? (
-              <button
+            {isCxo && (
+              <NavItem
+                icon={<Layers size={15} />}
+                label="Executive Analytics"
+                active={currentView === PAGES.CXO_ANALYTICS}
+                collapsed={sidebarCollapsed}
                 onClick={() => setCurrentView(PAGES.CXO_ANALYTICS)}
-                className={`w-full text-left px-5 py-2.5 flex items-center gap-3 cursor-pointer ${
-                  currentView === PAGES.CXO_ANALYTICS
-                    ? "bg-slate-100 text-slate-900 border-l-4 border-slate-900 font-semibold"
-                    : "hover:bg-slate-50 hover:text-slate-900 text-slate-500 transition-colors"
-                }`}
-              >
-                <Layers size={15} />
-                <span>Executive Analytics</span>
-              </button>
-            ) : null}
+              />
+            )}
 
             {/* Staff / Agent Directory */}
             {isGlobalAdmin && (
-              <button
+              <NavItem
+                icon={<Users size={15} />}
+                label="Staff Directory"
+                active={currentView === PAGES.USER_DIRECTORY}
+                collapsed={sidebarCollapsed}
                 onClick={() => setCurrentView(PAGES.USER_DIRECTORY)}
-                className={`w-full text-left px-5 py-2.5 flex items-center gap-3 cursor-pointer ${
-                  currentView === PAGES.USER_DIRECTORY
-                    ? "bg-slate-100 text-slate-900 border-l-4 border-slate-900 font-semibold"
-                    : "hover:bg-slate-50 hover:text-slate-900 text-slate-500 transition-colors"
-                }`}
-              >
-                <Users size={15} />
-                <span>Staff Directory</span>
-              </button>
+              />
             )}
 
             {/* Requestor Directory (self-registered requesters awaiting/approved for access) */}
             {isGlobalAdmin && (
-              <button
+              <NavItem
+                icon={<User size={15} />}
+                label="Users Directory"
+                active={currentView === PAGES.REQUESTOR_DIRECTORY}
+                collapsed={sidebarCollapsed}
                 onClick={() => setCurrentView(PAGES.REQUESTOR_DIRECTORY)}
-                className={`w-full text-left px-5 py-2.5 flex items-center gap-3 cursor-pointer ${
-                  currentView === PAGES.REQUESTOR_DIRECTORY
-                    ? "bg-slate-100 text-slate-900 border-l-4 border-slate-900 font-semibold"
-                    : "hover:bg-slate-50 hover:text-slate-900 text-slate-500 transition-colors"
-                }`}
-              >
-                <User size={15} />
-                <span>Users Directory</span>
-              </button>
+              />
             )}
 
             {/* Admin invitations list */}
             {isAdmin && (
-              <button
+              <NavItem
+                icon={<Mail size={15} />}
+                label="Invitations"
+                active={currentView === PAGES.PENDING_INVITES}
+                collapsed={sidebarCollapsed}
                 onClick={() => setCurrentView(PAGES.PENDING_INVITES)}
-                className={`w-full text-left px-5 py-2.5 flex items-center gap-3 cursor-pointer ${
-                  currentView === PAGES.PENDING_INVITES
-                    ? "bg-slate-100 text-slate-900 border-l-4 border-slate-900 font-semibold"
-                    : "hover:bg-slate-50 hover:text-slate-900 text-slate-500 transition-colors"
-                }`}
-              >
-                <Mail size={15} />
-                <span>Invitations</span>
-              </button>
+              />
             )}
 
             {/* Department SLA / Priority config */}
             {isAdmin && (
-              <button
+              <NavItem
+                icon={<Layers size={15} />}
+                label="Departments"
+                active={currentView === PAGES.DEPARTMENTS}
+                collapsed={sidebarCollapsed}
                 onClick={() => {
                   setCurrentView(PAGES.DEPARTMENTS);
                   setSelectedDeptId("");
                 }}
-                className={`w-full text-left px-5 py-2.5 flex items-center gap-3 cursor-pointer ${
-                  currentView === PAGES.DEPARTMENTS
-                    ? "bg-slate-100 text-slate-900 border-l-4 border-slate-900 font-semibold"
-                    : "hover:bg-slate-50 hover:text-slate-900 text-slate-500 transition-colors"
-                }`}
-              >
-                <Layers size={15} />
-                <span>Departments</span>
-              </button>
+              />
             )}
 
-           
-
-            {
-              isAgent && (
-              <button
+            {isAgent && (
+              <NavItem
+                icon={<Layers size={15} />}
+                label="Analytics"
+                active={currentView === PAGES.AGENT_ANALYTICS}
+                collapsed={sidebarCollapsed}
                 onClick={() => {
                   setCurrentView(PAGES.AGENT_ANALYTICS);
                   setSelectedDeptId("");
                 }}
-                className={`w-full text-left px-5 py-2.5 flex items-center gap-3 cursor-pointer ${
-                  currentView === PAGES.AGENT_ANALYTICS
-                    ? "bg-slate-100 text-slate-900 border-l-4 border-slate-900 font-semibold"
-                    : "hover:bg-slate-50 hover:text-slate-900 text-slate-500 transition-colors"
-                }`}
-              >
-                <Layers size={15} />
-                <span>Analytics</span>
-              </button>
+              />
             )}
 
             {/* Clients Management (Global Admin only) */}
             {isGlobalAdmin && (
-              <button
+              <NavItem
+                icon={<Settings size={15} />}
+                label="Clients Database"
+                active={currentView === PAGES.CLIENTS}
+                collapsed={sidebarCollapsed}
                 onClick={() => setCurrentView(PAGES.CLIENTS)}
-                className={`w-full text-left px-5 py-2.5 flex items-center gap-3 cursor-pointer ${
-                  currentView === PAGES.CLIENTS
-                    ? "bg-slate-100 text-slate-900 border-l-4 border-slate-900 font-semibold"
-                    : "hover:bg-slate-50 hover:text-slate-900 text-slate-500 transition-colors"
-                }`}
-              >
-                <Settings size={15} />
-                <span>Clients Database</span>
-              </button>
+              />
             )}
 
             {/* System Audit logs */}
             {isAdmin && (
-              <button
+              <NavItem
+                icon={<Database size={15} />}
+                label="System Audit Logs"
+                active={currentView === PAGES.AUDIT_LOGS}
+                collapsed={sidebarCollapsed}
                 onClick={() => setCurrentView(PAGES.AUDIT_LOGS)}
-                className={`w-full text-left px-5 py-2.5 flex items-center gap-3 cursor-pointer ${
-                  currentView === PAGES.AUDIT_LOGS
-                    ? "bg-slate-100 text-slate-900 border-l-4 border-slate-900 font-semibold"
-                    : "hover:bg-slate-50 hover:text-slate-900 text-slate-500 transition-colors"
-                }`}
-              >
-                <Database size={15} />
-                <span>System Audit Logs</span>
-              </button>
+              />
             )}
           </div>
         </nav>
@@ -2703,5 +2711,4 @@ export default function App() {
     </div>
   );
 }
-
 
