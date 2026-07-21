@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { Plus,Inbox,User,CheckCircle,Clock,Layers } from "lucide-react";
 import { PAGES, Ticket, User as UserType, metric } from "../types";
 import { RequesterNotifications } from "./RequesterNotifications";
+import {GlobalAdminTicketSearch} from "./GlobalAdminTicketSearch"
+import AgentTicketSearch from "./AgentTicketSearch"
 
 
 export const Dashboard = ({setCurrentView,user,setSelectedTicketId,token,metric}:{
@@ -14,7 +16,12 @@ export const Dashboard = ({setCurrentView,user,setSelectedTicketId,token,metric}
     const [tickets,setTickets] = useState<Ticket[]>([])
 
     const isStaff = user ? ["AGENT"].includes(user.role) : false;
-    const isAdmin = user ? ["GLOBAL_ADMIN","HOD","CXO"].includes(user.role) : false;
+    const isAdmin = user ? ["GLOBAL_ADMIN"].includes(user.role) : false;
+    const isManager = user ? ["HOD"].includes(user.role) : false;
+    const isCxo = user ? ["CXO"].includes(user.role) : false
+    const isAgent = user ? ["AGENT"].includes(user.role) : false
+
+
    
     return (
          <div className="space-y-6 font-sans">
@@ -144,31 +151,44 @@ export const Dashboard = ({setCurrentView,user,setSelectedTicketId,token,metric}
                     <div 
                       onClick={() => {
                         setCurrentView(PAGES.ON_HOLD);
-                      }}
-                      className="bg-white border border-slate-200 hover:border-slate-400 shadow-xs rounded-2xl p-6 flex items-center justify-between cursor-pointer transition-all duration-200 group"
-                    >
-                      <div>
-                        <span className="text-xs text-slate-400 uppercase font-mono font-bold tracking-wider">ON HOLD</span>
-                        <h2 className="text-3xl font-extrabold text-slate-900 mt-1 group-hover:text-black transition-colors">
-                            {metric?.onhold}
-                        </h2>
-                        <p className="text-xs text-slate-500 mt-1 font-medium">Tickects put on hold for some reason</p>
-                      </div>
-                      <span className="p-3 bg-slate-50 text-slate-600 rounded-xl border border-slate-150 group-hover:bg-slate-100 group-hover:text-slate-900 transition-all">
-                        <Layers size={24} />
-                      </span>
-                    </div>
-                  </>
-                )}
+              }}
+              className="bg-white border border-slate-200 hover:border-slate-400 shadow-xs rounded-2xl p-6 flex items-center justify-between cursor-pointer transition-all duration-200 group"
+            >
+              <div>
+                <span className="text-xs text-slate-400 uppercase font-mono font-bold tracking-wider">ON HOLD</span>
+                <h2 className="text-3xl font-extrabold text-slate-900 mt-1 group-hover:text-black transition-colors">
+                  {metric?.onhold}
+                </h2>
+                <p className="text-xs text-slate-500 mt-1 font-medium">Tickects put on hold for some reason</p>
               </div>
-
-              {/* Quick Ticket List Table */}
-              <div className="bg-white border border-slate-200/80 shadow-sm rounded-2xl p-6">
-
-                
-             <div className="py-8 text-center text-slate-400 text-sm">More features will be added soon</div>
-                  
-              </div>
+              <span className="p-3 bg-slate-50 text-slate-600 rounded-xl border border-slate-150 group-hover:bg-slate-100 group-hover:text-slate-900 transition-all">
+                <Layers size={24} />
+              </span>
             </div>
-    )
+          </>
+        )}
+      </div>
+
+
+
+      {isAdmin && (
+        <GlobalAdminTicketSearch
+          token={token}
+          currentUser={user!}
+          setSelectedTicketId={setSelectedTicketId}
+          setCurrentView={setCurrentView}
+        />
+      )}
+
+      {isAgent && (
+            <AgentTicketSearch
+              token={token}
+              currentUser={user!}
+              setSelectedTicketId={setSelectedTicketId}
+              setCurrentView={setCurrentView}
+            />
+          )}
+
+    </div>
+  )
 }

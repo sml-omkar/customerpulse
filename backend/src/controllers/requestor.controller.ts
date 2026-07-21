@@ -170,7 +170,7 @@ export const requestorController = {
           email,
           role: UserRole.REQUESTER,
           name,
-          state: "",
+          zone: "",
           windCategory: null,
           departmentId: "",
           departmentIds: [],

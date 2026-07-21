@@ -287,7 +287,6 @@ export default function App() {
   const [personalStatusFilter, setPersonalStatusFilter] = useState("");
 
   // Role based check short hands
-  const isStaff = user ? ["HOD","CXO", "AGENT"].includes(user.role) : false;
   const isAdmin = user ? ["GLOBAL_ADMIN"].includes(user.role) : false;
   const isGlobalAdmin = user ? user.role === "GLOBAL_ADMIN" : false;
   const isManager = user ? ["HOD"].includes(user.role) : false;
@@ -1637,16 +1636,6 @@ export default function App() {
               user={user!}
               setSelectedTicketId={setSelectedTicketId}
               metric={metric!}
-            />
-          )}
-
-          {/* VIEW: GLOBAL ADMIN - company-wide ticket search */}
-          {currentView === PAGES.GLOBAL_TICKET_SEARCH && isGlobalAdmin && (
-            <GlobalAdminTicketSearch
-              token={token}
-              currentUser={user!}
-              setSelectedTicketId={setSelectedTicketId}
-              setCurrentView={setCurrentView}
             />
           )}
 

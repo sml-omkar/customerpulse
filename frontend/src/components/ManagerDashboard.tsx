@@ -378,36 +378,7 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
         </div>
       </div>
 
-      {showTicketSearch && (
-        <div className="space-y-4">
-          <AdvancedTicketFilters
-            tickets={allDeptTickets}
-            departments={managedDepartments}
-            categories={categoryOptions}
-            onFilteredTicketsChange={setFilteredDeptTickets}
-            userRole="HOD"
-            userDepartmentIds={managedDepartments.map((d) => d.id)}
-            userId={currentUser.id}
-          />
-          {allTicketsError && (
-            <div className="p-3.5 bg-red-50 border border-red-200 text-red-800 text-sm flex items-center gap-2 rounded-xl">
-              <AlertTriangle size={16} /> {allTicketsError}
-            </div>
-          )}
-          {allTicketsLoading ? (
-            <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center text-sm text-slate-400">
-              Loading department tickets...
-            </div>
-          ) : (
-            <TicketsTable
-              tickets={filteredDeptTickets}
-              currentView={PAGES.HOD_DASHBOARD}
-              setSelectedTicketId={setSelectedTicketId as any}
-              setCurrentView={setCurrentView as any}
-            />
-          )}
-        </div>
-      )}
+      
 
       {error && (
         <div className="p-3.5 bg-red-50 border border-red-200 text-red-800 text-sm flex items-center gap-2 rounded-xl">
