@@ -69,6 +69,8 @@ import TicketsTable from "./components/TicketsTable"
 import ManagerDashboard from "./components/ManagerDashboard"
 import GlobalAdminTicketSearch from "./components/GlobalAdminTicketSearch"
 import AgentTicketSearch from "./components/AgentTicketSearch"
+import HODTicketSearch from "./components/HODTicketSearch"
+import CXOTicketSearch from "./components/CXOTicketSearch"
 import AgentDashboard from "./components/AgentDashboardmock";
 import DepartmentDashboard from "./components/HODDashboardmock";
 import CXODashboardMock from "./components/CXODashboardmock";
@@ -1419,6 +1421,20 @@ export default function App() {
 
             {isManager ? (
               <button
+                onClick={() => setCurrentView(PAGES.HOD_TICKET_SEARCH)}
+                className={`w-full text-left px-5 py-2.5 flex items-center gap-3 cursor-pointer ${
+                  currentView === PAGES.HOD_TICKET_SEARCH
+                    ? "bg-slate-100 text-slate-900 border-l-4 border-slate-900 font-semibold"
+                    : "hover:bg-slate-50 hover:text-slate-900 text-slate-500 transition-colors"
+                }`}
+              >
+                <Search size={15} />
+                <span>Department Tickets Search</span>
+              </button>
+            ) : null}
+
+            {isManager ? (
+              <button
                 onClick={() => setCurrentView(PAGES.HOD_ANALYTICS)}
                 className={`w-full text-left px-5 py-2.5 flex items-center gap-3 cursor-pointer ${
                   currentView === PAGES.HOD_ANALYTICS
@@ -1447,6 +1463,20 @@ export default function App() {
               </button>
             ) : null}
             
+            {isCxo ? (
+              <button
+                onClick={() => setCurrentView(PAGES.CXO_TICKET_SEARCH)}
+                className={`w-full text-left px-5 py-2.5 flex items-center gap-3 cursor-pointer ${
+                  currentView === PAGES.CXO_TICKET_SEARCH
+                    ? "bg-slate-100 text-slate-900 border-l-4 border-slate-900 font-semibold"
+                    : "hover:bg-slate-50 hover:text-slate-900 text-slate-500 transition-colors"
+                }`}
+              >
+                <Search size={15} />
+                <span>Department Tickets Search</span>
+              </button>
+            ) : null}
+
             {isCxo ? (
               <button
                 onClick={() => setCurrentView(PAGES.CXO_ANALYTICS)}
@@ -1642,6 +1672,26 @@ export default function App() {
           {/* VIEW: AGENT - own/assigned ticket search */}
           {currentView === PAGES.AGENT_TICKET_SEARCH && isAgent && (
             <AgentTicketSearch
+              token={token}
+              currentUser={user!}
+              setSelectedTicketId={setSelectedTicketId}
+              setCurrentView={setCurrentView}
+            />
+          )}
+
+          {/* VIEW: HOD - department ticket search */}
+          {currentView === PAGES.HOD_TICKET_SEARCH && isManager && (
+            <HODTicketSearch
+              token={token}
+              currentUser={user!}
+              setSelectedTicketId={setSelectedTicketId}
+              setCurrentView={setCurrentView}
+            />
+          )}
+
+          {/* VIEW: CXO - department ticket search */}
+          {currentView === PAGES.CXO_TICKET_SEARCH && isCxo && (
+            <CXOTicketSearch
               token={token}
               currentUser={user!}
               setSelectedTicketId={setSelectedTicketId}
