@@ -15,7 +15,8 @@ export const invitationController = {
         return res.status(401).json({ message: "no inviter found" })
       }
 
-      // take stae if agenta
+      // Admin selects a Zone in the payload (not the mapped states) - the
+      // Zone -> state(s) mapping now happens server-side, in the service.
       const invitation = await invitationService.createInvitation({
         inviter: {
           id: inviter.id,
@@ -24,7 +25,7 @@ export const invitationController = {
         email: req.body.email,
         role: req.body.role,
         name: req.body.name,
-        state : req.body.state,
+        zone : req.body.zone,
         windCategory: req.body.role === "AGENT" ? (req.body.windCategory || null) : null,
         departmentId: req.body.departmentId,
         departmentIds : req.body.departmentIds,
@@ -46,15 +47,18 @@ export const invitationController = {
   },
 
   // POST /invitations/bulk  (GLOBAL_ADMIN, DEPT_ADMIN)
-  // Bulk version of `create` above - role/category/state/windCategory
+  // Bulk version of `create` above - role/category/zone/windCategory
   // settings are applied to every row (exactly what the "Onboard Staff
   // Member" form already collects once), except:
   //  - HOD/CXO: each row may carry its own `departmentIds` (an HOD row and
   //    a CXO row in the same batch can each report to different
   //    departments).
   //  - AGENT: each row may carry its own `departmentId`, `categoryIds`,
-  //    `state`, and `windCategory` (each agent can be onboarded to a
-  //    different department/category/state/wind coverage in one batch).
+  //    `zone`, and `windCategory` (each agent can be onboarded to a
+  //    different department/category/zone/wind coverage in one batch).
+  //    The Zone -> state(s) mapping happens server-side (see
+  //    invitationService.createInvitation / utils/zoneStateMap.ts), not
+  //    on the client anymore.
   // Any row that omits its per-row fields falls back to the shared
   // field(s) from the request body, for backward compatibility with any
   // caller still sending one set of values for the whole batch.
@@ -71,7 +75,7 @@ export const invitationController = {
     const {
       role,
       requestors,
-      state,
+      zone,
       windCategory,
       departmentId,
       departmentIds,
@@ -152,7 +156,7 @@ export const invitationController = {
         }
       }
 
-      // Per-row department/categories/state/windCategory (AGENT) if the
+      // Per-row department/categories/zone/windCategory (AGENT) if the
       // row provided them, otherwise fall back to the shared values.
       const rowDepartmentId: string = isAgentRole
         ? (typeof raw?.departmentId === "string" && raw.departmentId ? raw.departmentId : (departmentId || ""))
@@ -162,9 +166,11 @@ export const invitationController = {
             ? raw.categoryIds.filter((id: unknown) => typeof id === "string")
             : (Array.isArray(categoryIds) ? categoryIds : []))
         : (categoryIds || []);
-      const rowState: string = isAgentRole
-        ? (typeof raw?.state === "string" && raw.state ? raw.state : (state || ""))
-        : (role === "AGENT" ? (state || "") : "");
+      // The Zone (not a pre-mapped state list) - resolved to state(s) down
+      // in invitationService.createInvitation via statesForZone.
+      const rowZone: string = isAgentRole
+        ? (typeof raw?.zone === "string" && raw.zone ? raw.zone : (zone || ""))
+        : (role === "AGENT" ? (zone || "") : "");
       const rowWindCategory = isAgentRole
         ? (raw?.windCategory || windCategory || null)
         : (role === "AGENT" ? (windCategory || null) : null);
@@ -194,7 +200,7 @@ export const invitationController = {
           email,
           role,
           name,
-          state: rowState,
+          zone: rowZone,
           windCategory: rowWindCategory,
           departmentId: rowDepartmentId,
           departmentIds: isExecutiveRole ? rowDepartmentIds : [],
@@ -263,4 +269,3 @@ export const invitationController = {
     res.json(invitation);
   },
 };
-
