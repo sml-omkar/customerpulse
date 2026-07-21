@@ -1,9 +1,64 @@
-import { FileText } from "lucide-react"
+import { FileText, Building2, MapPin, Layers, Clock } from "lucide-react"
 import { useState } from "react";
 import API_BASE from "../lib/api";
 import { Department, TicketCategory, Client, PAGES, SubDepartment } from "../types";
 import AttachmentUploader from "./AttachmentUploader";
 import { uploadAttachmentToS3 } from "../libs/attachmentUpload";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
+
+const INDIAN_STATES = [
+  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
+  "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka",
+  "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya",
+  "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim",
+  "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand",
+  "West Bengal",
+];
+
+const UNION_TERRITORIES: { value: string; label: string }[] = [
+  { value: "Andaman and Nicobar Islands", label: "Andaman & Nicobar Islands" },
+  { value: "Chandigarh", label: "Chandigarh" },
+  { value: "Dadra and Nagar Haveli and Daman and Diu", label: "Dadra & Nagar Haveli & Daman & Diu" },
+  { value: "Delhi", label: "Delhi" },
+  { value: "Jammu and Kashmir", label: "Jammu & Kashmir" },
+  { value: "Ladakh", label: "Ladakh" },
+  { value: "Lakshadweep", label: "Lakshadweep" },
+  { value: "Puducherry", label: "Puducherry" },
+];
+
+const DESIGNATIONS = ["CEO", "COO", "CXO", "HOD", "EMPLOYEE"];
+
+// Section heading used to separate the form into the field groups the
+// person fills in, in order: client details -> location -> routing ->
+// issue details -> attachments.
+const SectionHeading = ({
+  icon: Icon,
+  title,
+  subtitle,
+}: {
+  icon: React.ElementType;
+  title: string;
+  subtitle?: string;
+}) => (
+  <div className="flex items-center gap-2 mb-1">
+    <Icon size={14} className="text-indigo-600 shrink-0" />
+    <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500">{title}</h2>
+    {subtitle && <span className="text-[11px] text-slate-400 font-normal normal-case">- {subtitle}</span>}
+  </div>
+);
+
+const FieldLabel = ({ children }: { children: React.ReactNode }) => (
+  <label className="block text-xs font-semibold text-slate-700 mb-1">{children}</label>
+);
+
+const textInputClass =
+  "w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all";
 
 export const TicketForm = ({setError,setSuccess,setSelectedTicketId,setCurrentView,token,departments,clients}:{
     setError:React.Dispatch<React.SetStateAction<string>>,
@@ -160,12 +215,11 @@ export const TicketForm = ({setError,setSuccess,setSelectedTicketId,setCurrentVi
     }
   };
 
-
     return (
-        <div className="max-w-3xl mx-auto space-y-6 font-sans">
-              <div className="bg-white border border-slate-200/80 p-6 rounded-2xl shadow-xs">
-                <h1 className="text-lg font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
-                  <FileText className="text-indigo-600" size={20} />
+        <div className="w-full max-w-4xl mx-auto space-y-4 sm:space-y-6 font-sans">
+              <div className="bg-white border border-slate-200/80 p-4 sm:p-6 rounded-2xl shadow-xs">
+                <h1 className="text-base sm:text-lg font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
+                  <FileText className="text-indigo-600 shrink-0" size={20} />
                   New Customer Pulse Ticket
                 </h1>
                 <p className="text-xs text-slate-500 mt-2">
@@ -173,226 +227,219 @@ export const TicketForm = ({setError,setSuccess,setSelectedTicketId,setCurrentVi
                 </p>
               </div>
 
-              <form onSubmit={handleSubmitTicket} className="bg-white border border-slate-200/80 rounded-2xl p-8 space-y-5 shadow-sm">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Department *</label>
-                    <select
-                      value={newTicketDept}
-                      onChange={(e) => handleTicketDeptChange(e.target.value)}
-                      className="w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
-                      required>
-                      <option value="">-- Select Department --</option>
-                      {departments.map(d => (
-                        <option key={d.id} value={d.id}>{d.name}</option>
+              <form
+                onSubmit={handleSubmitTicket}
+                className="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-7 shadow-sm"
+              >
+                {/* ---------------- 1. Client details ---------------- */}
+                <div className="space-y-4">
+                  <SectionHeading icon={Building2} title="Client Details" />
 
-                      ))}
-                      
-                    </select>
-                  </div>
-
-                  {newTicketDept && newTicketDept !== "OTHER" && deptSubDepartments.length > 0 && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">Sub-Department</label>
-                      <select
-                        value={newTicketSubDepartment}
-                        onChange={(e) => handleTicketSubDepartmentChange(e.target.value)}
-                        className="w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
+                      <FieldLabel>Client Business/Company *</FieldLabel>
+                      <Select
+                        value={newTicketClient}
+                        onValueChange={(value) => {
+                          setNewTicketClient(value);
+                          setNewTicketProjectId("");
+                        }}
                       >
-                        <option value="">-- All / Not applicable --</option>
-                        {deptSubDepartments.map(sd => (
-                          <option key={sd.id} value={sd.id}>{sd.name}</option>
-                        ))}
-                      </select>
+                        <SelectTrigger>
+                          <SelectValue placeholder="-- Choose Client --" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.isArray(clients) && clients.map(c => (
+                            <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                  )}
 
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Ticket Category </label>
-                    <select
-                      value={newTicketCategory}
-                      onChange={(e) => setNewTicketCategory(e.target.value)}
-                      className="w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
-                      disabled={!newTicketDept}
-                    >
-                      <option value="">-- Select Category --</option>
-                      {deptCategories.map(c => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
-                      ))}
-                      {newTicketDept && <option value="OTHER">Other</option>}
-                    </select>
+                    <div>
+                      <FieldLabel>Project</FieldLabel>
+                      <Select
+                        value={newTicketProjectId}
+                        onValueChange={setNewTicketProjectId}
+                        disabled={!newTicketClient}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="-- Choose Project --" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.isArray(clients) && clients
+                            .find(c => c.name === newTicketClient)?.projects?.map(p => (
+                              <SelectItem key={p.id} value={p.id}>
+                                {p.name}{p.isShutdownJob ? " (Shutdown Job)" : ""}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <FieldLabel>Client Authorized Email *</FieldLabel>
+                      <input
+                        type="email"
+                        placeholder="authorized@client.com"
+                        value={newTicketClientEmail}
+                        onChange={(e) => setNewTicketClientEmail(e.target.value)}
+                        className={textInputClass}
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <FieldLabel>Client Designation *</FieldLabel>
+                      <Select value={newTicketDesignation} onValueChange={setNewTicketDesignation}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="-- Choose Designation --" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {DESIGNATIONS.map((d) => (
+                            <SelectItem key={d} value={d}>{d}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 </div>
 
-                <div className="border-t border-slate-100 pt-4 grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Client Business/Company *</label>
-                    <select
-                      value={newTicketClient}
-                      onChange={(e) => {
-                        setNewTicketClient(e.target.value);
-                        setNewTicketProjectId("");
-                      }}
-                      className="w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
-                      required
-                    >
-                      <option value="">-- Choose Client --</option>
-                      {Array.isArray(clients) && clients.map(c => (
-                        <option key={c.id} value={c.name}>{c.name}</option>
-                      ))}
-                    </select>
-                  </div>
+                {/* ---------------- 2. Site & state ---------------- */}
+                <div className="border-t border-slate-100 pt-5 sm:pt-6 space-y-4">
+                  <SectionHeading icon={MapPin} title="Location" />
 
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Project</label>
-                    <select
-                      value={newTicketProjectId}
-                      onChange={(e) => setNewTicketProjectId(e.target.value)}
-                      className="w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer disabled:bg-slate-50 disabled:cursor-not-allowed"
-                      disabled={!newTicketClient}
-                    >
-                      <option value="">-- Choose Project --</option>
-                      {Array.isArray(clients) && clients
-                        .find(c => c.name === newTicketClient)?.projects?.map(p => (
-                          <option key={p.id} value={p.id}>{p.name}{p.isShutdownJob ? " (Shutdown Job)" : ""}</option>
-                        ))}
-                    </select>
-                  </div>
-                </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+                    <div>
+                      <FieldLabel>Site / Physical location</FieldLabel>
+                      <input
+                        type="text"
+                        placeholder="e.g. John Doe"
+                        value={newTicketSite}
+                        onChange={(e) => setNewTicketSite(e.target.value)}
+                        className={textInputClass}
+                      />
+                    </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Client Authorized Email *</label>
-                    <input
-                      type="email"
-                      placeholder="authorized@client.com"
-                      value={newTicketClientEmail}
-                      onChange={(e) => setNewTicketClientEmail(e.target.value)}
-                      className="w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Client Designation *</label>
-                    <select
-                      value={newTicketDesignation}
-                      onChange={(e) => setNewTicketDesignation(e.target.value)}
-                      className="w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
-                      required
-                    >
-                      <option value="">-- Choose Designation --</option>
-                      <option value="CEO">CEO</option>
-                      <option value="COO">COO</option>
-                      <option value="CXO">CXO</option>
-                      <option value="HOD">HOD</option>
-                      <option value="EMPLOYEE">EMPLOYEE</option>
-                    </select>
+                    <div>
+                      <FieldLabel>State *</FieldLabel>
+                      <Select value={newTicketState} onValueChange={setNewTicketState}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="-- Choose Indian State --" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {INDIAN_STATES.map((s) => (
+                            <SelectItem key={s} value={s}>{s}</SelectItem>
+                          ))}
+                          {UNION_TERRITORIES.map((ut) => (
+                            <SelectItem key={ut.value} value={ut.value}>{ut.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Issue Occurred (Date & Time) *</label>
-                    <input
-                      type="datetime-local"
-                      value={newTicketDateOccurred}
-                      onChange={(e) => setNewTicketDateOccurred(e.target.value)}
-                      className="w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                      required
-                    />
+                {/* ---------------- 3. Department / sub-department / category ---------------- */}
+                <div className="border-t border-slate-100 pt-5 sm:pt-6 space-y-4">
+                  <SectionHeading icon={Layers} title="Routing" />
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+                    <div>
+                      <FieldLabel>Department *</FieldLabel>
+                      <Select value={newTicketDept} onValueChange={handleTicketDeptChange}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="-- Select Department --" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {departments.map(d => (
+                            <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {newTicketDept && newTicketDept !== "OTHER" && deptSubDepartments.length > 0 && (
+                      <div>
+                        <FieldLabel>Sub-Department</FieldLabel>
+                        <Select value={newTicketSubDepartment} onValueChange={handleTicketSubDepartmentChange}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="-- All / Not applicable --" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {deptSubDepartments.map(sd => (
+                              <SelectItem key={sd.id} value={sd.id}>{sd.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+
+                    <div>
+                      <FieldLabel>Ticket Category</FieldLabel>
+                      <Select
+                        value={newTicketCategory}
+                        onValueChange={setNewTicketCategory}
+                        disabled={!newTicketDept}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="-- Select Category --" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {deptCategories.map(c => (
+                            <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                          ))}
+                          {newTicketDept && <SelectItem value="OTHER">Other</SelectItem>}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 </div>
 
+                {/* ---------------- 4. Issue occurred ---------------- */}
+                <div className="border-t border-slate-100 pt-5 sm:pt-6 space-y-4">
+                  <SectionHeading icon={Clock} title="Issue Details" />
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+                    <div>
+                      <FieldLabel>Issue Occurred (Date & Time) *</FieldLabel>
+                      <input
+                        type="datetime-local"
+                        value={newTicketDateOccurred}
+                        onChange={(e) => setNewTicketDateOccurred(e.target.value)}
+                        className={textInputClass}
+                        required
+                      />
+                    </div>
+                  </div>
+
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Site / Physical location</label>
+                    <FieldLabel>Ticket Subject / Title *</FieldLabel>
                     <input
                       type="text"
-                      placeholder="e.g. John Doe"
-                      value={newTicketSite}
-                      onChange={(e) => setNewTicketSite(e.target.value)}
-                      className="w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                      placeholder="Short summary of the outage or issue"
+                      value={newTicketTitle}
+                      onChange={(e) => setNewTicketTitle(e.target.value)}
+                      className={`${textInputClass} font-semibold`}
+                      required
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">State *</label>
-                    <select
-                      value={newTicketState}
-                      onChange={(e) => setNewTicketState(e.target.value)}
-                      className="w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
-                      required
-                    >
-                      <option value="">-- Choose Indian State --</option>
-                      <option value="Andhra Pradesh">Andhra Pradesh</option>
-                      <option value="Arunachal Pradesh">Arunachal Pradesh</option>
-                      <option value="Assam">Assam</option>
-                      <option value="Bihar">Bihar</option>
-                      <option value="Chhattisgarh">Chhattisgarh</option>
-                      <option value="Goa">Goa</option>
-                      <option value="Gujarat">Gujarat</option>
-                      <option value="Haryana">Haryana</option>
-                      <option value="Himachal Pradesh">Himachal Pradesh</option>
-                      <option value="Jharkhand">Jharkhand</option>
-                      <option value="Karnataka">Karnataka</option>
-                      <option value="Kerala">Kerala</option>
-                      <option value="Madhya Pradesh">Madhya Pradesh</option>
-                      <option value="Maharashtra">Maharashtra</option>
-                      <option value="Manipur">Manipur</option>
-                      <option value="Meghalaya">Meghalaya</option>
-                      <option value="Mizoram">Mizoram</option>
-                      <option value="Nagaland">Nagaland</option>
-                      <option value="Odisha">Odisha</option>
-                      <option value="Punjab">Punjab</option>
-                      <option value="Rajasthan">Rajasthan</option>
-                      <option value="Sikkim">Sikkim</option>
-                      <option value="Tamil Nadu">Tamil Nadu</option>
-                      <option value="Telangana">Telangana</option>
-                      <option value="Tripura">Tripura</option>
-                      <option value="Uttar Pradesh">Uttar Pradesh</option>
-                      <option value="Uttarakhand">Uttarakhand</option>
-                      <option value="West Bengal">West Bengal</option>
-                      <option value="Andaman and Nicobar Islands">Andaman & Nicobar Islands</option>
-                      <option value="Chandigarh">Chandigarh</option>
-                      <option value="Dadra and Nagar Haveli and Daman and Diu">Dadra & Nagar Haveli & Daman & Diu</option>
-                      <option value="Delhi">Delhi</option>
-                      <option value="Jammu and Kashmir">Jammu & Kashmir</option>
-                      <option value="Ladakh">Ladakh</option>
-                      <option value="Lakshadweep">Lakshadweep</option>
-                      <option value="Puducherry">Puducherry</option>
-                    </select>
+                    <FieldLabel>Detailed Outage Narrative / Description</FieldLabel>
+                    <textarea
+                      placeholder="Provide troubleshooting details, steps to reproduce, or notes."
+                      value={newTicketDesc}
+                      onChange={(e) => setNewTicketDesc(e.target.value)}
+                      className={textInputClass}
+                      rows={4}
+                    />
                   </div>
                 </div>
 
-                <div className="border-t border-slate-100 pt-4">
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Ticket Subject / Title *</label>
-                  <input
-                    type="text"
-                    placeholder="Short summary of the outage or issue"
-                    value={newTicketTitle}
-                    onChange={(e) => setNewTicketTitle(e.target.value)}
-                    className="w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-semibold"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Detailed Outage Narrative / Description</label>
-                  <textarea
-                    placeholder="Provide troubleshooting details, steps to reproduce, or notes."
-                    value={newTicketDesc}
-                    onChange={(e) => setNewTicketDesc(e.target.value)}
-                    className="w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                    rows={4}
-                  />
-                </div>
-
-               
-
-                <div className="pt-2">
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Attachments (Optional)</label>
+                {/* ---------------- 5. Attachments ---------------- */}
+                <div className="border-t border-slate-100 pt-5 sm:pt-6">
+                  <FieldLabel>Attachments (Optional)</FieldLabel>
                   <AttachmentUploader
                     token={token}
                     stagedFiles={newTicketAttachFiles}
@@ -403,17 +450,17 @@ export const TicketForm = ({setError,setSuccess,setSelectedTicketId,setCurrentVi
                   )}
                 </div>
 
-                <div className="border-t border-slate-100 pt-4 flex gap-2 justify-end">
+                <div className="border-t border-slate-100 pt-4 flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
                   <button
                     type="button"
                     onClick={() => setCurrentView(PAGES.DASHBOARD)}
-                    className="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                    className="w-full sm:w-auto px-4 py-2.5 sm:py-2 border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                    className="w-full sm:w-auto px-5 py-2.5 sm:py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer"
                   >
                     Create and File Ticket
                   </button>
