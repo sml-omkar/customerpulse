@@ -28,6 +28,31 @@ function matchesWindRequirement(agentWindCategory: WindCategory | null, required
   return required.includes(agentWindCategory);
 }
 
+// NOTE(added): state is stored as a free-text, comma-separated string on
+// both User (e.g. "Karnataka, Kerala") and Ticket (e.g. "karnataka,kerala")
+// - casing/spacing aren't guaranteed to line up between the two, so both
+// sides are normalised (split on comma, trimmed, lowercased) before being
+// compared.
+function parseStateList(raw: string | null | undefined): string[] {
+  if (!raw) return [];
+  return raw
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter((s) => s.length > 0);
+}
+
+// `required` is the ticket's requested state(s), already parsed/lowercased.
+// An empty `required` (ticket has no state set) means every agent matches -
+// state is a preference layered on top of department+category+wind, never
+// a hard requirement, so it should never wipe out an eligible pool just
+// because the ticket didn't specify a state.
+function matchesStateRequirement(agentState: string | null, required: string[]): boolean {
+  if (required.length === 0) return true;
+  const agentStates = parseStateList(agentState);
+  if (agentStates.length === 0) return false;
+  return agentStates.some((s) => required.includes(s));
+}
+
 export const assignmentService = {
   /**
    * Picks the best agent for a ticket, in priority order:
@@ -45,6 +70,23 @@ export const assignmentService = {
    *      match, fall back to the least-loaded eligible agent in the
    *      department so a ticket never sits permanently unassigned just
    *      because nobody's skills/category lined up.
+   *
+   * WIND vs STATE narrowing (applies within both stage 1 and stage 2):
+   *   We never go "state first". Within whatever base pool a stage builds
+   *   (department[+category]), narrowing happens in this fixed order, each
+   *   step with a "fall back if it would empty the pool" safety net so a
+   *   preference never blocks assignment outright:
+   *     a) department (+ category, in stage 1)
+   *     b) wind/non-wind match against the ticket's client
+   *     c) state match against the ticket's state (ticket.state can be a
+   *        comma-separated list like "karnataka,kerala"; an agent's state
+   *        can likewise be a comma-separated list - any overlap counts as
+   *        a match)
+   *   So if an agent in that department/category/wind pool covers the
+   *   ticket's state, they're preferred. If nobody in that pool covers it,
+   *   we fall back to the pool from before the state filter (i.e. still
+   *   respecting department+category+wind) rather than leaving the ticket
+   *   unassigned.
    *
    * All three respect maxActiveTickets - an agent at capacity is never
    * selected, regardless of how good their match score is.
@@ -64,14 +106,19 @@ export const assignmentService = {
     const client = await prisma.client.findFirst({ where: { name: ticket.clientName } });
     const required = requiredWindCategories(client ? client.isWindClient : null);
 
+    // NOTE(added): the ticket's requested state(s), normalised. Empty means
+    // the ticket didn't specify a state, so the state filter below is a
+    // no-op wherever it's applied. See parseStateList/matchesStateRequirement.
+    const requiredStates = parseStateList(ticket.state);
+
     // ---- 1. Category-based match (primary) ----
     if (ticket.categoryId) {
       console.log("Hitting ticket category")
       // NOTE(changed): scoped to the ticket's department up front - agents
       // linked to this category but sitting in a different department were
       // previously still being considered. Department + category is the
-      // base candidate pool; wind/non-wind/both is applied as a filter on
-      // top of that pool below, not the other way round.
+      // base candidate pool; wind/non-wind/both and state are applied as
+      // filters on top of that pool below, not the other way round.
       const categoryAgents = await prisma.categoryAgent.findMany({
         where: { categoryId: ticket.categoryId, agent: { agentsdepartmentId: ticket.departmentId } },
         include: {
@@ -106,7 +153,18 @@ export const assignmentService = {
         // pool - i.e. the department+category match still wins, just
         // without the wind preference.
         const windMatched = eligible.filter((e) => matchesWindRequirement(e.agent.windCategory, required));
-        const pool = windMatched.length > 0 ? windMatched : eligible;
+        const windPool = windMatched.length > 0 ? windMatched : eligible;
+
+        // NOTE(added): last narrowing step - prefer an agent whose own
+        // `state` covers the ticket's state, within the wind-matched pool.
+        // If nobody in that pool covers the ticket's state, fall back to
+        // the wind-matched pool itself (state is a preference layered on
+        // top of department+category+wind, never a hard blocker) - this is
+        // the "no agent for that state -> fall back to our implemented
+        // logic" behaviour.
+        const stateMatched = windPool.filter((e) => matchesStateRequirement(e.agent.state, requiredStates));
+        const pool = stateMatched.length > 0 ? stateMatched : windPool;
+
         pool.sort((a, b) => b.proficiency - a.proficiency || a.openCount - b.openCount);
         return { agent: pool[0].agent, method: AssignmentMethod.AUTO_CATEGORY };
       }
@@ -155,8 +213,15 @@ export const assignmentService = {
     const windMatched = scored.filter((c) => matchesWindRequirement(c.agent.windCategory, required));
     const capacityPool = windMatched.length > 0 ? windMatched : scored;
 
-    const hasSkillMatch = capacityPool.some((c) => c.skillScore > 0);
-    const pool = hasSkillMatch ? capacityPool.filter((c) => c.skillScore > 0) : capacityPool;
+    // NOTE(added): state preference, same "narrow then fall back" pattern
+    // as wind above, applied on top of the wind-narrowed pool - i.e.
+    // department -> wind/non-wind -> state, in that order, matching the
+    // routing logic used in stage 1.
+    const stateMatchedCapacity = capacityPool.filter((c) => matchesStateRequirement(c.agent.state, requiredStates));
+    const finalPool = stateMatchedCapacity.length > 0 ? stateMatchedCapacity : capacityPool;
+
+    const hasSkillMatch = finalPool.some((c) => c.skillScore > 0);
+    const pool = hasSkillMatch ? finalPool.filter((c) => c.skillScore > 0) : finalPool;
 
     // ---- 3. Load-balance fallback is just "no skill match" above, same pool ----
     pool.sort((a, b) => b.skillScore - a.skillScore || a.openCount - b.openCount);
