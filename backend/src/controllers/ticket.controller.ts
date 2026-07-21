@@ -494,10 +494,11 @@ export const ticketController = {
 
     const now = new Date();
     // Ticket is put ON_HOLD or RESOLVED -> SLA clock pauses (deadline banked
-    // into slaRemainingMinutes) and, for ON_HOLD specifically, the wall-clock
-    // hold window that TAT subtracts opens/closes. Coming back off either
-    // one resumes the deadline from the banked remainder rather than
-    // granting a fresh window. No-op when status isn't actually changing.
+    // into slaRemainingMinutes) and the wall-clock pause window that TAT
+    // subtracts opens too (now covering RESOLVED time as well as ON_HOLD).
+    // Coming back off either one resumes the deadline - and TAT - from the
+    // banked remainder rather than granting a fresh window. No-op when
+    // status isn't actually changing.
     const slaClockUpdate = status !== undefined && status !== previous.status
       ? computeSlaClockUpdate(previous, status, now)
       : {};
@@ -973,4 +974,3 @@ export const ticketController = {
     res.status(204).send();
   },
 };
-
