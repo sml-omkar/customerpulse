@@ -30,6 +30,26 @@ const STATES = [
   "Kerala",
 ];
 
+// Onboarding now collects a Zone from the person filling the form (instead
+// of asking them to pick one of the individual states above) and maps that
+// Zone to its underlying state(s) internally, per the company's Region List
+// (State / UT -> Zone) mapping. Only zones that are actually reachable via
+// the STATES list above are exposed here.
+const ZONE_STATE_MAP: Record<string, string[]> = {
+  "North": ["Delhi"],
+  "West 1": ["Maharashtra"],
+  "West 2": ["Gujarat"],
+  "South 1": ["Karnataka", "Kerala"],
+  "South 2": ["Tamil Nadu", "Telangana"],
+};
+
+const ZONES = Object.keys(ZONE_STATE_MAP);
+
+// Given a Zone name, resolve it to the comma-separated list of states it
+// covers (what actually gets stored/sent) - this is the "map the mentioned
+// states to the zone internally" step.
+const statesForZone = (zone: string): string => (ZONE_STATE_MAP[zone] || []).join(", ");
+
 
 export const InvitationComponent: React.FC<InvitationComponentProps> = ({
   setInviteDeptId,
@@ -53,13 +73,13 @@ export const InvitationComponent: React.FC<InvitationComponentProps> = ({
   const [inviteRole, setInviteRole] = useState<UserRole>(UserRole.REQUESTER);
   const [inviteDeptIds, setInviteDeptIds] = useState<string[]>([]);
 
-  const [selectedState, setSelectedState] = useState<string>("");
+  const [selectedZone, setSelectedZone] = useState<string>("");
   const [selectedWindCategory, setSelectedWindCategory] = useState<WindCategory | "">("");
   const isExecutiveRole = inviteRole === UserRole.HOD || inviteRole === UserRole.CXO;
   const isAgentRole = inviteRole === UserRole.AGENT;
 
   // Bulk upload (Excel template download / bulk invite) state - reuses
-  // whichever Role/Department/Category/State/WindCategory is currently
+  // whichever Role/Department/Category/Zone/WindCategory is currently
   // selected in the form above; only Name+Email vary per row.
   const [showBulkMenu, setShowBulkMenu] = useState(false);
   const [bulkUploading, setBulkUploading] = useState(false);
@@ -77,7 +97,7 @@ export const InvitationComponent: React.FC<InvitationComponentProps> = ({
     setInviteRole(newRole);
 
     if (newRole !== UserRole.AGENT) {
-      setSelectedState("");
+      setSelectedZone("");
       setSelectedWindCategory("");
     }
 
@@ -141,8 +161,8 @@ export const InvitationComponent: React.FC<InvitationComponentProps> = ({
         categoryIds: !isExecutiveRole ? inviteCategoryIds : [],
         supportLevel: inviteRole == UserRole.AGENT ? SupportLevel.L1 : SupportLevel.L2,
         state:
-          inviteRole === UserRole.AGENT && selectedState
-            ? selectedState
+          inviteRole === UserRole.AGENT && selectedZone
+            ? statesForZone(selectedZone)
             : null,
         windCategory:
           inviteRole === UserRole.AGENT && selectedWindCategory
@@ -166,7 +186,7 @@ export const InvitationComponent: React.FC<InvitationComponentProps> = ({
       setName("");
       setInviteEmail("");
       setInviteCategoryIds([]);
-      setSelectedState("");
+      setSelectedZone("");
       setSelectedWindCategory("");
       setInviteDeptIds([]);
       setInviteDeptId("");
@@ -204,7 +224,7 @@ export const InvitationComponent: React.FC<InvitationComponentProps> = ({
 
   // Same field checks as handleSendInvite, reused so a bulk batch can't be
   // fired off with an incomplete selection. Department is intentionally
-  // NOT checked here for HOD/CXO, and neither Department/Category/State/
+  // NOT checked here for HOD/CXO, and neither Department/Category/Zone/
   // WindCategory are checked for AGENT - for those roles each row in the
   // uploaded file supplies its own values, so there's nothing to
   // pre-select on the form for bulk.
@@ -221,7 +241,7 @@ export const InvitationComponent: React.FC<InvitationComponentProps> = ({
     const header = isExecutiveRole
       ? ["Name", "Email", "Departments"]
       : isAgentRole
-      ? ["Name", "Email", "State", "WindCategory", "Department", "Categories"]
+      ? ["Name", "Email", "Zone", "WindCategory", "Department", "Categories"]
       : ["Name", "Email"];
 
     const sampleDeptNames = departments.slice(0, 2).map((d) => d.name).join(", ") || "Sales, Finance";
@@ -230,7 +250,7 @@ export const InvitationComponent: React.FC<InvitationComponentProps> = ({
     const exampleRow = isExecutiveRole
       ? ["Jane Doe", "jane.doe@example.com", sampleDeptNames]
       : isAgentRole
-      ? ["Jane Doe", "jane.doe@example.com", STATES[0] || "", "Wind", firstDeptName, "Category A, Category B"]
+      ? ["Jane Doe", "jane.doe@example.com", ZONES[0] || "", "Wind", firstDeptName, "Category A, Category B"]
       : ["Jane Doe", "jane.doe@example.com"];
 
     const worksheet = XLSX.utils.aoa_to_sheet([header, exampleRow]);
@@ -266,9 +286,9 @@ export const InvitationComponent: React.FC<InvitationComponentProps> = ({
     }
 
     if (isAgentRole) {
-      const stateSheet = XLSX.utils.aoa_to_sheet([["Valid States"], ...STATES.map((s) => [s])]);
-      stateSheet["!cols"] = [{ wch: 24 }];
-      XLSX.utils.book_append_sheet(workbook, stateSheet, "States");
+      const zoneSheet = XLSX.utils.aoa_to_sheet([["Valid Zones"], ...ZONES.map((z) => [z])]);
+      zoneSheet["!cols"] = [{ wch: 24 }];
+      XLSX.utils.book_append_sheet(workbook, zoneSheet, "Zones");
 
       const windSheet = XLSX.utils.aoa_to_sheet([["Valid Wind Categories"], ["Wind"], ["Non-Wind"], ["Both"]]);
       windSheet["!cols"] = [{ wch: 24 }];
@@ -314,10 +334,9 @@ export const InvitationComponent: React.FC<InvitationComponentProps> = ({
 
       const instructionsSheet = XLSX.utils.aoa_to_sheet([
         ["Instructions"],
-        ["1. Fill in Name, Email, State, WindCategory, Department, and Categories for each agent."],
-        ["2. State is optional - leave blank if not applicable. If provided, it must match a name"],
-        ["   from the 'States' sheet."],
-        ["3. WindCategory is required: Wind, Non-Wind, or Both (see the 'WindCategories' sheet)."],
+        ["1. Fill in Name, Email, Zone, WindCategory, Department, and Categories for each agent."],
+        ["2. Zone is optional - leave blank if not applicable. If provided, it must match a name"],
+        ["   from the 'Zones' sheet. The agent will automatically be mapped to every state in that zone."],
         ["4. Department is required: one name from the 'Departments' sheet."],
         ["5. Categories is required: one or more category names valid for that row's Department,"],
         ["   separated by commas (see 'Departments & Categories' sheet for what's valid per department)."],
@@ -370,7 +389,7 @@ export const InvitationComponent: React.FC<InvitationComponentProps> = ({
       const deptIdByName = new Map(
         departments.map((d) => [d.name.trim().toLowerCase(), d.id])
       );
-      const stateByName = new Map(STATES.map((s) => [s.toLowerCase(), s]));
+      const zoneByName = new Map(ZONES.map((z) => [z.toLowerCase(), z]));
       const normalizeWindCategory = (raw: string): WindCategory | null => {
         const key = raw.trim().toLowerCase().replace(/[\s_-]+/g, "");
         if (key === "wind") return WindCategory.WIND;
@@ -385,7 +404,7 @@ export const InvitationComponent: React.FC<InvitationComponentProps> = ({
       const parseSkips: { name: string; email: string; reason: string }[] = [];
 
       // Normalize headers once per row. Accepts "Name"/"name",
-      // "Email"/"email", "Departments"/"Department", "State"/"state",
+      // "Email"/"email", "Departments"/"Department", "Zone"/"zone",
       // "WindCategory"/"Wind Category"/"wind", and "Categories"/"Category".
       const normalizedRows = rows
         .map((row) => {
@@ -397,7 +416,7 @@ export const InvitationComponent: React.FC<InvitationComponentProps> = ({
             name: String(keyMap["name"] ?? "").trim(),
             email: String(keyMap["email"] ?? "").trim(),
             rawDepartments: String(keyMap["departments"] ?? keyMap["department"] ?? "").trim(),
-            rawState: String(keyMap["state"] ?? "").trim(),
+            rawZone: String(keyMap["zone"] ?? "").trim(),
             rawWindCategory: String(keyMap["windcategory"] ?? keyMap["wind category"] ?? keyMap["wind"] ?? "").trim(),
             rawCategories: String(keyMap["categories"] ?? keyMap["category"] ?? "").trim(),
           };
@@ -450,13 +469,15 @@ export const InvitationComponent: React.FC<InvitationComponentProps> = ({
             }
 
             let state: string | null = null;
-            if (r.rawState) {
-              const matchedState = stateByName.get(r.rawState.toLowerCase());
-              if (!matchedState) {
-                parseSkips.push({ name, email, reason: `Unrecognized state: "${r.rawState}"` });
+            if (r.rawZone) {
+              const matchedZone = zoneByName.get(r.rawZone.toLowerCase());
+              if (!matchedZone) {
+                parseSkips.push({ name, email, reason: `Unrecognized zone: "${r.rawZone}"` });
                 return null;
               }
-              state = matchedState;
+              // Internally map the Zone to the state(s) it covers - this is
+              // what actually gets stored for the agent.
+              state = statesForZone(matchedZone);
             }
 
             const catNames = r.rawCategories.split(/[,;|]/).map((c) => c.trim()).filter(Boolean);
@@ -534,7 +555,7 @@ export const InvitationComponent: React.FC<InvitationComponentProps> = ({
           const expectedCols = isExecutiveRole
             ? " + Departments."
             : isAgentRole
-            ? ", State, WindCategory, Department + Categories."
+            ? ", Zone, WindCategory, Department + Categories."
             : ".";
           setError(`No rows found in the uploaded file. Use the template and fill in Name + Email${expectedCols}`);
         }
@@ -547,11 +568,12 @@ export const InvitationComponent: React.FC<InvitationComponentProps> = ({
         departmentId: !isExecutiveRole ? (inviteDeptId || null) : null,
         // Kept as a fallback only - each HOD/CXO row now carries its own
         // departmentIds, and each AGENT row now carries its own
-        // departmentId/categoryIds/state/windCategory, resolved above.
+        // departmentId/categoryIds/state (mapped from its Zone)/windCategory,
+        // resolved above.
         departmentIds: isExecutiveRole ? inviteDeptIds : [],
         categoryIds: !isExecutiveRole ? inviteCategoryIds : [],
         supportLevel: inviteRole == UserRole.AGENT ? SupportLevel.L1 : SupportLevel.L2,
-        state: inviteRole === UserRole.AGENT && selectedState ? selectedState : null,
+        state: inviteRole === UserRole.AGENT && selectedZone ? statesForZone(selectedZone) : null,
         windCategory: inviteRole === UserRole.AGENT && selectedWindCategory ? selectedWindCategory : null,
       };
 
@@ -718,26 +740,32 @@ export const InvitationComponent: React.FC<InvitationComponentProps> = ({
               </select>
             </div>
 
-            {/* if agent is selected add the state drop it should be optional*/}
-            {/* State (Optional - AGENT only) */}
+            {/* if agent is selected add the zone dropdown, it should be optional.
+                The chosen Zone is mapped internally to the state(s) it covers. */}
+            {/* Zone (Optional - AGENT only) */}
             {inviteRole === UserRole.AGENT && (
               <div>
                 <label className="block text-xs font-semibold text-zinc-600 mb-1">
-                  State (Optional)
+                  Zone (Optional)
                 </label>
                 <select
-                  value={selectedState}
-                  onChange={(e) => setSelectedState(e.target.value)}
+                  value={selectedZone}
+                  onChange={(e) => setSelectedZone(e.target.value)}
                   className="w-full text-xs p-2.5 border border-zinc-300 bg-white"
                 >
-                  <option value="">-- Select State --</option>
+                  <option value="">-- Select Zone --</option>
 
-                  {STATES.map((state) => (
-                    <option key={state} value={state}>
-                      {state}
+                  {ZONES.map((zone) => (
+                    <option key={zone} value={zone}>
+                      {zone}
                     </option>
                   ))}
                 </select>
+                {selectedZone && (
+                  <p className="mt-1 text-[10px] text-zinc-400 italic">
+                    Covers: {statesForZone(selectedZone)}
+                  </p>
+                )}
               </div>
             )}
 
@@ -875,7 +903,7 @@ export const InvitationComponent: React.FC<InvitationComponentProps> = ({
               {isExecutiveRole
                 ? "Or invite many people at once as this Role - the Departments column in the uploaded file sets each person's own department(s):"
                 : isAgentRole
-                ? "Or invite many agents at once - the State, WindCategory, Department, and Categories columns in the uploaded file set each agent's own values:"
+                ? "Or invite many agents at once - the Zone, WindCategory, Department, and Categories columns in the uploaded file set each agent's own values:"
                 : `Or invite many people at once with this same Role${inviteRole !== UserRole.REQUESTER ? " / Department / Category" : ""} setting:`}
             </p>
             <div className="relative">
@@ -904,7 +932,7 @@ export const InvitationComponent: React.FC<InvitationComponentProps> = ({
                           {isExecutiveRole
                             ? "Excel file with Name, Email + Departments columns"
                             : isAgentRole
-                            ? "Excel file with Name, Email, State, WindCategory, Department + Categories columns"
+                            ? "Excel file with Name, Email, Zone, WindCategory, Department + Categories columns"
                             : "Excel file with Name + Email columns"}
                         </span>
                       </span>
@@ -963,4 +991,3 @@ export const InvitationComponent: React.FC<InvitationComponentProps> = ({
     </div>
   );
 };
-
