@@ -4,6 +4,7 @@ import { notificationService } from "./notification.service";
 import { UserRole, InvitationStatus, SupportLevel, Invitation, WindCategory } from "../generated/prisma/client";
 import { daysFromNow } from "../utils/time";
 import { signAuthToken } from "../utils/jwt";
+import { statesForZone } from "../utils/zoneStateMap";
 import bcrypt from "bcryptjs";
 
 const INVITATION_TTL_DAYS = 7;
@@ -31,14 +32,21 @@ export const invitationService = {
     email: string;
     role: UserRole;
     name : string,
-    state : string,
+    // The caller now sends the Zone the admin picked (e.g. "South 1"), not
+    // the resolved state list - resolving Zone -> state(s) is done here,
+    // server-side, via statesForZone (see ../utils/zoneStateMap.ts).
+    zone : string,
     windCategory : WindCategory | null,
     departmentId: string;
     departmentIds : string[],
     categoryIds : string[]
     supportLevel: SupportLevel;
   }) {
-    const { name, inviter, email, role, departmentId,departmentIds, supportLevel, categoryIds,state,windCategory } = params;
+    const { name, inviter, email, role, departmentId,departmentIds, supportLevel, categoryIds,zone,windCategory } = params;
+    // Resolve the Zone to its underlying state(s) - this is what actually
+    // gets stored against the invitation/user, same as before, just
+    // computed on the backend instead of the frontend.
+    const state = statesForZone(zone);
 
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) throw new InvitationError("A user with this email already exists");
