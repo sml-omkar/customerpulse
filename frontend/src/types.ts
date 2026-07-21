@@ -231,10 +231,17 @@ export interface Ticket {
   resolvedAt?: string;
   closedAt?: string;
   // SLA/TAT pause-resume bookkeeping - see backend slaClock.service.ts.
+  // holdStartedAt/totalHoldMinutes/turnOverTime back Agent TAT (pauses on
+  // ON_HOLD or RESOLVED). resolvedStartedAt/totalResolvedMinutes/
+  // ticketTurnOverTime back Ticket TAT (pauses on RESOLVED only - keeps
+  // running through a hold).
   holdStartedAt?: string;
   totalHoldMinutes?: number;
+  resolvedStartedAt?: string;
+  totalResolvedMinutes?: number;
   slaRemainingMinutes?: number;
   turnOverTime?: number;
+  ticketTurnOverTime?: number;
   tags: string[];
   createdAt: string;
   updatedAt: string;
