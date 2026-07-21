@@ -4,6 +4,61 @@ import API_BASE from "../lib/api";
 import { Department, TicketCategory, Client, PAGES, SubDepartment } from "../types";
 import AttachmentUploader from "./AttachmentUploader";
 import { uploadAttachmentToS3 } from "../libs/attachmentUpload";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../components/ui/select";
+
+const INDIAN_STATES = [
+  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
+  "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka",
+  "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya",
+  "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim",
+  "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand",
+  "West Bengal",
+];
+
+const UNION_TERRITORIES: { value: string; label: string }[] = [
+  { value: "Andaman and Nicobar Islands", label: "Andaman & Nicobar Islands" },
+  { value: "Chandigarh", label: "Chandigarh" },
+  { value: "Dadra and Nagar Haveli and Daman and Diu", label: "Dadra & Nagar Haveli & Daman & Diu" },
+  { value: "Delhi", label: "Delhi" },
+  { value: "Jammu and Kashmir", label: "Jammu & Kashmir" },
+  { value: "Ladakh", label: "Ladakh" },
+  { value: "Lakshadweep", label: "Lakshadweep" },
+  { value: "Puducherry", label: "Puducherry" },
+];
+
+const DESIGNATIONS = ["CEO", "COO", "CXO", "HOD", "EMPLOYEE"];
+
+// Section heading used to separate the form into the field groups the
+// person fills in, in order: client details -> location -> routing ->
+// issue details -> attachments.
+const SectionHeading = ({
+  icon: Icon,
+  title,
+  subtitle,
+}: {
+  icon: React.ElementType;
+  title: string;
+  subtitle?: string;
+}) => (
+  <div className="flex items-center gap-2 mb-1">
+    <Icon size={14} className="text-indigo-600 shrink-0" />
+    <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500">{title}</h2>
+    {subtitle && <span className="text-[11px] text-slate-400 font-normal normal-case">- {subtitle}</span>}
+  </div>
+);
+
+const FieldLabel = ({ children }: { children: React.ReactNode }) => (
+  <label className="block text-xs font-semibold text-slate-700 mb-1">{children}</label>
+);
+
+const textInputClass =
+  "w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all";
 
 export const TicketForm = ({setError,setSuccess,setSelectedTicketId,setCurrentView,token,departments,clients}:{
     setError:React.Dispatch<React.SetStateAction<string>>,
@@ -174,59 +229,10 @@ export const TicketForm = ({setError,setSuccess,setSelectedTicketId,setCurrentVi
               </div>
 
               <form onSubmit={handleSubmitTicket} className="bg-white border border-slate-200/80 rounded-2xl p-8 space-y-5 shadow-sm">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Department *</label>
-                    <select
-                      value={newTicketDept}
-                      onChange={(e) => handleTicketDeptChange(e.target.value)}
-                      className="w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
-                      required>
-                      <option value="">-- Select Department --</option>
-                      {departments.map(d => (
-                        <option key={d.id} value={d.id}>{d.name}</option>
-
-                      ))}
-                      
-                    </select>
-                  </div>
-
-                  {newTicketDept && newTicketDept !== "OTHER" && deptSubDepartments.length > 0 && (
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">Sub-Department</label>
-                      <select
-                        value={newTicketSubDepartment}
-                        onChange={(e) => handleTicketSubDepartmentChange(e.target.value)}
-                        className="w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
-                      >
-                        <option value="">-- All / Not applicable --</option>
-                        {deptSubDepartments.map(sd => (
-                          <option key={sd.id} value={sd.id}>{sd.name}</option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Ticket Category </label>
-                    <select
-                      value={newTicketCategory}
-                      onChange={(e) => setNewTicketCategory(e.target.value)}
-                      className="w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
-                      disabled={!newTicketDept}
-                    >
-                      <option value="">-- Select Category --</option>
-                      {deptCategories.map(c => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
-                      ))}
-                      {newTicketDept && <option value="OTHER">Other</option>}
-                    </select>
-                  </div>
-                </div>
 
                 <div className="border-t border-slate-100 pt-4 grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Client Business/Company *</label>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Client / Company Name *</label>
                     <select
                       value={newTicketClient}
                       onChange={(e) => {
@@ -260,52 +266,38 @@ export const TicketForm = ({setError,setSuccess,setSelectedTicketId,setCurrentVi
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Client Authorized Email *</label>
-                    <input
-                      type="email"
-                      placeholder="authorized@client.com"
-                      value={newTicketClientEmail}
-                      onChange={(e) => setNewTicketClientEmail(e.target.value)}
-                      className="w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                      required
-                    />
-                  </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Client Email *</label>
+              <input
+                type="email"
+                placeholder="authorized@client.com"
+                value={newTicketClientEmail}
+                onChange={(e) => setNewTicketClientEmail(e.target.value)}
+                className="w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                required
+              />
+            </div>
 
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Client Designation *</label>
-                    <select
-                      value={newTicketDesignation}
-                      onChange={(e) => setNewTicketDesignation(e.target.value)}
-                      className="w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
-                      required
-                    >
-                      <option value="">-- Choose Designation --</option>
-                      <option value="CEO">CEO</option>
-                      <option value="COO">COO</option>
-                      <option value="CXO">CXO</option>
-                      <option value="HOD">HOD</option>
-                      <option value="EMPLOYEE">EMPLOYEE</option>
-                    </select>
-                  </div>
-                </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Client Designation *</label>
+              <select
+                value={newTicketDesignation}
+                onChange={(e) => setNewTicketDesignation(e.target.value)}
+                className="w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
+                required
+              >
+                <option value="">-- Choose Designation --</option>
+                <option value="CEO">CEO</option>
+                <option value="COO">COO</option>
+                <option value="CXO">CXO</option>
+                <option value="HOD">HOD</option>
+                <option value="EMPLOYEE">EMPLOYEE</option>
+              </select>
+            </div>
+          </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Issue Occurred (Date & Time) *</label>
-                    <input
-                      type="datetime-local"
-                      value={newTicketDateOccurred}
-                      onChange={(e) => setNewTicketDateOccurred(e.target.value)}
-                      className="w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                      required
-                    />
-                  </div>
-                </div>
-
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+<div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1">Site / Physical location</label>
                     <input
@@ -366,8 +358,80 @@ export const TicketForm = ({setError,setSuccess,setSelectedTicketId,setCurrentVi
                   </div>
                 </div>
 
+
+
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Department *</label>
+                    <select
+                      value={newTicketDept}
+                      onChange={(e) => handleTicketDeptChange(e.target.value)}
+                      className="w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
+                      required>
+                      <option value="">-- Select Department --</option>
+                      {departments.map(d => (
+                        <option key={d.id} value={d.id}>{d.name}</option>
+
+                      ))}
+                      
+                    </select>
+                  </div>
+
+                  
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">Sub-Department</label>
+                      <select
+                        value={newTicketSubDepartment}
+                        onChange={(e) => handleTicketSubDepartmentChange(e.target.value)}
+                        className="w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
+                      >
+                        <option value="">-- All / Not applicable --</option>
+                        {deptSubDepartments.map(sd => (
+                          <option key={sd.id} value={sd.id}>{sd.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  
+
+                  
+                </div>
+
+                
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Issue *</label>
+                    <select
+                      value={newTicketCategory}
+                      onChange={(e) => setNewTicketCategory(e.target.value)}
+                      className="w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
+                      disabled={!newTicketDept}
+                    >
+                      <option value="">-- Select Category --</option>
+                      {deptCategories.map(c => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))}
+                      {newTicketDept && <option value="OTHER">Other</option>}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Issue Occurred (Date & Time) *</label>
+                    <input
+                      type="datetime-local"
+                      value={newTicketDateOccurred}
+                      onChange={(e) => setNewTicketDateOccurred(e.target.value)}
+                      className="w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                      required
+                    />
+                  </div>
+                </div>
+
+
+                
+
                 <div className="border-t border-slate-100 pt-4">
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Ticket Subject / Title *</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Title *</label>
                   <input
                     type="text"
                     placeholder="Short summary of the outage or issue"
@@ -379,7 +443,7 @@ export const TicketForm = ({setError,setSuccess,setSelectedTicketId,setCurrentVi
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Detailed Outage Narrative / Description</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Description</label>
                   <textarea
                     placeholder="Provide troubleshooting details, steps to reproduce, or notes."
                     value={newTicketDesc}

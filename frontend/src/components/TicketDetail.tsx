@@ -707,7 +707,7 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
           </button>
           <span className="text-slate-300">|</span>
           <span className="text-sm font-mono font-semibold text-slate-900 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-md">
-            {[ticket.title, ticket.ticketNumber, ticket.category?.name || "General", ticket.clientName].join(" _ ")}
+            {[ticket.ticketNumber, ticket.category?.name || "General", ticket.clientName].join(" _ ")}
           </span>
           {ticket.requester?.role === "REQUESTER" && (
             <span className="text-[10px] font-bold uppercase tracking-wide bg-amber-50 text-amber-700 border border-amber-200 px-2 py-1 rounded-md">
@@ -1137,19 +1137,7 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
 
               {/* Priority Badges */}
               <div className="flex flex-col items-end gap-1.5">
-                <span
-                  className={`text-xs font-bold px-2.5 py-1 border font-mono rounded-md ${
-                    ticket.priority === "P1"
-                      ? "bg-red-50 text-red-800 border-red-200"
-                      : ticket.priority === "P2"
-                        ? "bg-amber-50 text-amber-800 border-amber-200"
-                        : ticket.priority === "P3"
-                          ? "bg-slate-100 text-slate-800 border-slate-200"
-                          : "bg-slate-50 text-slate-800 border-slate-200"
-                  }`}
-                >
-                  Priority: {ticket.priority}
-                </span>
+               
 
                 {/* Internal-only triage metric - separate from the customer-facing
                     Priority above, purely informational, never manually overridden. */}
@@ -1164,7 +1152,7 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
                           : "bg-green-50 text-green-800 border-slate-200"
                   }`}
                 >
-                  Internal Priority: {ticket.internalPriority}
+                  Priority: {ticket.internalPriority}
                 </span>
               </div>
             </div>
@@ -1175,7 +1163,7 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
             </div>
 
             {/* Structured ticket metadata */}
-            <div className="mt-6 pt-6 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-3 gap-4 text-xs font-mono text-slate-600">
+            <div className="mt-6 pt-6 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs font-mono text-slate-600">
               <div>
                 <span className="text-slate-400 block font-sans text-[10px] uppercase font-bold tracking-wider mb-0.5">Client / Company</span>
                 <span className="font-semibold text-slate-900">{ticket.clientName}</span>
@@ -1187,6 +1175,10 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
               <div>
                 <span className="text-slate-400 block font-sans text-[10px] uppercase font-bold tracking-wider mb-0.5">Occurred On</span>
                 <span className="font-semibold text-slate-900">{new Date(ticket.dateOfOccurance).toLocaleDateString()}</span>
+              </div>
+              <div>
+                <span className="text-slate-400 block font-sans text-[10px] uppercase font-bold tracking-wider mb-0.5">Created On</span>
+                <span className="font-semibold text-slate-900">{new Date(ticket.createdAt).toLocaleDateString()}</span>
               </div>
             </div>
 
@@ -1286,8 +1278,7 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
                     )}
                     {comment.isInternal && (
                       <span className="inline-block mt-2 text-[10px] uppercase font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 font-mono border border-amber-200">
-                        Internal Work Note - Hidden from Requesters
-                      </span>
+                        Internal Work Note - Hidden from User                      </span>
                     )}
                   </div>
                 ))}
@@ -1506,7 +1497,7 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
                   {ticket.requester?.fullName ? ticket.requester.fullName[0].toUpperCase() : "U"}
                 </div>
                 <div className="text-xs">
-                  <span className="text-slate-400 block font-medium">Requester / Employee</span>
+                  <span className="text-slate-400 block font-medium">Requested by</span>
                   <span className="font-bold text-slate-800">{ticket.requester?.fullName || "System User"}</span>
                   <span className="text-slate-400 block font-mono text-[10px]">{ticket.requester?.email}</span>
                 </div>
