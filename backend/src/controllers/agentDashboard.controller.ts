@@ -114,6 +114,7 @@ export const agentDashboardController = {
           category: { select: { name: true } },
           requester: { select: { fullName: true } },
           createdAt: true,
+          dateOfOccurance: true,
           slaDeadline: true,
           resolvedAt: true,
           slaBreached: true,
@@ -165,6 +166,7 @@ export const agentDashboardController = {
         categoryId: t.categoryId,
         categoryName: t.category?.name ?? "Uncategorized",
         createdAt: t.createdAt,
+        dateOfOccurance: t.dateOfOccurance,
         dueAt: t.slaDeadline,
         dueInHrs,
         resolvedAt: t.resolvedAt,
@@ -226,3 +228,4 @@ export const agentDashboardController = {
     });
   },
 };
+

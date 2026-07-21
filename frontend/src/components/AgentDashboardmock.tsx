@@ -185,6 +185,7 @@ interface ApiTicket {
   categoryId: string | null;
   categoryName: string;
   createdAt: string;
+  dateOfOccurance: string;
   dueAt: string | null;
   dueInHrs: number | null;
   resolvedAt: string | null;
@@ -216,12 +217,15 @@ interface AgentAnalyticsResponse {
 
 function mapApiTicketToMockTicket(t: ApiTicket): MockTicket {
   const createdAt = new Date(t.createdAt).getTime();
+  const dateOfOccurance = new Date(t.dateOfOccurance).getTime();
   const dueAt = t.dueAt ? new Date(t.dueAt).getTime() : createdAt + SLA_HOURS[API_PRIORITY_MAP[t.priority] ?? "MEDIUM"] * 3600000;
   const resolvedAt = t.resolvedAt ? new Date(t.resolvedAt).getTime() : null;
   // tatHours is only set server-side once a ticket resolves — for tickets
-  // still open, fall back to elapsed time so KPI/trend averages (which
-  // expect every ticket to carry a number) still have something sane.
-  const tatHours = t.tatHours ?? Math.max(0.5, (Date.now() - createdAt) / 3600000);
+  // still open, fall back to elapsed time since the issue occurred (same
+  // anchor the server uses in computeTurnOverTimeSeconds) so KPI/trend
+  // averages (which expect every ticket to carry a number) still have
+  // something sane.
+  const tatHours = t.tatHours ?? Math.max(0.5, (Date.now() - dateOfOccurance) / 3600000);
 
   return {
     id: t.ticketNumber,
@@ -1052,3 +1056,4 @@ export default function AgentDashboard({ token, apiFetch }: AgentDashboardProps 
     </div>
   );
 }
+

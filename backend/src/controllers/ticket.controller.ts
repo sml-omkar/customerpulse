@@ -478,6 +478,7 @@ export const ticketController = {
         id : true,
         status : true,
         createdAt: true,
+        dateOfOccurance: true,
         slaDeadline: true,
         slaRemainingMinutes: true,
         holdStartedAt: true,
@@ -654,6 +655,7 @@ export const ticketController = {
       select: {
         status: true,
         priority: true,
+        departmentId: true,
         categoryId: true,
         projectId: true,
         clientName: true,
@@ -771,6 +773,17 @@ export const ticketController = {
     data.priority = newPriority;
     data.internalPriority = internalPriorityResult.level;
 
+    // Whether this edit actually changes the ticket's routing inputs -
+    // category is the primary signal assignmentService.findBestAgent uses
+    // (CategoryAgent lookup), and department reshapes the whole candidate
+    // pool (keyword/load-balance fallback is scoped to `departmentId`), so
+    // either one changing means the *previously* assigned agent may no
+    // longer be the right fit and the ticket needs to be re-routed through
+    // the same engine createTicket uses - not just re-labelled.
+    const categoryChanged = categoryFetched && effectiveCategoryId !== previous.categoryId;
+    const departmentChanged = departmentId !== undefined && departmentId !== previous.departmentId;
+    const needsReroute = categoryChanged || departmentChanged;
+
     // SLA window carryover: figure out how much of the *previous* window
     // is already consumed, then apply that same consumed amount against the
     // newly-computed window - same math as a category's defaultSlaMinutes
@@ -821,7 +834,40 @@ export const ticketController = {
       },
     });
 
-    res.json(ticket);
+    // Category/department changed - re-run the same auto-assignment engine
+    // createTicket uses so the ticket lands with an agent who actually
+    // matches its *new* classification, instead of quietly staying with
+    // whoever it was routed to under the old one. TAT (turnOverTime) is
+    // untouched by this - assignmentService.autoAssign never writes it,
+    // only assigneeId/status/assignedAt.
+    let finalTicket = ticket;
+    if (needsReroute) {
+      const reassigned = await assignmentService.autoAssign(ticket.id, req.user!.id);
+      if (reassigned) {
+        await prisma.auditLog.create({
+          data: {
+            userId: req.user!.id,
+            action: "TICKET_AUTO_REROUTED",
+            entityType: "Ticket",
+            entityId: ticket.id,
+          },
+        });
+        finalTicket = await prisma.ticket.findUniqueOrThrow({
+          where: { id: ticket.id },
+          include: {
+            assignee: true,
+            department: { select: { id: true, name: true } },
+            requester: { select: { id: true, fullName: true, email: true } },
+            category: true,
+          },
+        });
+      }
+      // No eligible agent found for the new category/department - leave the
+      // existing assignee in place rather than stripping assignment; it'll
+      // still surface via the department's unassigned queue if it matters.
+    }
+
+    res.json(finalTicket);
   },
 
   // PATCH /tickets/:id/priority  { priority }  (GLOBAL_ADMIN, DEPT_ADMIN only)
@@ -927,3 +973,4 @@ export const ticketController = {
     res.status(204).send();
   },
 };
+

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import {
   ShieldAlert,
@@ -20,6 +21,19 @@ import { Ticket, Comment, Attachment, Escalation, Keyword, User as UserType, Tic
 import { userInfo } from "os";
 import AttachmentUploader from "./AttachmentUploader";
 import { deleteAttachment } from "../libs/attachmentUpload";
+
+// Converts a stored UTC ISO timestamp into the "YYYY-MM-DDTHH:mm" format a
+// <input type="datetime-local"> expects, using LOCAL wall-clock getters
+// (getFullYear/getMonth/.../getMinutes). A naive `isoString.slice(0, 16)`
+// instead takes the UTC digits verbatim, which is only correct for
+// browsers in UTC - anywhere else it silently shows the wrong date/time
+// (off by the local UTC offset), which is why the "current" date of
+// occurrence looked stale/incorrect when re-opening the edit form.
+function toLocalDatetimeInputValue(isoString: string): string {
+  const d = new Date(isoString);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 interface metric {
         openTickets : number
         assignedTickets : number,
@@ -440,7 +454,7 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
       designation: ticket.designation || "",
       site: ticket.site || "",
       state: ticket.state || "",
-      dateOfOccurance: ticket.dateOfOccurance ? ticket.dateOfOccurance.slice(0, 16) : "",
+      dateOfOccurance: ticket.dateOfOccurance ? toLocalDatetimeInputValue(ticket.dateOfOccurance) : "",
     });
     setEditDeptCategories([]);
     setEditDeptSubDepartments([]);
@@ -574,8 +588,13 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
     return { text: `${hours}h ${mins}m left`, color: "text-zinc-700 bg-zinc-100 border-zinc-300" };
   };
 
-  // TAT (turnaround time): wall-clock age of the ticket minus time spent
-  // ON_HOLD - mirrors the server-side calc in slaClock.service.ts. Unlike
+  // TAT (turnaround time): wall-clock age of the ticket *since the issue
+  // occurred* (dateOfOccurance, not createdAt/filed-in-system time) minus
+  // time spent ON_HOLD - mirrors the server-side calc in
+  // slaClock.service.ts. Editing dateOfOccurance (e.g. correcting a wrong
+  // date) naturally shifts this number since it's still measuring from
+  // the same anchor each time - that's not the same as "restarting" TAT,
+  // which would mean zeroing it out or granting a fresh window. Unlike
   // ON_HOLD, a RESOLVED period is NOT subtracted, so time spent resolved
   // still counts if the ticket is later reopened. While RESOLVED (and not
   // reopened since), this is frozen at the value the backend stored at

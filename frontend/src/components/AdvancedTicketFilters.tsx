@@ -357,15 +357,7 @@ export const AdvancedTicketFilters: React.FC<AdvancedTicketFiltersProps> = ({
             <input type="date" value={occurredTo} onChange={(e) => setOccurredTo(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-xl" />
           </div>
         </div>
-
-        <div>
-          <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1.5">SLA Deadline</div>
-          <div className="flex items-center gap-2">
-            <input type="date" value={slaFrom} onChange={(e) => setSlaFrom(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-xl" />
-            <span className="text-slate-400 text-xs">to</span>
-            <input type="date" value={slaTo} onChange={(e) => setSlaTo(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-xl" />
-          </div>
-        </div>
+        
       </div>
 
       <div className="mt-3 text-xs text-slate-500">

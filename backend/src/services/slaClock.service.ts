@@ -12,6 +12,7 @@ const SLA_PAUSED_STATUSES: TicketStatus[] = [TicketStatus.ON_HOLD, TicketStatus.
 export type TicketClockFields = {
   status: TicketStatus;
   createdAt: Date;
+  dateOfOccurance: Date;
   slaDeadline: Date | null;
   slaRemainingMinutes: number | null;
   holdStartedAt: Date | null;
@@ -68,13 +69,19 @@ export function computeSlaClockUpdate(
 }
 
 /**
- * TAT (turnOverTime): wall-clock age of the ticket minus time spent
- * ON_HOLD. Unlike the SLA clock, a RESOLVED period is NOT subtracted - if
- * the ticket gets reopened, the time it sat resolved still counts toward
- * turnaround time.
+ * TAT (turnOverTime): wall-clock age of the ticket *since the issue
+ * actually occurred* (dateOfOccurance) - not since it was filed in the
+ * system (createdAt) - minus time spent ON_HOLD. Unlike the SLA clock, a
+ * RESOLVED period is NOT subtracted - if the ticket gets reopened, the
+ * time it sat resolved still counts toward turnaround time. Editing
+ * dateOfOccurance (e.g. a global admin correcting a wrong date) naturally
+ * shifts this calculation since it's still measuring from the same
+ * anchor point each time - it is not "restarted"; only the accumulated
+ * ON_HOLD time and the current moment ever change what's subtracted/used.
  */
-export function computeTurnOverTimeSeconds(ticket: Pick<TicketClockFields, "status" | "createdAt" | "holdStartedAt" | "totalHoldMinutes">, now: Date = new Date()) {
+export function computeTurnOverTimeSeconds(ticket: Pick<TicketClockFields, "status" | "dateOfOccurance" | "holdStartedAt" | "totalHoldMinutes">, now: Date = new Date()) {
   const ongoingHoldMinutes = ticket.status === TicketStatus.ON_HOLD && ticket.holdStartedAt ? diffInMinutes(ticket.holdStartedAt, now) : 0;
   const totalHoldSeconds = (ticket.totalHoldMinutes + ongoingHoldMinutes) * 60;
-  return Math.max(0, diffInSeconds(ticket.createdAt, now) - totalHoldSeconds);
+  return Math.max(0, diffInSeconds(ticket.dateOfOccurance, now) - totalHoldSeconds);
 }
+
