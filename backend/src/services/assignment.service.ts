@@ -1,5 +1,5 @@
 import { prisma } from "../lib/database";
-import { AssignmentMethod, TicketStatus } from "../generated/prisma/client";
+import { AssignmentMethod, TicketStatus, WindCategory } from "../generated/prisma/client";
 import { notificationService } from "./notification.service";
 import { logStatusChange } from "./statushistory.service";
 import { ASSIGNABLE_AGENT_ROLES } from "../utils/rbac";
@@ -7,6 +7,26 @@ import { AppError } from "../middleware/errorHandler";
 
 
 const OPEN_STATUSES: TicketStatus[] = [ TicketStatus.OPEN, TicketStatus.IN_PROGRESS, TicketStatus.ON_HOLD, TicketStatus.REOPENED];
+
+// NOTE(added): given the ticket's client, work out which agent
+// WindCategory value(s) are an acceptable match.
+//   - Wind client        -> agent must be WIND or BOTH
+//   - Non-Wind client    -> agent must be NON_WIND or BOTH
+//   - Client not found / not resolvable -> null (no wind filtering at all,
+//     agents of every wind category are equally eligible).
+// `null` on an agent's own `windCategory` (i.e. never assigned one) never
+// matches a resolved requirement - such an agent is only picked once we've
+// fallen back to the unfiltered pool below.
+function requiredWindCategories(isWindClient: boolean | null): WindCategory[] | null {
+  if (isWindClient === null) return null;
+  return isWindClient ? [WindCategory.WIND, WindCategory.BOTH] : [WindCategory.NON_WIND, WindCategory.BOTH];
+}
+
+function matchesWindRequirement(agentWindCategory: WindCategory | null, required: WindCategory[] | null): boolean {
+  if (required === null) return true;
+  if (!agentWindCategory) return false;
+  return required.includes(agentWindCategory);
+}
 
 export const assignmentService = {
   /**
@@ -18,10 +38,9 @@ export const assignmentService = {
    *      current open-ticket load.
    *   2. KEYWORD MATCH (fallback, used whenever there's no category, or
    *      the category has zero linked agents): candidates = active,
-   *      available agents in the department at the required support
-   *      level, scored by how many of the ticket's linked keywords
-   *      match their declared skills (UserKeyword), weighted by
-   *      proficiency.
+   *      available agents in the department, scored by how many of the
+   *      ticket's linked keywords match their declared skills
+   *      (UserKeyword), weighted by proficiency.
    *   3. LOAD-BALANCE FALLBACK: if neither of the above produces a
    *      match, fall back to the least-loaded eligible agent in the
    *      department so a ticket never sits permanently unassigned just
@@ -36,11 +55,25 @@ export const assignmentService = {
       include: { keywords: true },
     });
 
+    // NOTE(added): resolve the ticket's client the same way ticket.service.ts
+    // does at creation time (by clientName - there's no clientId FK on
+    // Ticket), so we know whether this is a Wind or Non-Wind client and can
+    // prefer routing to an agent whose windCategory covers it (WIND/BOTH for
+    // a Wind client, NON_WIND/BOTH for a Non-Wind one). If the client can't
+    // be resolved, `required` comes back null and no wind filtering happens.
+    const client = await prisma.client.findFirst({ where: { name: ticket.clientName } });
+    const required = requiredWindCategories(client ? client.isWindClient : null);
+
     // ---- 1. Category-based match (primary) ----
     if (ticket.categoryId) {
       console.log("Hitting ticket category")
+      // NOTE(changed): scoped to the ticket's department up front - agents
+      // linked to this category but sitting in a different department were
+      // previously still being considered. Department + category is the
+      // base candidate pool; wind/non-wind/both is applied as a filter on
+      // top of that pool below, not the other way round.
       const categoryAgents = await prisma.categoryAgent.findMany({
-        where: { categoryId: ticket.categoryId },
+        where: { categoryId: ticket.categoryId, agent: { agentsdepartmentId: ticket.departmentId } },
         include: {
           agent: {
             include: { ticketsAssigned: { where: { status: { in: OPEN_STATUSES } }, select: { id: true } } },
@@ -53,31 +86,41 @@ export const assignmentService = {
       let eligible 
       if (categoryAgents.length >= 1){
 
+        // NOTE(removed): supportLevel filter dropped - agents are all L1,
+        // and L2 (HOD/CXO) never get assigned tickets, so it never
+        // meaningfully narrowed this pool anyway.
         eligible = categoryAgents
-        .filter((ca) => !ticket.supportLevel || ca.agent.supportLevel === ticket.supportLevel)
         .map((ca) => ({ agent: ca.agent, proficiency: ca.proficiency, openCount: ca.agent.ticketsAssigned.length }))
         
       }else {
         eligible = categoryAgents
         .filter((ca)=>ticket.requesterId == ca.id)
-        .filter((ca) => !ticket.supportLevel || ca.agent.supportLevel === ticket.supportLevel)
         .map((ca) => ({ agent: ca.agent, proficiency: ca.proficiency, openCount: ca.agent.ticketsAssigned.length }))
       }
 
       if (eligible.length > 0) {
-        eligible.sort((a, b) => b.proficiency - a.proficiency || a.openCount - b.openCount);
-        return { agent: eligible[0].agent, method: AssignmentMethod.AUTO_CATEGORY };
+        // NOTE(added): now that `eligible` is already department+category
+        // scoped, narrow it down further to agents whose windCategory
+        // covers this client (WIND/BOTH or NON_WIND/BOTH per `required`
+        // above). If that leaves nobody, fall back to the full `eligible`
+        // pool - i.e. the department+category match still wins, just
+        // without the wind preference.
+        const windMatched = eligible.filter((e) => matchesWindRequirement(e.agent.windCategory, required));
+        const pool = windMatched.length > 0 ? windMatched : eligible;
+        pool.sort((a, b) => b.proficiency - a.proficiency || a.openCount - b.openCount);
+        return { agent: pool[0].agent, method: AssignmentMethod.AUTO_CATEGORY };
       }
       // No eligible category agents - fall through to keyword matching
       // below rather than returning null immediately.
     }
 
     // ---- 2. Keyword/skill match (fallback when no category, or category has no agents) ----
+    // NOTE(removed): supportLevel filter dropped here too - same reasoning
+    // as the category-match stage above.
     const candidates = await prisma.user.findMany({
       where: {
         agentsdepartmentId: ticket.departmentId,
         role: { in: ASSIGNABLE_AGENT_ROLES },
-        ...(ticket.supportLevel ? { supportLevel: ticket.supportLevel } : {}),
       },
       include: {
         skills: true,
@@ -104,8 +147,16 @@ export const assignmentService = {
 
     if (scored.length === 0) return null;
 
-    const hasSkillMatch = scored.some((c) => c.skillScore > 0);
-    const pool = hasSkillMatch ? scored.filter((c) => c.skillScore > 0) : scored;
+    // NOTE(added): same wind-category preference as the category-match
+    // stage above - try to keep the ticket within agents whose windCategory
+    // covers this client first, and only fall back to the full (unfiltered)
+    // candidate pool - i.e. the pre-existing keyword/load-balance logic -
+    // if that leaves nobody eligible in the department.
+    const windMatched = scored.filter((c) => matchesWindRequirement(c.agent.windCategory, required));
+    const capacityPool = windMatched.length > 0 ? windMatched : scored;
+
+    const hasSkillMatch = capacityPool.some((c) => c.skillScore > 0);
+    const pool = hasSkillMatch ? capacityPool.filter((c) => c.skillScore > 0) : capacityPool;
 
     // ---- 3. Load-balance fallback is just "no skill match" above, same pool ----
     pool.sort((a, b) => b.skillScore - a.skillScore || a.openCount - b.openCount);
