@@ -114,7 +114,7 @@ export const GlobalAdminTicketSearch: React.FC<GlobalAdminTicketSearchProps> = (
               <Search size={16} />
             </span>
             <div>
-              <h1 className="text-xl font-bold text-slate-900 tracking-tight">All Tickets</h1>
+              <h1 className="text-xl font-bold text-slate-900 tracking-tight">Report</h1>
               <p className="text-sm text-slate-500 mt-1">
                 Company-wide ticket search - every department, every client.
               </p>

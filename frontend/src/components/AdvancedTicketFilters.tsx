@@ -75,7 +75,7 @@ export const TicketSearchBar: React.FC<TicketSearchBarProps> = ({ value, onChang
     <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
     <input
       type="text"
-      placeholder={placeholder || "Search title, #, client, requester..."}
+      placeholder={placeholder || "Search title, ticket number, client, requester..."}
       value={value}
       onChange={(e) => onChange(e.target.value)}
       className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-xl focus:border-indigo-500 focus:ring-1 focus:outline-none"

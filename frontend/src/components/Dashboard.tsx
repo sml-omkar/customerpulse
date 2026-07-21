@@ -4,6 +4,8 @@ import { PAGES, Ticket, User as UserType, metric } from "../types";
 import { RequesterNotifications } from "./RequesterNotifications";
 import {GlobalAdminTicketSearch} from "./GlobalAdminTicketSearch"
 import AgentTicketSearch from "./AgentTicketSearch"
+import CXOTicketSearch from "./CXOTicketSearch";
+import HODTicketSearch from "./HODTicketSearch";
 
 
 export const Dashboard = ({setCurrentView,user,setSelectedTicketId,token,metric}:{
@@ -59,7 +61,7 @@ export const Dashboard = ({setCurrentView,user,setSelectedTicketId,token,metric}
                       className="bg-white border border-slate-200 hover:border-slate-400 shadow-xs rounded-2xl p-6 flex items-center justify-between cursor-pointer transition-all duration-200 group"
                     >
                       <div>
-                        <span className="text-xs text-slate-400 uppercase font-mono font-bold tracking-wider">My Tickets</span>
+                        <span className="text-xs text-slate-400 uppercase font-mono font-bold tracking-wider">Tickets Created By Me</span>
                         <h2 className="text-3xl font-extrabold text-slate-900 mt-1 group-hover:text-black transition-colors">{metric?.openTickets}</h2>
                         <p className="text-xs text-slate-500 mt-1 font-medium">Active, unresolved cases</p>
                       </div>
@@ -76,7 +78,7 @@ export const Dashboard = ({setCurrentView,user,setSelectedTicketId,token,metric}
                       className="bg-white border border-slate-200 hover:border-slate-400 shadow-xs rounded-2xl p-6 flex items-center justify-between cursor-pointer transition-all duration-200 group"
                     >
                       <div>
-                        <span className="text-xs text-slate-400 uppercase font-mono font-bold tracking-wider">Personal Workload</span>
+                        <span className="text-xs text-slate-400 uppercase font-mono font-bold tracking-wider">Tickets Assigned to ME</span>
                         <h2 className="text-3xl font-extrabold text-slate-900 mt-1 group-hover:text-black transition-colors">{metric?.assignedTickets}</h2>
                         <p className="text-xs text-slate-500 mt-1 font-medium">Cases assigned to you</p>
                       </div>
@@ -101,7 +103,7 @@ export const Dashboard = ({setCurrentView,user,setSelectedTicketId,token,metric}
                             <span className="inline-flex w-2.5 h-2.5 rounded-full bg-rose-600 animate-pulse" />
                           )}
                         </h2>
-                        <p className="text-xs text-slate-500 mt-1 font-medium">Past deadline / Breached state</p>
+                       
                       </div>
                       <span className="p-3 bg-rose-50 text-rose-600 rounded-xl border border-rose-100 group-hover:bg-rose-100 group-hover:text-rose-700 transition-all">
                         <Clock size={24} />
@@ -118,7 +120,7 @@ export const Dashboard = ({setCurrentView,user,setSelectedTicketId,token,metric}
                       className="bg-white border border-slate-200 hover:border-slate-400 shadow-xs rounded-2xl p-6 flex items-center justify-between cursor-pointer transition-all duration-200 group"
                     >
                       <div>
-                        <span className="text-xs text-slate-400 uppercase font-mono font-bold tracking-wider">My Active Tickets</span>
+                        <span className="text-xs text-slate-400 uppercase font-mono font-bold tracking-wider">TICKETS CREATED BY ME</span>
                         <h2 className="text-3xl font-extrabold text-slate-900 mt-1 group-hover:text-black transition-colors">
                            {metric?.openTickets}
                         </h2>
@@ -189,6 +191,25 @@ export const Dashboard = ({setCurrentView,user,setSelectedTicketId,token,metric}
             />
           )}
 
+{/* VIEW: HOD - department ticket search */}
+          { isManager && (
+            <HODTicketSearch
+              token={token}
+              currentUser={user!}
+              setSelectedTicketId={setSelectedTicketId}
+              setCurrentView={setCurrentView}
+            />
+          )}
+
+          {/* VIEW: CXO - department ticket search */}
+          { isCxo && (
+            <CXOTicketSearch
+              token={token}
+              currentUser={user!}
+              setSelectedTicketId={setSelectedTicketId}
+              setCurrentView={setCurrentView}
+            />
+          )}
     </div>
   )
 }

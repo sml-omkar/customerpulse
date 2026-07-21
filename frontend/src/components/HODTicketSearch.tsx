@@ -130,7 +130,7 @@ export const HODTicketSearch: React.FC<HODTicketSearchProps> = ({
               <Search size={16} />
             </span>
             <div>
-              <h1 className="text-xl font-bold text-slate-900 tracking-tight">Department Tickets</h1>
+              <h1 className="text-xl font-bold text-slate-900 tracking-tight">Report</h1>
               <p className="text-sm text-slate-500 mt-1">
                 Search and filter tickets across your managed department(s).
               </p>

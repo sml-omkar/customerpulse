@@ -34,6 +34,47 @@ export default function TicketsTable({
         setCurrentView(PAGES.TICKET_DETAILS);
     };
 
+    const getTurnaroundTime = (ticket  : Ticket) :{display:string,seconds:number} => {
+    if (!ticket) return {display : "-",seconds:0};
+
+    let seconds: number;
+    if (ticket.status === "RESOLVED" && typeof ticket.turnOverTime === "number") {
+      seconds = ticket.turnOverTime;
+    } else {
+      const now = Date.now();
+      const createdAt = new Date(ticket.dateOfOccurance).getTime();
+      const totalHoldMinutes = ticket.totalHoldMinutes ?? 0;
+      const ongoingHoldMinutes = ticket.status === "ON_HOLD" && ticket.holdStartedAt
+        ? Math.max(0, Math.round((now - new Date(ticket.holdStartedAt).getTime()) / 60000))
+        : 0;
+      const totalHoldSeconds = (totalHoldMinutes + ongoingHoldMinutes) * 60;
+      seconds = Math.max(0, Math.floor((now - createdAt) / 1000) - totalHoldSeconds);
+    }
+
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (days > 0) {
+      const remHours = hours % 24;
+      return {
+        display: `${days}d ${remHours}`,
+        seconds: seconds
+      };
+    } else if (hours > 0) {
+      const remMins = minutes % 60;
+      return {
+        display : `${hours}h ${remMins}m`,
+        seconds : seconds
+      };
+    } else {
+      return {
+        display : `${Math.max(1,minutes)}m`,
+        seconds : seconds
+      };
+    }
+  };
+
     if (!tickets?.length) {
         return (
             <div className="rounded-lg border border-slate-200 p-8 text-center text-sm text-slate-500">
@@ -69,6 +110,15 @@ export default function TicketsTable({
                 <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600">
                   Date of Issue
                 </th>
+
+                {
+                  (
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600">
+                    SLA
+                  </th>
+                  ) 
+                }
+
                 <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">
                   Action
                 </th>
@@ -84,11 +134,6 @@ export default function TicketsTable({
                   <td className="px-4 py-3 font-mono font-semibold">
                     <div className="flex items-center gap-2">
                       <span>{ticket.ticketNumber}</span>
-                      {ticket.requester?.role === "REQUESTER" && (
-                        <span className="text-[9px] font-sans font-bold uppercase tracking-wide bg-amber-50 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded">
-                          External
-                        </span>
-                      )}
                     </div>
                   </td>
 
@@ -114,7 +159,7 @@ export default function TicketsTable({
                         priorityColors[ticket.priority] ?? priorityColors.P4
                       }`}
                     >
-                      {ticket.priority}
+                      {ticket.internalPriority}
                     </span>
                   </td>
 
@@ -133,7 +178,11 @@ export default function TicketsTable({
                     {new Date(ticket.createdAt).toLocaleDateString()}
                   </td>
 
-
+                  {(
+                    <td className="px-4 py-3 text-slate-600">
+                      {getTurnaroundTime(ticket).display}
+                    </td>)
+                  }
 
                   <td className="px-4 py-3 text-right">
                     <button

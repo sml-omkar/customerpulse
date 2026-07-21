@@ -113,7 +113,7 @@ export const AgentTicketSearch: React.FC<AgentTicketSearchProps> = ({
               <Search size={16} />
             </span>
             <div>
-              <h1 className="text-xl font-bold text-slate-900 tracking-tight">My Tickets</h1>
+              <h1 className="text-xl font-bold text-slate-900 tracking-tight">Report</h1>
               <p className="text-sm text-slate-500 mt-1">
                 Search and filter tickets assigned to you, or raised by you.
               </p>
