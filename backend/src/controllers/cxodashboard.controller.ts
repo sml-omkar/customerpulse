@@ -63,7 +63,7 @@ export const cxoDashboardController = {
           resolvedAt: true,
           slaDeadline: true,
           slaBreached: true,
-          turnOverTime: true, // seconds — see computeTurnOverTimeSeconds
+          turnOverTime: true, // Agent TAT, seconds — see computeAgentTurnOverTimeSeconds
           site: true,
           state: true,
           clientName: true,
@@ -908,4 +908,3 @@ export const cxoDashboardController = {
     });
   },
 }
-
