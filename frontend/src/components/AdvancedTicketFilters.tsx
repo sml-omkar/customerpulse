@@ -14,6 +14,12 @@
 // triage metric staff actually search by, so it replaces the plain
 // priority filter here.
 //
+// NOTE(changed): every key/value filter below (status, internal priority,
+// department, agent, category, client, project, state) is now multi-select
+// - a person can pick several values for the same key at once and a ticket
+// matches if it has ANY of the selected values for that key (values across
+// different keys are still AND'ed together, same as before).
+//
 // Role access this filter enforces client-side (mirrors the backend
 // GET /tickets scoping in ticket.controller.ts):
 //   - GLOBAL_ADMIN: everything.
@@ -29,9 +35,9 @@
 // when toggled open. The search input is also exported on its own
 // (`TicketSearchBar`) in case a page wants just the search box without
 // the rest of the filter chrome.
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { Ticket, TicketStatus, InternalPriorityLevel, UserRole } from "../types";
-import { Filter, X, Search, ChevronDown } from "lucide-react";
+import { Filter, X, Search, ChevronDown, Check } from "lucide-react";
 
 // Loosened on purpose: callers (ManagerDashboard/CxoDashboard) only ever
 // have the {id, name} shape available for departments/categories in scope,
@@ -76,6 +82,99 @@ export const TicketSearchBar: React.FC<TicketSearchBarProps> = ({ value, onChang
   </div>
 );
 
+// Generic multi-select dropdown used for every key/value filter below.
+// Renders like a select (button showing a summary label) but opens a
+// checkbox list so multiple values can be picked at once.
+interface MultiSelectOption {
+  value: string;
+  label: string;
+}
+
+interface MultiSelectDropdownProps {
+  label: string;
+  options: MultiSelectOption[];
+  selected: string[];
+  onChange: (values: string[]) => void;
+}
+
+const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({ label, options, selected, onChange }) => {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const toggleValue = (value: string) => {
+    if (selected.includes(value)) {
+      onChange(selected.filter((v) => v !== value));
+    } else {
+      onChange([...selected, value]);
+    }
+  };
+
+  const summary =
+    selected.length === 0
+      ? label
+      : selected.length === 1
+      ? options.find((o) => o.value === selected[0])?.label || label
+      : `${label} (${selected.length})`;
+
+  return (
+    <div className="relative" ref={containerRef}>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className={`w-full flex items-center justify-between gap-2 px-3.5 py-2.5 border rounded-xl bg-white text-left truncate ${
+          selected.length > 0 ? "border-indigo-300 text-indigo-700" : "border-slate-200 text-slate-700"
+        }`}
+      >
+        <span className="truncate">{summary}</span>
+        <ChevronDown size={14} className={`shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+
+      {open && (
+        <div className="absolute z-20 mt-1 w-full min-w-[180px] max-h-64 overflow-auto bg-white border border-slate-200 rounded-xl shadow-lg py-1">
+          {options.length === 0 ? (
+            <div className="px-3 py-2 text-xs text-slate-400">No options</div>
+          ) : (
+            options.map((opt) => {
+              const isChecked = selected.includes(opt.value);
+              return (
+                <label
+                  key={opt.value}
+                  className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50 cursor-pointer"
+                >
+                  <span
+                    className={`flex items-center justify-center w-4 h-4 rounded border shrink-0 ${
+                      isChecked ? "bg-indigo-600 border-indigo-600" : "border-slate-300"
+                    }`}
+                  >
+                    {isChecked && <Check size={12} className="text-white" />}
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={isChecked}
+                    onChange={() => toggleValue(opt.value)}
+                    className="sr-only"
+                  />
+                  <span className="truncate">{opt.label}</span>
+                </label>
+              );
+            })
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const AdvancedTicketFilters: React.FC<AdvancedTicketFiltersProps> = ({
   tickets,
   departments,
@@ -91,14 +190,16 @@ export const AdvancedTicketFilters: React.FC<AdvancedTicketFiltersProps> = ({
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<TicketStatus | "">("");
-  const [internalPriorityFilter, setInternalPriorityFilter] = useState<InternalPriorityLevel | "">("");
-  const [departmentFilter, setDepartmentFilter] = useState("");
-  const [agentFilter, setAgentFilter] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
-  const [clientFilter, setClientFilter] = useState("");
-  const [projectFilter, setProjectFilter] = useState("");
-  const [stateFilter, setStateFilter] = useState("");
+  // Every key/value filter is now a list of selected values (multi-select)
+  // instead of a single value.
+  const [statusFilter, setStatusFilter] = useState<TicketStatus[]>([]);
+  const [internalPriorityFilter, setInternalPriorityFilter] = useState<InternalPriorityLevel[]>([]);
+  const [departmentFilter, setDepartmentFilter] = useState<string[]>([]);
+  const [agentFilter, setAgentFilter] = useState<string[]>([]);
+  const [categoryFilter, setCategoryFilter] = useState<string[]>([]);
+  const [clientFilter, setClientFilter] = useState<string[]>([]);
+  const [projectFilter, setProjectFilter] = useState<string[]>([]);
+  const [stateFilter, setStateFilter] = useState<string[]>([]);
   const [slaBreachedFilter, setSlaBreachedFilter] = useState(false);
 
   // Custom date filter (ticket filed/created date)
@@ -144,11 +245,11 @@ export const AdvancedTicketFilters: React.FC<AdvancedTicketFiltersProps> = ({
   // Agent-wise filtering for GLOBAL_ADMIN/CXO/HOD - option list is derived
   // from scopedTickets (so it only ever contains agents belonging to the
   // department(s) this person already has access to), and narrows further
-  // to just the selected department when one is picked, mirroring how
+  // to just the selected department(s) when any are picked, mirroring how
   // availableCategories/availableClients narrow with departmentFilter.
   const availableAgents = useMemo(() => {
-    const byDept = departmentFilter
-      ? scopedTickets.filter((t) => t.departmentId === departmentFilter)
+    const byDept = departmentFilter.length
+      ? scopedTickets.filter((t) => departmentFilter.includes(t.departmentId || ""))
       : scopedTickets;
     const map = new Map<string, string>();
     byDept.forEach((t) => {
@@ -178,7 +279,9 @@ export const AdvancedTicketFilters: React.FC<AdvancedTicketFiltersProps> = ({
     [scopedTickets]
   );
 
-  // Core filtering (role-aware scope + every key/value filter above it)
+  // Core filtering (role-aware scope + every key/value filter above it).
+  // Each filter now matches if the ticket's value is IN the selected list
+  // (an empty list means "no restriction", same as "" did before).
   const filteredTickets = useMemo(() => {
     return scopedTickets.filter((ticket) => {
       const matchesSearch =
@@ -187,14 +290,15 @@ export const AdvancedTicketFilters: React.FC<AdvancedTicketFiltersProps> = ({
           field?.toLowerCase().includes(searchTerm.toLowerCase())
         );
 
-      const matchesStatus = !statusFilter || ticket.status === statusFilter;
-      const matchesInternalPriority = !internalPriorityFilter || ticket.internalPriority === internalPriorityFilter;
-      const matchesCategory = !categoryFilter || ticket.categoryId === categoryFilter;
-      const matchesDept = !departmentFilter || ticket.departmentId === departmentFilter;
-      const matchesAgent = !agentFilter || ticket.assigneeId === agentFilter;
-      const matchesClient = !clientFilter || ticket.clientName === clientFilter;
-      const matchesProject = !projectFilter || ticket.projectId === projectFilter;
-      const matchesState = !stateFilter || ticket.state === stateFilter;
+      const matchesStatus = statusFilter.length === 0 || statusFilter.includes(ticket.status);
+      const matchesInternalPriority =
+        internalPriorityFilter.length === 0 || (!!ticket.internalPriority && internalPriorityFilter.includes(ticket.internalPriority));
+      const matchesCategory = categoryFilter.length === 0 || (!!ticket.categoryId && categoryFilter.includes(ticket.categoryId));
+      const matchesDept = departmentFilter.length === 0 || (!!ticket.departmentId && departmentFilter.includes(ticket.departmentId));
+      const matchesAgent = agentFilter.length === 0 || (!!ticket.assigneeId && agentFilter.includes(ticket.assigneeId));
+      const matchesClient = clientFilter.length === 0 || (!!ticket.clientName && clientFilter.includes(ticket.clientName));
+      const matchesProject = projectFilter.length === 0 || (!!ticket.projectId && projectFilter.includes(ticket.projectId));
+      const matchesState = stateFilter.length === 0 || (!!ticket.state && stateFilter.includes(ticket.state));
       const matchesSla = !slaBreachedFilter || !!ticket.slaBreached;
 
       // Custom date filter - date the ticket was filed.
@@ -256,26 +360,28 @@ export const AdvancedTicketFilters: React.FC<AdvancedTicketFiltersProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filteredTickets]);
 
-  // If the department changes to one that doesn't include the currently
-  // selected agent, drop the (now stale/invalid) agent selection rather
-  // than silently filtering to zero results.
+  // If the department selection changes such that some currently-selected
+  // agents no longer belong to any selected department, drop those (now
+  // stale/invalid) agent selections rather than silently filtering to zero
+  // results.
   useEffect(() => {
-    if (agentFilter && !availableAgents.some((a) => a.id === agentFilter)) {
-      setAgentFilter("");
-    }
+    setAgentFilter((prev) => {
+      const next = prev.filter((id) => availableAgents.some((a) => a.id === id));
+      return next.length === prev.length ? prev : next;
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [availableAgents]);
 
   const reset = () => {
     setSearchTerm("");
-    setStatusFilter("");
-    setInternalPriorityFilter("");
-    setDepartmentFilter("");
-    setAgentFilter("");
-    setCategoryFilter("");
-    setClientFilter("");
-    setProjectFilter("");
-    setStateFilter("");
+    setStatusFilter([]);
+    setInternalPriorityFilter([]);
+    setDepartmentFilter([]);
+    setAgentFilter([]);
+    setCategoryFilter([]);
+    setClientFilter([]);
+    setProjectFilter([]);
+    setStateFilter([]);
     setSlaBreachedFilter(false);
     setDateFrom("");
     setDateTo("");
@@ -287,9 +393,17 @@ export const AdvancedTicketFilters: React.FC<AdvancedTicketFiltersProps> = ({
 
   // Count of active filters, NOT counting the search box - drives the
   // badge on the "Filters" toggle so people can tell at a glance whether
-  // anything is narrowed down without having to open the panel.
+  // anything is narrowed down without having to open the panel. Each
+  // selected value across the multi-select filters counts individually.
   const activeFilterCount =
-    [statusFilter, internalPriorityFilter, departmentFilter, agentFilter, categoryFilter, clientFilter, projectFilter, stateFilter].filter(Boolean).length +
+    statusFilter.length +
+    internalPriorityFilter.length +
+    departmentFilter.length +
+    agentFilter.length +
+    categoryFilter.length +
+    clientFilter.length +
+    projectFilter.length +
+    stateFilter.length +
     (slaBreachedFilter ? 1 : 0) +
     (dateFrom || dateTo ? 1 : 0) +
     (occurredFrom || occurredTo ? 1 : 0) +
@@ -336,67 +450,67 @@ export const AdvancedTicketFilters: React.FC<AdvancedTicketFiltersProps> = ({
       {filtersOpen && (
         <div className="p-4 pt-0 border-t border-slate-100">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 text-sm pt-4">
-            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as any)} className="px-3.5 py-2.5 border border-slate-200 rounded-xl bg-white">
-              <option value="">All Status</option>
-              {availableStatuses.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
+            <MultiSelectDropdown
+              label="All Status"
+              options={availableStatuses.map((s) => ({ value: s, label: s }))}
+              selected={statusFilter}
+              onChange={(values) => setStatusFilter(values as TicketStatus[])}
+            />
 
-            <select value={internalPriorityFilter} onChange={(e) => setInternalPriorityFilter(e.target.value as any)} className="px-3.5 py-2.5 border border-slate-200 rounded-xl bg-white">
-              <option value="">All Internal Priority</option>
-              {availableInternalPriorities.map((p) => (
-                <option key={p} value={p}>{p}</option>
-              ))}
-            </select>
+            <MultiSelectDropdown
+              label="All Internal Priority"
+              options={availableInternalPriorities.map((p) => ({ value: p as string, label: p as string }))}
+              selected={internalPriorityFilter}
+              onChange={(values) => setInternalPriorityFilter(values as InternalPriorityLevel[])}
+            />
 
-            <select value={departmentFilter} onChange={(e) => setDepartmentFilter(e.target.value)} className="px-3.5 py-2.5 border border-slate-200 rounded-xl bg-white">
-              <option value="">All Depts</option>
-              {availableDepartments.map((d) => (
-                <option key={d.id} value={d.id}>{d.name}</option>
-              ))}
-            </select>
+            <MultiSelectDropdown
+              label="All Depts"
+              options={availableDepartments.map((d) => ({ value: d.id, label: d.name }))}
+              selected={departmentFilter}
+              onChange={setDepartmentFilter}
+            />
 
-            <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="px-3.5 py-2.5 border border-slate-200 rounded-xl bg-white">
-              <option value="">All Categories</option>
-              {availableCategories.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
+            <MultiSelectDropdown
+              label="All Categories"
+              options={availableCategories.map((c) => ({ value: c.id, label: c.name }))}
+              selected={categoryFilter}
+              onChange={setCategoryFilter}
+            />
 
             {/* Agent-wise filter - GLOBAL_ADMIN/CXO/HOD only, scoped to the
                 department(s) they have access to (and further narrowed to the
-                selected department, if any). Not shown for AGENT since agents
+                selected department(s), if any). Not shown for AGENT since agents
                 are already scoped to just their own tickets. */}
             {userRole !== UserRole.AGENT && (
-              <select value={agentFilter} onChange={(e) => setAgentFilter(e.target.value)} className="px-3.5 py-2.5 border border-slate-200 rounded-xl bg-white">
-                <option value="">All Agents</option>
-                {availableAgents.map((a) => (
-                  <option key={a.id} value={a.id}>{a.name}</option>
-                ))}
-              </select>
+              <MultiSelectDropdown
+                label="All Agents"
+                options={availableAgents.map((a) => ({ value: a.id, label: a.name }))}
+                selected={agentFilter}
+                onChange={setAgentFilter}
+              />
             )}
 
-            <select value={clientFilter} onChange={(e) => setClientFilter(e.target.value)} className="px-3.5 py-2.5 border border-slate-200 rounded-xl bg-white">
-              <option value="">All Clients</option>
-              {availableClients.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
+            <MultiSelectDropdown
+              label="All Clients"
+              options={availableClients.map((c) => ({ value: c as string, label: c as string }))}
+              selected={clientFilter}
+              onChange={setClientFilter}
+            />
 
-            <select value={projectFilter} onChange={(e) => setProjectFilter(e.target.value)} className="px-3.5 py-2.5 border border-slate-200 rounded-xl bg-white">
-              <option value="">All Projects</option>
-              {availableProjects.map((p) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
+            <MultiSelectDropdown
+              label="All Projects"
+              options={availableProjects.map((p) => ({ value: p.id, label: p.name }))}
+              selected={projectFilter}
+              onChange={setProjectFilter}
+            />
 
-            <select value={stateFilter} onChange={(e) => setStateFilter(e.target.value)} className="px-3.5 py-2.5 border border-slate-200 rounded-xl bg-white">
-              <option value="">All States</option>
-              {availableStates.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
+            <MultiSelectDropdown
+              label="All States"
+              options={availableStates.map((s) => ({ value: s as string, label: s as string }))}
+              selected={stateFilter}
+              onChange={setStateFilter}
+            />
 
             <label className="flex items-center gap-2">
               <input type="checkbox" checked={slaBreachedFilter} onChange={(e) => setSlaBreachedFilter(e.target.checked)} className="rounded" />
