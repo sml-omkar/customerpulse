@@ -29,6 +29,7 @@ import {
   ChevronLeft,
   Gauge,
   X,
+  Table as TableIcon,
 } from "lucide-react";
 
 // ============================================================================
@@ -981,6 +982,7 @@ export default function ManagerAnalyticsMock({ token, apiFetch }: ManagerAnalyti
           </div>
 
           {/* Average TAT analysis */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <SectionCard
             title="Average TAT analysis"
             subtitle={`Turnaround time on resolved tickets — ${rangeLabel}`}
@@ -988,7 +990,7 @@ export default function ManagerAnalyticsMock({ token, apiFetch }: ManagerAnalyti
           >
             <div className="flex flex-wrap items-baseline gap-3 pb-1">
               <span className="text-xs font-mono uppercase tracking-widest" style={{ color: C.neutral400 }}>Overall avg. TAT</span>
-              <span className="text-xl font-mono font-semibold" style={{ color: C.neutral900 }}>{fmtHours(overallAvgTat)}</span>
+              <span className="text-xl font-mono font-semibold" style={{ color: C.destructive600 }}>{fmtHours(overallAvgTat)}</span>
               <span className="text-xs" style={{ color: C.neutral400 }}>across {stats.resolvedCount} resolved tickets in scope</span>
             </div>
 
@@ -1000,7 +1002,7 @@ export default function ManagerAnalyticsMock({ token, apiFetch }: ManagerAnalyti
                   <XAxis type="number" tick={{ fontSize: 11, fill: AXIS_TICK }} axisLine={false} tickLine={false} unit="h" />
                   <YAxis dataKey="name" type="category" tick={{ fontSize: 11, fill: C.neutral700 }} axisLine={false} tickLine={false} width={130} />
                   <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(v: number) => [fmtHours(v), "Avg. TAT"] as [string, string]} />
-                  <Bar dataKey="avgHours" fill={ACCENT_CHART_A} radius={[0, 4, 4, 0]} name="Avg. TAT (hrs)" />
+                  <Bar dataKey="avgHours" fill={C.destructive500} radius={[0, 4, 4, 0]} name="Avg. TAT (hrs)" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -1022,11 +1024,91 @@ export default function ManagerAnalyticsMock({ token, apiFetch }: ManagerAnalyti
                   <XAxis type="number" tick={{ fontSize: 11, fill: AXIS_TICK }} axisLine={false} tickLine={false} unit="h" />
                   <YAxis dataKey="name" type="category" tick={{ fontSize: 11, fill: C.neutral700 }} axisLine={false} tickLine={false} width={140} />
                   <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(v: number) => [fmtHours(v), "Avg. TAT"] as [string, string]} />
-                  <Bar dataKey="avgHours" fill={ACCENT_PRIMARY} radius={[0, 4, 4, 0]} name="Avg. TAT (hrs)" />
+                  <Bar dataKey="avgHours" fill={C.destructive700} radius={[0, 4, 4, 0]} name="Avg. TAT (hrs)" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </SectionCard>
+
+          <SectionCard
+            title="Average TAT analysis (table)"
+            subtitle={`Same figures as the chart, in table form — ${rangeLabel}`}
+            right={<TableIcon className="w-4 h-4" style={{ color: C.neutral400 }} />}
+          >
+            <div className="flex flex-wrap items-baseline gap-3 pb-1">
+              <span className="text-xs font-mono uppercase tracking-widest" style={{ color: C.neutral400 }}>Overall avg. TAT</span>
+              <span className="text-xl font-mono font-semibold" style={{ color: C.destructive600 }}>{fmtHours(overallAvgTat)}</span>
+              <span className="text-xs" style={{ color: C.neutral400 }}>across {stats.resolvedCount} resolved tickets in scope</span>
+            </div>
+
+            <div>
+              <p className="text-xs font-medium mb-2" style={{ color: C.neutral600 }}>By department</p>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm min-w-[420px]">
+                  <thead>
+                    <tr className="text-left text-xs uppercase tracking-wide" style={{ color: C.neutral400, borderBottom: `1px solid ${C.neutral200}` }}>
+                      <th className="py-2 pr-3 font-medium">Department</th>
+                      <th className="py-2 pr-3 font-medium">Avg. TAT</th>
+                      <th className="py-2 font-medium">Resolved tickets</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {tatByDept.length === 0 && (
+                      <tr>
+                        <td colSpan={3} className="py-4 text-center text-sm" style={{ color: C.neutral400 }}>No departments in scope</td>
+                      </tr>
+                    )}
+                    {tatByDept.map(row => (
+                      <tr key={row.name} style={{ borderBottom: `1px solid ${C.neutral100}` }}>
+                        <td className="py-2 pr-3" style={{ color: C.neutral800 }}>{row.name}</td>
+                        <td className="py-2 pr-3 font-mono" style={{ color: C.destructive600 }}>{fmtHours(row.avgHours)}</td>
+                        <td className="py-2 font-mono" style={{ color: C.neutral600 }}>{row.resolvedCount}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div style={{ height: 1, background: C.neutral100 }} />
+
+            <div>
+              <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
+                <p className="text-xs font-medium" style={{ color: C.neutral600 }}>By category, within a department</p>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {scopedDepartments.map(d => (
+                    <Chip key={d.id} label={d.name} active={tatDeptId === d.id} onClick={() => setTatDeptId(d.id)} />
+                  ))}
+                </div>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm min-w-[420px]">
+                  <thead>
+                    <tr className="text-left text-xs uppercase tracking-wide" style={{ color: C.neutral400, borderBottom: `1px solid ${C.neutral200}` }}>
+                      <th className="py-2 pr-3 font-medium">Category</th>
+                      <th className="py-2 pr-3 font-medium">Avg. TAT</th>
+                      <th className="py-2 font-medium">Resolved tickets</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {tatByCategory.length === 0 && (
+                      <tr>
+                        <td colSpan={3} className="py-4 text-center text-sm" style={{ color: C.neutral400 }}>No categories for this department</td>
+                      </tr>
+                    )}
+                    {tatByCategory.map(row => (
+                      <tr key={row.name} style={{ borderBottom: `1px solid ${C.neutral100}` }}>
+                        <td className="py-2 pr-3" style={{ color: C.neutral800 }}>{row.name}</td>
+                        <td className="py-2 pr-3 font-mono" style={{ color: C.destructive600 }}>{fmtHours(row.avgHours)}</td>
+                        <td className="py-2 font-mono" style={{ color: C.neutral600 }}>{row.resolvedCount}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </SectionCard>
+          </div>
         </div>
       </div>
     </div>

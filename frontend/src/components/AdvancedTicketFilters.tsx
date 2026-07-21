@@ -20,9 +20,18 @@
 //   - CXO / HOD: identical access - tickets in their assigned department(s),
 //     plus tickets they personally raised.
 //   - AGENT: only tickets assigned to them, or raised by them.
+//
+// LAYOUT (redesigned): this used to render as one large always-expanded
+// card - a dozen selects plus two date-range rows - on every page that
+// used it. It's now a slim, single-row toolbar (search box + a "Filters"
+// button carrying an active-count badge + "Clear") and the actual filter
+// controls live in a panel that's collapsed by default and only mounts
+// when toggled open. The search input is also exported on its own
+// (`TicketSearchBar`) in case a page wants just the search box without
+// the rest of the filter chrome.
 import React, { useState, useMemo, useEffect } from "react";
 import { Ticket, TicketStatus, InternalPriorityLevel, UserRole } from "../types";
-import { Filter, X } from "lucide-react";
+import { Filter, X, Search, ChevronDown } from "lucide-react";
 
 // Loosened on purpose: callers (ManagerDashboard/CxoDashboard) only ever
 // have the {id, name} shape available for departments/categories in scope,
@@ -44,6 +53,29 @@ interface AdvancedTicketFiltersProps {
 
 const DEPARTMENT_SCOPED_ROLES: string[] = [UserRole.HOD, UserRole.CXO];
 
+// Standalone search box - separated out so a page can drop just the
+// search input somewhere (e.g. a table toolbar) without pulling in the
+// whole filter panel.
+interface TicketSearchBarProps {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  className?: string;
+}
+
+export const TicketSearchBar: React.FC<TicketSearchBarProps> = ({ value, onChange, placeholder, className }) => (
+  <div className={`relative flex-1 min-w-[200px] ${className || ""}`}>
+    <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+    <input
+      type="text"
+      placeholder={placeholder || "Search title, #, client, requester..."}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-xl focus:border-indigo-500 focus:ring-1 focus:outline-none"
+    />
+  </div>
+);
+
 export const AdvancedTicketFilters: React.FC<AdvancedTicketFiltersProps> = ({
   tickets,
   departments,
@@ -53,6 +85,11 @@ export const AdvancedTicketFilters: React.FC<AdvancedTicketFiltersProps> = ({
   userDepartmentIds = [],
   userId,
 }) => {
+  // Collapsed by default - this is the whole point of the redesign: the
+  // dozen selects + date ranges below only mount once someone actually
+  // asks for them.
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<TicketStatus | "">("");
   const [internalPriorityFilter, setInternalPriorityFilter] = useState<InternalPriorityLevel | "">("");
@@ -248,121 +285,155 @@ export const AdvancedTicketFilters: React.FC<AdvancedTicketFiltersProps> = ({
     setSlaTo("");
   };
 
+  // Count of active filters, NOT counting the search box - drives the
+  // badge on the "Filters" toggle so people can tell at a glance whether
+  // anything is narrowed down without having to open the panel.
+  const activeFilterCount =
+    [statusFilter, internalPriorityFilter, departmentFilter, agentFilter, categoryFilter, clientFilter, projectFilter, stateFilter].filter(Boolean).length +
+    (slaBreachedFilter ? 1 : 0) +
+    (dateFrom || dateTo ? 1 : 0) +
+    (occurredFrom || occurredTo ? 1 : 0) +
+    (slaFrom || slaTo ? 1 : 0);
+
+  const hasAnythingToClear = !!searchTerm || activeFilterCount > 0;
+
   return (
-    <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-6 shadow-sm">
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center gap-2 text-slate-700">
-          <Filter size={18} />
-          <span className="font-semibold">Advanced Ticket Search &amp; Filters</span>
-        </div>
-        <button onClick={reset} className="text-xs text-slate-500 hover:text-red-600 flex items-center gap-1">
-          <X size={14} /> Clear All
+    <div className="bg-white border border-slate-200 rounded-2xl shadow-sm mb-6">
+      {/* Always-visible toolbar: search (separated out) + filter toggle + clear.
+          This replaces the old always-expanded card as the thing every page
+          actually renders - compact enough to sit anywhere. */}
+      <div className="flex flex-wrap items-center gap-2 p-3">
+        <TicketSearchBar value={searchTerm} onChange={setSearchTerm} />
+
+        <button
+          onClick={() => setFiltersOpen((o) => !o)}
+          className={`relative flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-medium border transition-colors ${
+            filtersOpen ? "border-indigo-500 text-indigo-600 bg-indigo-50" : "border-slate-200 text-slate-700 hover:bg-slate-50"
+          }`}
+        >
+          <Filter size={15} />
+          Filters
+          {activeFilterCount > 0 && (
+            <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-indigo-600 text-white text-[10px] font-semibold">
+              {activeFilterCount}
+            </span>
+          )}
+          <ChevronDown size={14} className={`transition-transform ${filtersOpen ? "rotate-180" : ""}`} />
         </button>
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-        <div className="lg:col-span-2">
-          <input
-            type="text"
-            placeholder="Search title, #, client, requester..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:border-indigo-500 focus:ring-1"
-          />
-        </div>
-
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as any)} className="px-4 py-2.5 border border-slate-200 rounded-xl bg-white">
-          <option value="">All Status</option>
-          {availableStatuses.map((s) => (
-            <option key={s} value={s}>{s}</option>
-          ))}
-        </select>
-
-        <select value={internalPriorityFilter} onChange={(e) => setInternalPriorityFilter(e.target.value as any)} className="px-4 py-2.5 border border-slate-200 rounded-xl bg-white">
-          <option value="">All Internal Priority</option>
-          {availableInternalPriorities.map((p) => (
-            <option key={p} value={p}>{p}</option>
-          ))}
-        </select>
-
-        <select value={departmentFilter} onChange={(e) => setDepartmentFilter(e.target.value)} className="px-4 py-2.5 border border-slate-200 rounded-xl bg-white">
-          <option value="">All Depts</option>
-          {availableDepartments.map((d) => (
-            <option key={d.id} value={d.id}>{d.name}</option>
-          ))}
-        </select>
-
-        <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="px-4 py-2.5 border border-slate-200 rounded-xl bg-white">
-          <option value="">All Categories</option>
-          {availableCategories.map((c) => (
-            <option key={c.id} value={c.id}>{c.name}</option>
-          ))}
-        </select>
-
-        {/* Agent-wise filter - GLOBAL_ADMIN/CXO/HOD only, scoped to the
-            department(s) they have access to (and further narrowed to the
-            selected department, if any). Not shown for AGENT since agents
-            are already scoped to just their own tickets. */}
-        {userRole !== UserRole.AGENT && (
-          <select value={agentFilter} onChange={(e) => setAgentFilter(e.target.value)} className="px-4 py-2.5 border border-slate-200 rounded-xl bg-white">
-            <option value="">All Agents</option>
-            {availableAgents.map((a) => (
-              <option key={a.id} value={a.id}>{a.name}</option>
-            ))}
-          </select>
+        {hasAnythingToClear && (
+          <button onClick={reset} className="text-xs text-slate-500 hover:text-red-600 flex items-center gap-1 whitespace-nowrap px-1">
+            <X size={14} /> Clear all
+          </button>
         )}
 
-        <select value={clientFilter} onChange={(e) => setClientFilter(e.target.value)} className="px-4 py-2.5 border border-slate-200 rounded-xl bg-white">
-          <option value="">All Clients</option>
-          {availableClients.map((c) => (
-            <option key={c} value={c}>{c}</option>
-          ))}
-        </select>
-
-        <select value={projectFilter} onChange={(e) => setProjectFilter(e.target.value)} className="px-4 py-2.5 border border-slate-200 rounded-xl bg-white">
-          <option value="">All Projects</option>
-          {availableProjects.map((p) => (
-            <option key={p.id} value={p.id}>{p.name}</option>
-          ))}
-        </select>
-
-        <select value={stateFilter} onChange={(e) => setStateFilter(e.target.value)} className="px-4 py-2.5 border border-slate-200 rounded-xl bg-white">
-          <option value="">All States</option>
-          {availableStates.map((s) => (
-            <option key={s} value={s}>{s}</option>
-          ))}
-        </select>
-
-        <label className="flex items-center gap-2 pt-2">
-          <input type="checkbox" checked={slaBreachedFilter} onChange={(e) => setSlaBreachedFilter(e.target.checked)} className="rounded" />
-          <span>SLA Breached</span>
-        </label>
+        <span className="ml-auto text-xs text-slate-500 whitespace-nowrap">
+          {filteredTickets.length} results &bull; {scopedTickets.length} accessible
+        </span>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm mt-4 pt-4 border-t border-slate-100">
-        <div>
-          <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Custom Date Filter</div>
-          <div className="flex items-center gap-2">
-            <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-xl" />
-            <span className="text-slate-400 text-xs">to</span>
-            <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-xl" />
+      {/* Collapsible filter panel - hidden until "Filters" is clicked. */}
+      {filtersOpen && (
+        <div className="p-4 pt-0 border-t border-slate-100">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 text-sm pt-4">
+            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as any)} className="px-3.5 py-2.5 border border-slate-200 rounded-xl bg-white">
+              <option value="">All Status</option>
+              {availableStatuses.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+
+            <select value={internalPriorityFilter} onChange={(e) => setInternalPriorityFilter(e.target.value as any)} className="px-3.5 py-2.5 border border-slate-200 rounded-xl bg-white">
+              <option value="">All Internal Priority</option>
+              {availableInternalPriorities.map((p) => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
+
+            <select value={departmentFilter} onChange={(e) => setDepartmentFilter(e.target.value)} className="px-3.5 py-2.5 border border-slate-200 rounded-xl bg-white">
+              <option value="">All Depts</option>
+              {availableDepartments.map((d) => (
+                <option key={d.id} value={d.id}>{d.name}</option>
+              ))}
+            </select>
+
+            <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="px-3.5 py-2.5 border border-slate-200 rounded-xl bg-white">
+              <option value="">All Categories</option>
+              {availableCategories.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+
+            {/* Agent-wise filter - GLOBAL_ADMIN/CXO/HOD only, scoped to the
+                department(s) they have access to (and further narrowed to the
+                selected department, if any). Not shown for AGENT since agents
+                are already scoped to just their own tickets. */}
+            {userRole !== UserRole.AGENT && (
+              <select value={agentFilter} onChange={(e) => setAgentFilter(e.target.value)} className="px-3.5 py-2.5 border border-slate-200 rounded-xl bg-white">
+                <option value="">All Agents</option>
+                {availableAgents.map((a) => (
+                  <option key={a.id} value={a.id}>{a.name}</option>
+                ))}
+              </select>
+            )}
+
+            <select value={clientFilter} onChange={(e) => setClientFilter(e.target.value)} className="px-3.5 py-2.5 border border-slate-200 rounded-xl bg-white">
+              <option value="">All Clients</option>
+              {availableClients.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+
+            <select value={projectFilter} onChange={(e) => setProjectFilter(e.target.value)} className="px-3.5 py-2.5 border border-slate-200 rounded-xl bg-white">
+              <option value="">All Projects</option>
+              {availableProjects.map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+
+            <select value={stateFilter} onChange={(e) => setStateFilter(e.target.value)} className="px-3.5 py-2.5 border border-slate-200 rounded-xl bg-white">
+              <option value="">All States</option>
+              {availableStates.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={slaBreachedFilter} onChange={(e) => setSlaBreachedFilter(e.target.checked)} className="rounded" />
+              <span>SLA Breached</span>
+            </label>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm mt-4 pt-4 border-t border-slate-100">
+            <div>
+              <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Custom Date Filter</div>
+              <div className="flex items-center gap-2">
+                <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-xl" />
+                <span className="text-slate-400 text-xs">to</span>
+                <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-xl" />
+              </div>
+            </div>
+
+            <div>
+              <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Date of Occurrence</div>
+              <div className="flex items-center gap-2">
+                <input type="date" value={occurredFrom} onChange={(e) => setOccurredFrom(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-xl" />
+                <span className="text-slate-400 text-xs">to</span>
+                <input type="date" value={occurredTo} onChange={(e) => setOccurredTo(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-xl" />
+              </div>
+            </div>
+
+            <div>
+              <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1.5">SLA Deadline</div>
+              <div className="flex items-center gap-2">
+                <input type="date" value={slaFrom} onChange={(e) => setSlaFrom(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-xl" />
+                <span className="text-slate-400 text-xs">to</span>
+                <input type="date" value={slaTo} onChange={(e) => setSlaTo(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-xl" />
+              </div>
+            </div>
           </div>
         </div>
-
-        <div>
-          <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Date of Occurrence</div>
-          <div className="flex items-center gap-2">
-            <input type="date" value={occurredFrom} onChange={(e) => setOccurredFrom(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-xl" />
-            <span className="text-slate-400 text-xs">to</span>
-            <input type="date" value={occurredTo} onChange={(e) => setOccurredTo(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-xl" />
-          </div>
-        </div>
-        
-      </div>
-
-      <div className="mt-3 text-xs text-slate-500">
-        {filteredTickets.length} results • {scopedTickets.length} accessible
-      </div>
+      )}
     </div>
   );
 };
