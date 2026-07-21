@@ -443,12 +443,18 @@ model Ticket {
   // an "active" state (ON_HOLD, or RESOLVED pending a possible reopen),
   // slaDeadline is cleared and the remaining minutes are parked here; on
   // resume the deadline picks back up from that remainder instead of
-  // restarting the SLA clock. holdStartedAt/totalHoldMinutes track wall-clock
-  // time spent ON_HOLD specifically, which is subtracted from TAT (turnOverTime)
-  // - unlike SLA, TAT is NOT paused by a RESOLVED->REOPENED cycle, so time
-  // spent resolved still counts toward it.
+  // restarting the SLA clock. holdStartedAt/totalHoldMinutes track
+  // wall-clock time spent ON_HOLD *or* RESOLVED, which is subtracted from
+  // Agent TAT (turnOverTime) - i.e. Agent TAT only counts time an agent is
+  // actively able to work the ticket. resolvedStartedAt/totalResolvedMinutes
+  // track only RESOLVED time (not ON_HOLD), and are subtracted from Ticket
+  // TAT (ticketTurnOverTime) instead - Ticket TAT keeps ticking through a
+  // hold, and only pauses once the ticket is actually resolved, resuming
+  // from where it left off if the ticket is reopened.
   holdStartedAt       DateTime?
   totalHoldMinutes    Int            @default(0)
+  resolvedStartedAt      DateTime?
+  totalResolvedMinutes   Int            @default(0)
   slaRemainingMinutes Int?
 
   // NOTE(added): the total SLA window (in minutes) currently granted to
@@ -461,7 +467,6 @@ model Ticket {
   slaTotalMinutes     Int?
 
   metadata         Json?
-  
 
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
@@ -476,7 +481,13 @@ model Ticket {
   attachments      TicketAttachment[]
   escalationHistory TicketEscalation[]
   keywords         TicketKeyword[]
+  // Agent TAT: paused by ON_HOLD or RESOLVED (see holdStartedAt/totalHoldMinutes
+  // above). Snapshotted here whenever the ticket is resolved or reopened.
   turnOverTime     Float?
+  // Ticket TAT: like turnOverTime but only paused by RESOLVED, not ON_HOLD
+  // (see resolvedStartedAt/totalResolvedMinutes above). Also snapshotted on
+  // resolve/reopen.
+  ticketTurnOverTime Float?
 
 
   // NOTE(added): full log of every status transition, timestamped, so
@@ -623,6 +634,11 @@ model AdminMessage {
 
   @@index([userId, createdAt])
 }
+
+
+
+
+
 
 
 
