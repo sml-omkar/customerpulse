@@ -330,9 +330,6 @@ export default function App() {
     } else if (currentView === PAGES.NEW_TICKET) {
       fetchDepartments();
       fetchClients();
-    } else if (currentView === PAGES.TICKET_DETAILS) {
-      fetchDepartments();
-      fetchClients();
     } else if (currentView == PAGES.MY_TICKETS){
       fetchMytickets()
     } else if (currentView == PAGES.ASSINGED_TICKETS){
@@ -1960,7 +1957,7 @@ export default function App() {
           )}
 
           {/* VIEW: DEPARTMENTS & SLA POLICY */}
-          {currentView === PAGES.DEPARTMENTS && (
+                    {currentView === PAGES.DEPARTMENTS && (
             <div className="space-y-6">
               <div className="bg-white border border-zinc-200 p-6 flex justify-between items-center">
                 <div>
@@ -2008,8 +2005,12 @@ export default function App() {
                     </div>
 
                     <p className="text-xs text-zinc-500 mb-4">
-                      Upload an .xlsx or .xls file with a "name" and optional
-                      "description" column - one row per department.
+                      Upload an .xlsx or .xls file with one row per
+                      department / sub-department / category combination.
+                      Repeat the department name on every row it owns;
+                      sub-department and category are optional per row.
+                      Download the template below for the exact columns
+                      and a worked example.
                     </p>
 
                     <button
@@ -2045,6 +2046,7 @@ export default function App() {
                             Errors: {bulkDeptResult.errorCount}
                           </span>
                         </div>
+                        
                         {bulkDeptResult.skipped.length > 0 && (
                           <div>
                             <p className="font-semibold text-zinc-600">Skipped rows:</p>
@@ -2731,3 +2733,5 @@ export default function App() {
     </div>
   );
 }
+
+

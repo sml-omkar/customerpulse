@@ -273,7 +273,7 @@ export const TicketForm = ({setError,setSuccess,setSelectedTicketId,setCurrentVi
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Requester Designation *</label>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Client Designation *</label>
                     <select
                       value={newTicketDesignation}
                       onChange={(e) => setNewTicketDesignation(e.target.value)}

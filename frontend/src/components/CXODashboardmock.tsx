@@ -947,7 +947,7 @@ export default function ManagerAnalyticsMock({ token, apiFetch }: ManagerAnalyti
 
           {/* State + client volume */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <SectionCard title="Amount of tickets by state" subtitle="Only states actually captured on raised tickets, top 10 shown">
+            <SectionCard title="Tickets by state" subtitle="Only states actually captured on raised tickets, top 10 shown">
               {stateDistribution.length === 0 ? (
                 <p className="text-sm py-8 text-center" style={{ color: C.neutral400 }}>No tickets match the current filters</p>
               ) : (

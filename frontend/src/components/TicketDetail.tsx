@@ -15,12 +15,14 @@ import {
   Lock,
   ChevronDown,
   Info,
-  Tablet
+  Tablet,
+  ConeIcon
 } from "lucide-react";
 import { Ticket, Comment, Attachment, Escalation, Keyword, User as UserType, TicketStatus, TicketPriority, SupportLevel, TicketStatusHistory, PAGES, UserRole,ROLES, Department, Client, TicketCategory, SubDepartment } from "../types";
 import { userInfo } from "os";
 import AttachmentUploader from "./AttachmentUploader";
 import { deleteAttachment } from "../libs/attachmentUpload";
+import { Console } from "console";
 
 // Converts a stored UTC ISO timestamp into the "YYYY-MM-DDTHH:mm" format a
 // <input type="datetime-local"> expects, using LOCAL wall-clock getters
@@ -50,12 +52,11 @@ interface TicketDetailProps {
   setCurrentView : React.Dispatch<React.SetStateAction<string>>,
   onBack: () => void;
   metric : metric
-  departments: Department[];
-  clients: Client[];
+ 
   
 }
 
-export default function TicketDetail({ ticketId, token, currentUser, onBack,metric,setCurrentView, departments, clients }: TicketDetailProps) {
+export default function TicketDetail({ ticketId, token, currentUser, onBack,metric,setCurrentView}: TicketDetailProps) {
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -64,6 +65,8 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [clients,setClients] = useState<Client[]>([])
+  const [departments,setDepartments] = useState<Department[]>([])
 
   // Sub-component states
   const [commentText, setCommentText] = useState("");
@@ -117,7 +120,31 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
 } | null>(null)
   const [tat,setTat] = useState<string | null>(null)
 
-  
+  const fetchDepartments = async () => {
+    try {
+      const res = await fetch("http://localhost:3000/departments", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setDepartments(data);
+      }
+    } catch (err) {}
+
+  };
+
+  const fetchClients = async () => {
+    try {
+      const res = await fetch("http://localhost:3000/clients", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setClients(data.data);
+      }
+    } catch (err) {}
+  };
+
   const fetchTicketDetails = async () => {
     try {
       setError("");
@@ -192,6 +219,7 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
 
   useEffect(() => {
     fetchTicketDetails();
+    console.log(clients)
   }, [ticketId]);
 
   // Action: Add Comment
@@ -440,6 +468,7 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
   // Action: Open the Edit Ticket form, pre-filled with current values.
   // Also pre-loads the categories/sub-departments for the ticket's current
   // department, same as the New Ticket form does on department select.
+  
   const openEditForm = async () => {
     if (!ticket) return;
     setEditForm({
@@ -456,11 +485,15 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
       state: ticket.state || "",
       dateOfOccurance: ticket.dateOfOccurance ? toLocalDatetimeInputValue(ticket.dateOfOccurance) : "",
     });
+
+    console.log(editForm)
     setEditDeptCategories([]);
     setEditDeptSubDepartments([]);
     setError("");
     setSuccess("");
     setShowEditForm(true);
+
+    
 
     if (ticket.departmentId) {
       try {
@@ -474,6 +507,8 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
         ]);
         if (catRes.ok) setEditDeptCategories(await catRes.json());
         if (subDeptRes.ok) setEditDeptSubDepartments(await subDeptRes.json());
+        await fetchClients()
+        await fetchDepartments()
       } catch (err) {}
     }
   };
