@@ -1,6 +1,6 @@
 import { Attachment } from "../types";
 
-const API_BASE = "http://localhost:3000";
+import API_BASE from "../lib/api";
 
 export const MAX_ATTACHMENT_SIZE_BYTES = 20 * 1024 * 1024; // 20 MB
 

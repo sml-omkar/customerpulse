@@ -31,7 +31,7 @@ interface CxoDepartment {
   name: string;
 }
 
-const API_BASE = "http://localhost:3000";
+import API_BASE from "../lib/api";
 
 const CARD_LABELS: Record<"active" | "resolved" | "breached" | "escalated" | "onHold", string> = {
   active: "Active",

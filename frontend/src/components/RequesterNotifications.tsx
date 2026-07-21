@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Bell } from "lucide-react";
 import { AdminMessage } from "../types";
 
-const API_BASE = "http://localhost:3000";
+import API_BASE from "../lib/api";
 
 export const RequesterNotifications = ({ token }: { token: string }) => {
   const [messages, setMessages] = useState<AdminMessage[]>([]);

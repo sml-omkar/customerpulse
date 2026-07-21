@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from "react";
+import API_BASE from "../lib/api";
 import {
   ShieldAlert,
   CheckCircle,
@@ -122,7 +123,7 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
 
   const fetchDepartments = async () => {
     try {
-      const res = await fetch("http://localhost:3000/departments", {
+      const res = await fetch(`${API_BASE}/departments`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -135,7 +136,7 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
 
   const fetchClients = async () => {
     try {
-      const res = await fetch("http://localhost:3000/clients", {
+      const res = await fetch(`${API_BASE}/clients`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -150,7 +151,7 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
       setError("");
       // Fetch ticket
       console.log(currentUser.departments)
-      const ticketRes = await fetch(`http://localhost:3000/tickets/${ticketId}`, {
+      const ticketRes = await fetch(`${API_BASE}/tickets/${ticketId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!ticketRes.ok) {
@@ -161,7 +162,7 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
       setTicket(ticketData);
 
       // Fetch comments
-      const commentsRes = await fetch(`http://localhost:3000/tickets/${ticketId}/comments`, {
+      const commentsRes = await fetch(`${API_BASE}/tickets/${ticketId}/comments`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (commentsRes.ok) {
@@ -170,7 +171,7 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
       }
 
       // Fetch attachments
-      const attachRes = await fetch(`http://localhost:3000/tickets/${ticketId}/attachments`, {
+      const attachRes = await fetch(`${API_BASE}/tickets/${ticketId}/attachments`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (attachRes.ok) {
@@ -179,7 +180,7 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
       }
 
       // Fetch escalations
-      const escRes = await fetch(`http://localhost:3000/tickets/${ticketId}/escalations`, {
+      const escRes = await fetch(`${API_BASE}/tickets/${ticketId}/escalations`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (escRes.ok) {
@@ -189,7 +190,7 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
 
       // Fetch status histories if GLOBAL_ADMIN
     
-        const statusHistRes = await fetch(`http://localhost:3000/tickets/${ticketId}/status-history`, {
+        const statusHistRes = await fetch(`${API_BASE}/tickets/${ticketId}/status-history`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (statusHistRes.ok) {
@@ -200,7 +201,7 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
 
       // Fetch agents in the department for manual assignment
       if (isStaff && ticketRes) {
-        const agentsRes = await fetch(`http://localhost:3000/users?departmentId=${ticketData.departmentId}`, {
+        const agentsRes = await fetch(`${API_BASE}/users?departmentId=${ticketData.departmentId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (agentsRes.ok) {
@@ -229,7 +230,7 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
     setError("");
     setSuccess("");
     try {
-      const res = await fetch(`http://localhost:3000/tickets/${ticketId}/comments`, {
+      const res = await fetch(`${API_BASE}/tickets/${ticketId}/comments`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -270,7 +271,7 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
     setError("");
     setSuccess("");
     try {
-      const res = await fetch(`http://localhost:3000/tickets/${ticketId}/assign`, {
+      const res = await fetch(`${API_BASE}/tickets/${ticketId}/assign`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -296,7 +297,7 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
     setError("");
     setSuccess("");
     try {
-      const res = await fetch(`http://localhost:3000/tickets/${ticketId}/reassign`, {
+      const res = await fetch(`${API_BASE}/tickets/${ticketId}/reassign`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -317,7 +318,7 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
     setError("");
     setSuccess("");
     try {
-      const res = await fetch(`http://localhost:3000/tickets/${ticketId}/escalate`, {
+      const res = await fetch(`${API_BASE}/tickets/${ticketId}/escalate`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -348,7 +349,7 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
     setError("");
     setSuccess("");
     try {
-      const res = await fetch(`http://localhost:3000/tickets/${ticketId}`, {
+      const res = await fetch(`${API_BASE}/tickets/${ticketId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -365,7 +366,7 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
       if (!res.ok) throw new Error(data.error || "Failed to update status");
 
       // Log action to audit log from frontend
-      await fetch("http://localhost:3000/audit-logs", {
+      await fetch(`${API_BASE}/audit-logs`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -410,7 +411,7 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
     setError("");
     setSuccess("");
     try {
-      const res = await fetch(`http://localhost:3000/tickets/${ticketId}`, {
+      const res = await fetch(`${API_BASE}/tickets/${ticketId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -422,7 +423,7 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
       if (!res.ok) throw new Error(data.error || "Failed to update priority");
 
       // Log action
-      await fetch("http://localhost:3000/audit-logs", {
+      await fetch(`${API_BASE}/audit-logs`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -451,7 +452,7 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
     setError("");
     setSuccess("");
     try {
-      const res = await fetch(`http://localhost:3000/tickets/${ticketId}/resolve`, {
+      const res = await fetch(`${API_BASE}/tickets/${ticketId}/resolve`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -498,10 +499,10 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
     if (ticket.departmentId) {
       try {
         const [catRes, subDeptRes] = await Promise.all([
-          fetch(`http://localhost:3000/departments/${ticket.departmentId}/categories`, {
+          fetch(`${API_BASE}/departments/${ticket.departmentId}/categories`, {
             headers: { Authorization: `Bearer ${token}` }
           }),
-          fetch(`http://localhost:3000/departments/${ticket.departmentId}/subdepartments`, {
+          fetch(`${API_BASE}/departments/${ticket.departmentId}/subdepartments`, {
             headers: { Authorization: `Bearer ${token}` }
           })
         ]);
@@ -522,10 +523,10 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
     if (!deptId) return;
     try {
       const [catRes, subDeptRes] = await Promise.all([
-        fetch(`http://localhost:3000/departments/${deptId}/categories`, {
+        fetch(`${API_BASE}/departments/${deptId}/categories`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
-        fetch(`http://localhost:3000/departments/${deptId}/subdepartments`, {
+        fetch(`${API_BASE}/departments/${deptId}/subdepartments`, {
           headers: { Authorization: `Bearer ${token}` }
         })
       ]);
@@ -541,8 +542,8 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
     if (!editForm.departmentId) return;
     try {
       const url = subDepartmentId
-        ? `http://localhost:3000/departments/${editForm.departmentId}/categories?subDepartmentId=${subDepartmentId}`
-        : `http://localhost:3000/departments/${editForm.departmentId}/categories`;
+        ? `${API_BASE}/departments/${editForm.departmentId}/categories?subDepartmentId=${subDepartmentId}`
+        : `${API_BASE}/departments/${editForm.departmentId}/categories`;
       const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
       if (res.ok) setEditDeptCategories(await res.json());
     } catch (err) {}
@@ -555,7 +556,7 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
     setSuccess("");
     setEditSaving(true);
     try {
-      const res = await fetch(`http://localhost:3000/tickets/${ticketId}/edit`, {
+      const res = await fetch(`${API_BASE}/tickets/${ticketId}/edit`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -578,7 +579,7 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to update ticket");
 
-      await fetch("http://localhost:3000/audit-logs", {
+      await fetch(`${API_BASE}/audit-logs`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

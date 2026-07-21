@@ -1,4 +1,5 @@
 import { useState } from "react";
+import API_BASE from "../lib/api";
 import { UserRole,SupportLevel,User as UserType, Department} from "../types";
 import { User} from "lucide-react";
 export const UserDirectory = (
@@ -34,7 +35,7 @@ export const UserDirectory = (
     setError("");
     setSuccess("");
     try {
-      const res = await fetch(`http://localhost:3000/users/${editingUserId}`, {
+      const res = await fetch(`${API_BASE}/users/${editingUserId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -228,7 +229,7 @@ export const UserDirectory = (
                           onClick={async () => {
                             if (!editingUserId) return;
                             try {
-                              const res = await fetch("http://localhost:3000/manager-dashboard/set-manager", {
+                              const res = await fetch(`${API_BASE}/manager-dashboard/set-manager`, {
                                 method: "POST",
                                 headers: {
                                   "Content-Type": "application/json",

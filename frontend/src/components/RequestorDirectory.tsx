@@ -3,7 +3,7 @@ import { RequestorDirectoryEntry } from "../types";
 import { MessageSquare, ShieldCheck, ShieldX, Ban, CheckCircle2, Trash2, Upload, FileDown, FileUp } from "lucide-react";
 import * as XLSX from "xlsx";
 
-const API_BASE = "http://localhost:3000";
+import API_BASE from "../lib/api";
 
 type BulkInviteResult = {
   totalRows: number;

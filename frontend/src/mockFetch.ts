@@ -1,4 +1,5 @@
 import { UserRole, TicketStatus, TicketPriority, SupportLevel } from "./types";
+import API_BASE from "./lib/api";
 
 // Setup Mock Client DB in localStorage
 const DB_KEY = "service_now_lite_db";
@@ -508,8 +509,8 @@ const mockFetch = async function (input: RequestInfo | URL, init?: RequestInit):
   const body = init?.body ? JSON.parse(init.body as string) : null;
   const headers = init?.headers;
 
-  // Process only localhost requests (intercept all API calls to local backend)
-  if (!urlStr.includes("localhost:3000")) {
+  // Process only API requests (intercept all API calls to backend)
+  if (!urlStr.includes(API_BASE)) {
     return originalFetch(input, init);
   }
 

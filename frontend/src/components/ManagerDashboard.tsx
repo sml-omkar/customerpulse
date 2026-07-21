@@ -32,7 +32,7 @@ interface managerDepartments{
   name : string,
 }
 
-const API_BASE = "http://localhost:3000";
+import API_BASE from "../lib/api";
 
 const CARD_LABELS: Record<"active" | "resolved" | "breached" | "escalated" | "onHold", string> = {
   active: "Active",
@@ -121,7 +121,7 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
   const fetchManagerDepartments = async () => {
 
     try{
-        const res = await fetch(`http://localhost:3000/users/manageddepartments/${currentUser.id}`, {
+        const res = await fetch(`${API_BASE}/users/manageddepartments/${currentUser.id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {

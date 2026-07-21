@@ -165,7 +165,7 @@ const NOW = Date.now();
 /*  Maps the backend's lean payload (raw tickets + status-history      */
 /*  segments) onto the MockTicket shape the chart/table code consumes. */
 /* ------------------------------------------------------------------ */
-const API_BASE = "http://localhost:3000";
+import API_BASE from "../lib/api";
 
 // Backend TicketPriority (P1-P4, P1 fastest) -> this file's TicketPriority.
 const API_PRIORITY_MAP: Record<string, TicketPriority> = { P1: "URGENT", P2: "HIGH", P3: "MEDIUM", P4: "LOW" };

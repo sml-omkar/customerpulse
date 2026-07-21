@@ -59,6 +59,7 @@ export interface User {
   fullName: string;
   employeeId?: string;
   departments: string[];
+  departmentId?: string;
   managerId?: string;
   role: UserRole;
   supportLevel?: SupportLevel;

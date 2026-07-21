@@ -80,7 +80,7 @@ interface Ticket {
 // as it did over the old in-memory mock arrays.
 // ============================================================================
 
-const API_BASE = "http://localhost:3000";
+import API_BASE from "../lib/api";
 
 interface RawTicket {
   id: string;

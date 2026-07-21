@@ -1,4 +1,5 @@
 import React, { useRef, useState } from "react";
+import API_BASE from "../lib/api";
 import { Department, Invitation as InvitationType, SupportLevel, UserRole, TicketCategory, WindCategory } from "../types";
 import { Upload, FileDown, FileUp } from "lucide-react";
 import * as XLSX from "xlsx";
@@ -96,7 +97,7 @@ export const InvitationComponent: React.FC<InvitationComponentProps> = ({
     if (!deptId) return;
 
     try {
-      const res = await requestFn(`http://localhost:3000/departments/${deptId}/categories`, {
+      const res = await requestFn(`${API_BASE}/departments/${deptId}/categories`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -150,7 +151,7 @@ export const InvitationComponent: React.FC<InvitationComponentProps> = ({
 
       };
 
-      const res = await requestFn("http://localhost:3000/invitations", {
+      const res = await requestFn(`${API_BASE}/invitations`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -177,7 +178,7 @@ export const InvitationComponent: React.FC<InvitationComponentProps> = ({
 
   const handleResendInvite = async (id: string) => {
     try {
-      const res = await requestFn(`http://localhost:3000/invitations/${id}/resend`, {
+      const res = await requestFn(`${API_BASE}/invitations/${id}/resend`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -190,7 +191,7 @@ export const InvitationComponent: React.FC<InvitationComponentProps> = ({
 
   const handleCancelInvite = async (id: string) => {
     try {
-      const res = await requestFn(`http://localhost:3000/invitations/${id}/cancel`, {
+      const res = await requestFn(`${API_BASE}/invitations/${id}/cancel`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -281,7 +282,7 @@ export const InvitationComponent: React.FC<InvitationComponentProps> = ({
         await Promise.all(
           departments.map(async (d) => {
             try {
-              const res = await requestFn(`http://localhost:3000/departments/${d.id}/categories`, {
+              const res = await requestFn(`${API_BASE}/departments/${d.id}/categories`, {
                 headers: { Authorization: `Bearer ${token}` },
               });
               if (res.ok) {
@@ -417,7 +418,7 @@ export const InvitationComponent: React.FC<InvitationComponentProps> = ({
         await Promise.all(
           uniqueDeptIds.map(async (deptId) => {
             try {
-              const res = await requestFn(`http://localhost:3000/departments/${deptId}/categories`, {
+              const res = await requestFn(`${API_BASE}/departments/${deptId}/categories`, {
                 headers: { Authorization: `Bearer ${token}` },
               });
               const cats: TicketCategory[] = res.ok ? await res.json() : [];
@@ -555,7 +556,7 @@ export const InvitationComponent: React.FC<InvitationComponentProps> = ({
       };
 
       setBulkUploading(true);
-      const res = await requestFn("http://localhost:3000/invitations/bulk", {
+      const res = await requestFn(`${API_BASE}/invitations/bulk`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

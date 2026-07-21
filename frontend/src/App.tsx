@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import API_BASE from "./lib/api";
 import {
   Activity,
   Users,
@@ -351,7 +352,7 @@ export default function App() {
       setInviteCategoryIds([]);
       return;
     }
-    fetch(`http://localhost:3000/departments/${inviteDeptId}/categories`, {
+    fetch(`${API_BASE}/departments/${inviteDeptId}/categories`, {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then(res => {
@@ -371,7 +372,7 @@ export default function App() {
 
   const fetchDepartments = async () => {
     try {
-      const res = await fetch("http://localhost:3000/departments", {
+      const res = await fetch(`${API_BASE}/departments`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -384,7 +385,7 @@ export default function App() {
 
   const fetchMytickets = async () => {
      try {
-      const res = await fetch(`http://localhost:3000/tickets/mytickets/${user?.id}`, {
+      const res = await fetch(`${API_BASE}/tickets/mytickets/${user?.id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -398,7 +399,7 @@ export default function App() {
   const fetchAssignedTickets = async () => {
     try {
       const res = await fetch(
-        `http://localhost:3000/tickets/assigned/${user?.id}`,
+        `${API_BASE}/tickets/assigned/${user?.id}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         },
@@ -412,7 +413,7 @@ export default function App() {
   const fetchOnholdTickets = async () => {
     try {
       const res = await fetch(
-        `http://localhost:3000/tickets/onhold/${user?.id}`,
+        `${API_BASE}/tickets/onhold/${user?.id}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         },
@@ -426,7 +427,7 @@ export default function App() {
   const fetchResolvedTickets = async () => {
     try {
       const res = await fetch(
-        `http://localhost:3000/tickets/resolved/${user?.id}`,
+        `${API_BASE}/tickets/resolved/${user?.id}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         },
@@ -441,7 +442,7 @@ export default function App() {
   const fetchbreachedTickets = async () => {
     try {
       const res = await fetch(
-        `http://localhost:3000/tickets/breached/${user?.id}`,
+        `${API_BASE}/tickets/breached/${user?.id}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         },
@@ -455,7 +456,7 @@ export default function App() {
 
   const fetchUsers = async () => {
     try {
-      const res = await fetch(`http://localhost:3000/users`, {
+      const res = await fetch(`${API_BASE}/users`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -467,7 +468,7 @@ export default function App() {
 
   const fetchInvitations = async () => {
     try {
-      const res = await fetch("http://localhost:3000/invitations", {
+      const res = await fetch(`${API_BASE}/invitations`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -479,7 +480,7 @@ export default function App() {
 
   const fetchAuditLogs = async () => {
     try {
-      const res = await fetch("http://localhost:3000/audit-logs", {
+      const res = await fetch(`${API_BASE}/audit-logs`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -491,7 +492,7 @@ export default function App() {
 
   const fetchClients = async () => {
     try {
-      const res = await fetch("http://localhost:3000/clients", {
+      const res = await fetch(`${API_BASE}/clients`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -504,7 +505,7 @@ export default function App() {
       const fetchMetrics = async () => {
         try {
           const res = await fetch(
-            `http://localhost:3000/users/metric/${user.id}`,
+            `${API_BASE}/users/metric/${user.id}`,
             {
               headers: { Authorization: `Bearer ${token}` },
             },
@@ -524,7 +525,7 @@ export default function App() {
     setSuccess("");
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:3000/auth/login`, {
+      const res = await fetch(`${API_BASE}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: loginEmail, password: loginPassword })
@@ -551,7 +552,7 @@ export default function App() {
     setSuccess("");
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:3000/auth/signup", {
+      const res = await fetch(`${API_BASE}/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -584,7 +585,7 @@ export default function App() {
     setSuccess("");
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:3000/auth/forgot-password", {
+      const res = await fetch(`${API_BASE}/auth/forgot-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: forgotEmail })
@@ -608,7 +609,7 @@ export default function App() {
     setSuccess("");
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:3000/auth/verify-reset-otp", {
+      const res = await fetch(`${API_BASE}/auth/verify-reset-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: forgotEmail, otp: forgotOtp })
@@ -636,7 +637,7 @@ export default function App() {
     }
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:3000/auth/reset-password", {
+      const res = await fetch(`${API_BASE}/auth/reset-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: forgotEmail, otp: forgotOtp, password: forgotNewPassword })
@@ -685,7 +686,7 @@ export default function App() {
     }
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:3000/invitations/accept", {
+      const res = await fetch(`${API_BASE}/invitations/accept`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -726,7 +727,7 @@ export default function App() {
     setSelectedDeptId(deptId);
     try {
       // 1. Fetch categories
-      const catRes = await fetch(`http://localhost:3000/departments/${deptId}/categories`, {
+      const catRes = await fetch(`${API_BASE}/departments/${deptId}/categories`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (catRes.ok) {
@@ -735,7 +736,7 @@ export default function App() {
       }
 
       // 1b. Fetch sub-departments (optional grouping within the department)
-      const subDeptRes = await fetch(`http://localhost:3000/departments/${deptId}/subdepartments`, {
+      const subDeptRes = await fetch(`${API_BASE}/departments/${deptId}/subdepartments`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (subDeptRes.ok) {
@@ -743,7 +744,7 @@ export default function App() {
       }
 
       // 2. Fetch keywords
-      const kwRes = await fetch(`http://localhost:3000/keywords?departmentId=${deptId}`, {
+      const kwRes = await fetch(`${API_BASE}/keywords?departmentId=${deptId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (kwRes.ok) {
@@ -752,7 +753,7 @@ export default function App() {
       }
 
       // 3. Fetch aggregated keyword suggestions
-      const sugRes = await fetch(`http://localhost:3000/keywords/departments/${deptId}/suggestions?status=PENDING`, {
+      const sugRes = await fetch(`${API_BASE}/keywords/departments/${deptId}/suggestions?status=PENDING`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (sugRes.ok) {
@@ -767,7 +768,7 @@ export default function App() {
     e.preventDefault();
     if (!newDeptName) return;
     try {
-      const res = await fetch("http://localhost:3000/departments", {
+      const res = await fetch(`${API_BASE}/departments`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -794,7 +795,7 @@ export default function App() {
   // Download the .xlsx template admins fill in for bulk department upload
   const handleDownloadDeptTemplate = async () => {
     try {
-      const res = await fetch("http://localhost:3000/departments/bulk-upload/template", {
+      const res = await fetch(`${API_BASE}/departments/bulk-upload/template`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error("Failed to download template");
@@ -821,7 +822,7 @@ export default function App() {
     try {
       const formData = new FormData();
       formData.append("file", bulkDeptFile);
-      const res = await fetch("http://localhost:3000/departments/bulk-upload", {
+      const res = await fetch(`${API_BASE}/departments/bulk-upload`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: formData
@@ -844,7 +845,7 @@ export default function App() {
     e.preventDefault();
     if (!newSubDeptName || !selectedDeptId) return;
     try {
-      const res = await fetch(`http://localhost:3000/departments/${selectedDeptId}/subdepartments`, {
+      const res = await fetch(`${API_BASE}/departments/${selectedDeptId}/subdepartments`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -868,7 +869,7 @@ export default function App() {
   // department-wide rather than being deleted (handled by the backend).
   const handleDeleteSubDepartment = async (subDeptId: string) => {
     try {
-      const res = await fetch(`http://localhost:3000/subdepartments/${subDeptId}`, {
+      const res = await fetch(`${API_BASE}/subdepartments/${subDeptId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -884,7 +885,7 @@ export default function App() {
     e.preventDefault();
     if (!newCatName) return;
     try {
-      const res = await fetch(`http://localhost:3000/departments/${selectedDeptId}/categories`, {
+      const res = await fetch(`${API_BASE}/departments/${selectedDeptId}/categories`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -914,7 +915,7 @@ export default function App() {
   // Delete Category
   const handleDeleteCategory = async (catId: string) => {
     try {
-      const res = await fetch(`http://localhost:3000/categories/${catId}`, {
+      const res = await fetch(`${API_BASE}/categories/${catId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -944,7 +945,7 @@ export default function App() {
   const handleUpdateCategory = async (catId: string) => {
     if (!editCatName) return;
     try {
-      const res = await fetch(`http://localhost:3000/categories/${catId}`, {
+      const res = await fetch(`${API_BASE}/categories/${catId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -976,7 +977,7 @@ export default function App() {
     try {
 
       let synonyms = newKwSynonyms.split(",")
-      const res = await fetch("http://localhost:3000/keywords", {
+      const res = await fetch(`${API_BASE}/keywords`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -1001,7 +1002,7 @@ export default function App() {
   const handleDeleteKeyword = async (kwId: string) => {
    
     try {
-      const res = await fetch(`http://localhost:3000/keywords/${kwId}`, {
+      const res = await fetch(`${API_BASE}/keywords/${kwId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -1015,7 +1016,7 @@ export default function App() {
   const handleDeleteDepartment= async (kwId: string) => {
      
     try {
-      const res = await fetch(`http://localhost:3000/departments/${kwId}`, {
+      const res = await fetch(`${API_BASE}/departments/${kwId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -1034,7 +1035,7 @@ export default function App() {
     const synonymsInput = prompt(`Promote suggestion '${term}' to Real Keyword. Add synonyms separated by commas if any:`, "");
     if (synonymsInput === null) return; // cancelled
     try {
-      const res = await fetch(`http://localhost:3000/keywords/suggestions/${sugId}/promote`, {
+      const res = await fetch(`${API_BASE}/keywords/suggestions/${sugId}/promote`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -1052,7 +1053,7 @@ export default function App() {
   // Reject Suggestion
   const handleRejectSuggestion = async (sugId: string) => {
     try {
-      const res = await fetch(`http://localhost:3000/keywords/suggestions/${sugId}/reject`, {
+      const res = await fetch(`${API_BASE}/keywords/suggestions/${sugId}/reject`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` }
       });

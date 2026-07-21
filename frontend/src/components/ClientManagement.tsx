@@ -15,7 +15,7 @@ type DeleteDialogProps = {
   onConfirm: () => void;
 };
 
-const API_BASE = "http://localhost:3000";
+import API_BASE from "../lib/api";
 
 export default function ClientManagement({ token }: ClientManagementProps) {
   const [clients, setClients] = useState<Client[]>([]);

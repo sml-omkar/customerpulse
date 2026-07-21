@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import API_BASE from "../lib/api";
 import { User } from "../types";
 import { Lock, User as UserIcon, CheckCircle, AlertTriangle } from "lucide-react";
 
@@ -27,7 +28,7 @@ export const Profile: React.FC<ProfileProps> = ({
 
   const handleProfileAvailabilityToggle = async (avail: boolean) => {
     try {
-      const res = await requestFn("http://localhost:3000/users/me/availability", {
+      const res = await requestFn(`${API_BASE}/users/me/availability`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -75,7 +76,7 @@ export const Profile: React.FC<ProfileProps> = ({
 
     setLoading(true);
     try {
-      const res = await requestFn(`http://localhost:3000/users/reset/${user.id}`, {
+      const res = await requestFn(`${API_BASE}/users/reset/${user.id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

@@ -1,5 +1,6 @@
 import { FileText } from "lucide-react"
 import { useState } from "react";
+import API_BASE from "../lib/api";
 import { Department, TicketCategory, Client, PAGES, SubDepartment } from "../types";
 import AttachmentUploader from "./AttachmentUploader";
 import { uploadAttachmentToS3 } from "../libs/attachmentUpload";
@@ -50,10 +51,10 @@ export const TicketForm = ({setError,setSuccess,setSelectedTicketId,setCurrentVi
     }
     try {
       const [catRes, subDeptRes] = await Promise.all([
-        fetch(`http://localhost:3000/departments/${deptId}/categories`, {
+        fetch(`${API_BASE}/departments/${deptId}/categories`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
-        fetch(`http://localhost:3000/departments/${deptId}/subdepartments`, {
+        fetch(`${API_BASE}/departments/${deptId}/subdepartments`, {
           headers: { Authorization: `Bearer ${token}` }
         })
       ]);
@@ -71,8 +72,8 @@ export const TicketForm = ({setError,setSuccess,setSelectedTicketId,setCurrentVi
     if (!newTicketDept || newTicketDept === "OTHER") return;
     try {
       const url = subDepartmentId
-        ? `http://localhost:3000/departments/${newTicketDept}/categories?subDepartmentId=${subDepartmentId}`
-        : `http://localhost:3000/departments/${newTicketDept}/categories`;
+        ? `${API_BASE}/departments/${newTicketDept}/categories?subDepartmentId=${subDepartmentId}`
+        : `${API_BASE}/departments/${newTicketDept}/categories`;
       const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
       if (res.ok) setDeptCategories(await res.json());
     } catch (err) {}
@@ -90,7 +91,7 @@ export const TicketForm = ({setError,setSuccess,setSelectedTicketId,setCurrentVi
     }
 
     try {
-      const res = await fetch("http://localhost:3000/tickets", {
+      const res = await fetch(`${API_BASE}/tickets`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
