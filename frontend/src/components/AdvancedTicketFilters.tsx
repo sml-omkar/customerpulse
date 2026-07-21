@@ -37,7 +37,8 @@
 // the rest of the filter chrome.
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { Ticket, TicketStatus, InternalPriorityLevel, UserRole } from "../types";
-import { Filter, X, Search, ChevronDown, Check } from "lucide-react";
+import { Filter, X, Search, ChevronDown, Check, FileSpreadsheet } from "lucide-react";
+import * as XLSX from "xlsx";
 
 // Loosened on purpose: callers (ManagerDashboard/CxoDashboard) only ever
 // have the {id, name} shape available for departments/categories in scope,
@@ -360,6 +361,57 @@ export const AdvancedTicketFilters: React.FC<AdvancedTicketFiltersProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filteredTickets]);
 
+  // Export every currently-filtered ticket (i.e. whatever `filteredTickets`
+  // resolves to right now, respecting search + all key/value + date-range
+  // filters above) to an .xlsx workbook with one row per ticket and every
+  // field on the Ticket record as its own column.
+  const exportToExcel = () => {
+    const rows = filteredTickets.map((t) => ({
+      "Ticket Number": t.ticketNumber,
+      "Title": t.title,
+      "Description": t.description || "",
+      "Status": t.status,
+      "Priority": t.priority,
+      "Internal Priority": t.internalPriority,
+      "Department": t.department?.name || "",
+      "Category": t.category?.name || "",
+      "Project": t.project?.name || "",
+      "Client Name": t.clientName,
+      "Client Email": t.clientEmail,
+      "Requester Name": t.requester?.fullName || "",
+      "Requester Email": t.requester?.email || "",
+      "Employee ID": t.employeeId || "",
+      "Representative": t.representative || "",
+      "Designation": t.designation || "",
+      "Assignee": t.assignee?.fullName || "",
+      "Assignment Method": t.assignmentMethod || "",
+      "Assigned At": t.assignedAt || "",
+      "Support Level": t.supportLevel || "",
+      "Site": t.site,
+      "State": t.state,
+      "Date of Occurrence": t.dateOfOccurance || "",
+      "Due Date": t.dueDate || "",
+      "SLA Deadline": t.slaDeadline || "",
+      "SLA Breached": t.slaBreached ? "Yes" : "No",
+      "SLA Remaining (min)": t.slaRemainingMinutes ?? "",
+      "Hold Started At": t.holdStartedAt || "",
+      "Total Hold Minutes": t.totalHoldMinutes ?? "",
+      "Turn Over Time": t.turnOverTime ?? "",
+      "Resolved At": t.resolvedAt || "",
+      "Closed At": t.closedAt || "",
+      "Tags": (t.tags || []).join(", "),
+      "Created At": t.createdAt,
+      "Updated At": t.updatedAt,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Tickets");
+
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+    XLSX.writeFile(workbook, `tickets-export-${timestamp}.xlsx`);
+  };
+
   // If the department selection changes such that some currently-selected
   // agents no longer belong to any selected department, drop those (now
   // stale/invalid) agent selections rather than silently filtering to zero
@@ -537,13 +589,16 @@ export const AdvancedTicketFilters: React.FC<AdvancedTicketFiltersProps> = ({
               </div>
             </div>
 
-            <div>
-              <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1.5">SLA Deadline</div>
-              <div className="flex items-center gap-2">
-                <input type="date" value={slaFrom} onChange={(e) => setSlaFrom(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-xl" />
-                <span className="text-slate-400 text-xs">to</span>
-                <input type="date" value={slaTo} onChange={(e) => setSlaTo(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-xl" />
-              </div>
+            <div className="flex flex-col justify-end">
+              <button
+                type="button"
+                onClick={exportToExcel}
+                disabled={filteredTickets.length === 0}
+                className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 disabled:bg-slate-200 disabled:text-slate-400 transition-colors"
+              >
+                <FileSpreadsheet size={15} />
+                Export to Excel ({filteredTickets.length})
+              </button>
             </div>
           </div>
         </div>
