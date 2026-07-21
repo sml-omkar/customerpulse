@@ -1,0 +1,646 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+enum UserRole {
+  CXO
+  GLOBAL_ADMIN
+  HOD
+  AGENT
+  REQUESTER
+}
+
+enum SupportLevel {
+  L1
+  L2
+}
+
+// NOTE(added): tracks the admin-approval workflow for accounts created via
+// public self-signup (requesters). Invitation-based accounts (agents, HODs,
+// CXOs, admins) skip this entirely and are created as APPROVED directly.
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum TicketPriority {
+  P1
+  P2
+  P3
+  P4
+}
+
+enum TicketStatus {
+  OPEN
+  REOPENED
+  IN_PROGRESS
+  ON_HOLD
+  RESOLVED
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  CANCELLED
+}
+
+// NOTE(added): which turbine business an AGENT covers - Wind, Non-Wind,
+// or Both. Only ever set for the AGENT role (see Invitation/User below).
+enum WindCategory {
+  WIND
+  NON_WIND
+  BOTH
+}
+
+// NOTE(added): tracks whether a ticket was routed by the auto-assignment
+// engine or manually reassigned, for audit + tuning of the matching logic.
+enum AssignmentMethod {
+  AUTO_KEYWORD
+  AUTO_LOAD_BALANCE
+  MANUAL
+  ESCALATION
+  AUTO_CATEGORY
+}
+
+// NOTE(added): lifecycle of a candidate keyword mined from unmatched
+// ticket text before an admin promotes it into a real Keyword.
+enum SuggestionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// NOTE(added): the requester's organizational designation, captured on the
+// ticket intake form as a dropdown - distinct from UserRole (platform role).
+enum Designation {
+  CEO
+  COO
+  CXO
+  HOD
+  EMPLOYEE
+}
+
+// NOTE(added): internal triage metric computed from 5 weighted signals
+// (work-stopping, safety violation, shutdown job, top-management reporter,
+// key client) - see internalPriority.service.ts for the scoring algorithm.
+// Intentionally separate from TicketPriority (P1-P4), which still drives
+// SLA/TAT and can be manually overridden - this metric is purely
+// informational triage context and is never touched by that override.
+enum InternalPriorityLevel {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+}
+
+
+
+// client list that was static on the frontend it should be on the backend and the global admin should be able to edit it 
+
+model Client {
+  id String @id @default(uuid())
+
+  name String
+
+  // NOTE(added): marks a client as a "key client" (strategic / high-priority
+  // account) — surfaced to the global admin and usable for prioritization.
+  isKeyClient Boolean @default(false)
+
+  // NOTE(added): classifies the client's business as Wind (true) or
+  // Non-Wind (false). Simple boolean toggle set at client creation/edit.
+  isWindClient Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  // NOTE(added): a client can now have multiple projects under it, replacing
+  // the old single `projectName` string field.
+  projects Project[]
+}
+
+// NOTE(added): a project belongs to exactly one client. `isShutdownJob` flags
+// whether the project is a shutdown job (as opposed to ongoing work).
+model Project {
+  id String @id @default(uuid())
+
+  name          String
+  isShutdownJob Boolean @default(false)
+  createdAt     DateTime @default(now())
+
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  // NOTE(added): tickets can optionally be filed against a specific project.
+  tickets Ticket[]
+
+  @@unique([clientId, name])
+}
+
+model Department {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+
+  managerId String?
+  manager User? @relation("departmentManager",fields: [managerId] , references: [id])
+
+  cxoId String?
+  cxo User? @relation("departmentCxo",fields: [cxoId],references: [id])
+
+  agents      User[] @relation("departmentAgents")
+
+  categories  TicketCategory[]
+  subDepartments SubDepartment[]
+  tickets     Ticket[]
+  keywords    Keyword[]
+  invitations Invitation[]
+  keywordSuggestions KeywordSuggestion[]
+}
+
+// NOTE(added): optional sub-grouping within a Department. A category can
+// optionally be mapped to one of the department's sub-departments; when a
+// category has no subDepartmentId it's a department-wide category.
+model SubDepartment {
+  id           String   @id @default(uuid())
+  departmentId String
+  name         String
+  description  String?
+  createdAt    DateTime @default(now())
+
+  department   Department       @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  categories   TicketCategory[]
+
+  @@unique([departmentId, name])
+}
+
+model User {
+  id              String       @id @default(uuid())
+  email           String       @unique
+  fullName        String
+  employeeId      String?     @unique
+  // Note only for AGENTS 
+  state           String? 
+
+  // NOTE(added): Wind / Non-Wind / Both - AGENT only, set at onboarding.
+  windCategory    WindCategory?
+
+  ssoProvider     String?
+  ssoExternalId   String?
+
+  // NOTE(added): password hash for local invitation-accept flow.
+  // Nullable because SSO users won't have one.
+  passwordHash    String?
+
+  //agent should be assigned to only one department
+  agentsdepartmentId    String? 
+  role            UserRole     @default(REQUESTER)
+  supportLevel    SupportLevel?
+
+  isActive        Boolean      @default(true)
+  onboardedById   String?
+
+  // NOTE(added): gates login + ticket creation for self-registered
+  // requesters until a GLOBAL_ADMIN reviews and approves the account.
+  approvalStatus  ApprovalStatus @default(APPROVED)
+
+  // NOTE(added): inputs to the auto-assignment load balancer.
+  isAvailableForAssignment Boolean @default(true)
+  maxActiveTickets         Int     @default(15)
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  // managed departments by the user
+  managedDepartments     Department[]  @relation("departmentManager")
+  // agent
+  assignedDepartment Department? @relation("departmentAgents",fields: [agentsdepartmentId],references: [id]) 
+  //cxo   
+  coxDepartements  Department[] @relation("departmentCxo")
+
+
+  
+  onboardedUsers  User[]       @relation("OnboardedBy")
+  onboardedBy     User?        @relation("OnboardedBy", fields: [onboardedById], references: [id])
+
+  ticketsRequested Ticket[]    @relation("Requester")
+  ticketsAssigned  Ticket[]    @relation("Assignee")
+  ticketsEscalatedToMe Ticket[] @relation("TicketEscalatedTo")
+  comments         TicketComment[]
+  skills           UserKeyword[] // Agent skills for auto-assignment
+
+  // NOTE(added): back-relations that were missing from the original
+  // schema (Prisma requires both sides of a relation to be declared).
+  attachmentsUploaded TicketAttachment[] @relation("TicketAttachmentUploader")
+  escalationsRaised   TicketEscalation[] @relation("TicketEscalationEscalatedBy")
+  escalationsReceived TicketEscalation[] @relation("TicketEscalationEscalatedTo")
+  auditLogs           AuditLog[]
+  invitationsSent     Invitation[]       @relation("InvitedBy")
+  keywordSuggestionsReviewed KeywordSuggestion[] @relation("SuggestionReviewedBy")
+
+  // NOTE(added): categories this agent is assigned to handle. One agent
+  // can cover many categories, and one category can have many agents —
+  // hence the CategoryAgent join model rather than a direct FK.
+  categoryAssignments CategoryAgent[] @relation("CategoryAgents")
+
+  // NOTE(added): audit trail of who moved a ticket into each status,
+  // separate from the per-status timestamp columns kept on Ticket itself.
+  statusChangesLogged TicketStatusHistory[] @relation("TicketStatusChangedBy")
+
+  // NOTE(added): admin -> requester messages, surfaced in the requester's
+  // notifications panel.
+  messagesReceived AdminMessage[] @relation("MessageRecipient")
+  messagesSent     AdminMessage[] @relation("MessageSender")
+}
+
+model Keyword {
+  id           String   @id @default(uuid())
+  departmentId String
+  name         String   // e.g., "Network", "Password Reset", "Payroll", "Hardware"
+  description  String?
+  // NOTE(added): alternate terms/synonyms that should also match this
+  // keyword when scanning ticket title/description (e.g. "vpn" -> "Network").
+  synonyms     String[] @default([])
+  createdAt    DateTime @default(now())
+
+  department   Department      @relation(fields: [departmentId], references: [id],onDelete: Cascade)
+  tickets      TicketKeyword[]
+  agents       UserKeyword[]
+
+  @@unique([departmentId, name])
+}
+
+// NOTE(added): candidate keywords mined from ticket text that didn't
+// match any existing Keyword. Admins review and can promote them,
+// which is the "increasing keywords" logic requested.
+model KeywordSuggestion {
+  id             String            @id @default(uuid())
+  departmentId   String
+  term           String
+  occurrenceCount Int              @default(1)
+  status         SuggestionStatus  @default(PENDING)
+  promotedKeywordId String?
+  reviewedById   String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  department     Department        @relation(fields: [departmentId], references: [id],onDelete: Cascade)
+  reviewedBy     User?             @relation("SuggestionReviewedBy", fields: [reviewedById], references: [id])
+
+  @@unique([departmentId, term])
+}
+
+model UserKeyword {
+  userId     String
+  keywordId  String
+  // NOTE(added): lets an admin/agent express stronger proficiency in a
+  // skill; used as a tiebreaker in assignment scoring.
+  proficiency Int     @default(1)
+
+  user       User     @relation(fields: [userId], references: [id])
+  keyword    Keyword  @relation(fields: [keywordId], references: [id])
+
+  @@id([userId, keywordId])
+}
+
+model TicketKeyword {
+  ticketId   String
+  keywordId  String
+
+  ticket     Ticket   @relation(fields: [ticketId], references: [id],onDelete: Cascade)
+  keyword    Keyword  @relation(fields: [keywordId], references: [id],onDelete: Cascade)
+
+  @@id([ticketId, keywordId])
+}
+
+// ====================== TICKETING ======================
+
+// NOTE(added): join table mapping agents (Users) to the TicketCategories
+// they can be auto-assigned/routed for. Many-to-many: one agent can be
+// assigned to many categories, and one category can have many agents.
+model CategoryAgent {
+  id         String   @id @default(uuid())
+  categoryId String
+  userId     String
+  // NOTE(added): mirrors UserKeyword.proficiency — lets scoring prefer a
+  // more experienced agent within the same category when load balancing.
+  proficiency Int     @default(1)
+  createdAt  DateTime @default(now())
+
+  category   TicketCategory @relation(fields: [categoryId], references: [id])
+  agent      User           @relation("CategoryAgents", fields: [userId], references: [id])
+
+  @@unique([categoryId, userId])
+}
+
+model PriorityConfig {
+  priority             TicketPriority @id
+  updatedAt            DateTime       @updatedAt
+  
+}
+
+model TicketCategory {
+  id              String         @id @default(uuid())
+  departmentId    String
+  // NOTE(added): optional - a category can be scoped to one of the
+  // department's sub-departments, or left null to stay department-wide.
+  subDepartmentId String?
+  name            String
+  // NOTE(added): stored in minutes (previously hours) so category SLAs can
+  // be configured with sub-hour precision.
+  defaultSlaMinutes Int?
+  
+  defaultPriority TicketPriority @default(P3)
+
+  // NOTE(added): admin-only classification flags set when the category is
+  // created/edited. Never surfaced to requesters/agents - only to
+  // GLOBAL_ADMIN / HOD in the category configuration screens.
+  isWorkStopping     Boolean @default(false)
+  isSafetyViolation  Boolean @default(false)
+
+  department      Department     @relation(fields: [departmentId], references: [id],onDelete: Cascade)
+  subDepartment   SubDepartment? @relation(fields: [subDepartmentId], references: [id], onDelete: SetNull)
+  tickets         Ticket[]
+
+  // invitations 
+  invitations Invitation[]
+
+  // NOTE(added): agents who can be routed tickets in this category.
+  agents          CategoryAgent[]
+}
+
+model Ticket {
+  id               String         @id @default(uuid())
+  ticketNumber     String         @unique
+
+  title            String
+  description      String?
+  requesterId      String
+  departmentId     String
+  categoryId       String?
+
+  // Replicating the form provided
+  representative String?
+  employeeId        String?
+  clientName        String
+  clientEmail       String
+  dateOfOccurance  DateTime
+  site             String
+  // NOTE(added): the Indian state chosen on the ticket intake form -
+  // captured separately from `site` (the free-text location field).
+  state            String?
+  turnoverRate     Float? 
+
+  // NOTE(added): requester's designation at the client organization, and the
+  // specific project (under the selected client) the ticket relates to.
+  designation      Designation?
+  projectId        String?
+  project          Project?       @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  status           TicketStatus   @default(OPEN)
+  priority         TicketPriority @default(P3)
+  // NOTE(changed): was TicketPriority (P1-P4), now a separately computed
+  // triage metric with its own scale - see InternalPriorityLevel above.
+  internalPriority InternalPriorityLevel @default(LOW)
+
+  assigneeId       String?
+  // NOTE(added): audit trail for how the current assignee was chosen.
+  assignedById     String?
+  assignmentMethod AssignmentMethod?
+  assignedAt       DateTime?
+
+  supportLevel     SupportLevel?
+  escalatedToId    String?
+  escalatedAt      DateTime?
+  escalationReason String?
+
+  dueDate          DateTime?
+  slaDeadline      DateTime?
+  // NOTE(added): flag flipped by the SLA job so we don't re-notify/re-escalate
+  // the same breach repeatedly.
+  slaBreached      Boolean        @default(false)
+  resolvedAt       DateTime?
+  closedAt         DateTime?
+
+  // NOTE(added): SLA/TAT pause-resume tracking. Whenever the ticket leaves
+  // an "active" state (ON_HOLD, or RESOLVED pending a possible reopen),
+  // slaDeadline is cleared and the remaining minutes are parked here; on
+  // resume the deadline picks back up from that remainder instead of
+  // restarting the SLA clock. holdStartedAt/totalHoldMinutes track wall-clock
+  // time spent ON_HOLD specifically, which is subtracted from TAT (turnOverTime)
+  // - unlike SLA, TAT is NOT paused by a RESOLVED->REOPENED cycle, so time
+  // spent resolved still counts toward it.
+  holdStartedAt       DateTime?
+  totalHoldMinutes    Int            @default(0)
+  slaRemainingMinutes Int?
+
+  // NOTE(added): the total SLA window (in minutes) currently granted to
+  // this ticket - set at creation from the category's defaultSlaMinutes
+  // (or the priority-based fallback), and refreshed whenever an admin
+  // changes the category's SLA afterwards. Together with slaDeadline /
+  // slaRemainingMinutes this lets us work out how much SLA time a ticket
+  // has already consumed, so a category SLA change can carry over
+  // consumed time instead of granting a full fresh window.
+  slaTotalMinutes     Int?
+
+  metadata         Json?
+  
+
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  requester        User           @relation("Requester", fields: [requesterId], references: [id])
+  department       Department     @relation(fields: [departmentId], references: [id],onDelete: Cascade)
+  category         TicketCategory? @relation(fields: [categoryId], references: [id])
+  assignee         User?          @relation("Assignee", fields: [assigneeId], references: [id])
+  escalatedTo      User?          @relation("TicketEscalatedTo", fields: [escalatedToId], references: [id])
+
+  comments         TicketComment[]
+  attachments      TicketAttachment[]
+  escalationHistory TicketEscalation[]
+  keywords         TicketKeyword[]
+  turnOverTime     Float?
+
+
+  // NOTE(added): full log of every status transition, timestamped, so
+  // resolvedAt/closedAt on the ticket no longer have to be the only
+  // record of "when did this change status" — also covers NEW->OPEN,
+  // OPEN->PENDING, etc., including moves back and forth.
+  statusHistory    TicketStatusHistory[]
+}
+
+// ====================== SUPPORT TABLES ======================
+
+model TicketComment {
+  id           String   @id @default(uuid())
+  ticketId     String
+  userId       String
+  commentText  String
+  isInternal   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  // NOTE(added): when a comment is created alongside an attachment upload,
+  // this links back to that attachment so the thread can render the file
+  // next to the comment text. Nullable + SetNull so deleting the attachment
+  // later doesn't delete the comment itself.
+  attachmentId String?
+  attachment   TicketAttachment? @relation(fields: [attachmentId], references: [id], onDelete: SetNull)
+
+  ticket      Ticket   @relation(fields: [ticketId], references: [id],onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id])
+}
+
+model TicketAttachment {
+  id         String   @id @default(uuid())
+  ticketId   String
+  fileName   String
+  fileUrl    String
+  uploadedBy String
+  createdAt  DateTime @default(now())
+
+  ticket     Ticket   @relation(fields: [ticketId], references: [id])
+  uploader   User     @relation("TicketAttachmentUploader", fields: [uploadedBy], references: [id])
+  comments   TicketComment[]
+}
+
+model TicketEscalation {
+  id            String       @id @default(uuid())
+  ticketId      String
+  fromLevel     SupportLevel?
+  toLevel       SupportLevel
+  escalatedById String
+  escalatedToId String
+  reason        String
+  // NOTE(added): distinguishes an automatic SLA-breach escalation from a
+  // human-triggered one, useful for reporting.
+  isAutomatic   Boolean      @default(false)
+  createdAt     DateTime     @default(now())
+
+  ticket        Ticket       @relation(fields: [ticketId], references: [id])
+  escalatedBy   User         @relation("TicketEscalationEscalatedBy", fields: [escalatedById], references: [id])
+  escalatedTo   User         @relation("TicketEscalationEscalatedTo", fields: [escalatedToId], references: [id])
+}
+
+model TicketStatusHistory {
+  id          String       @id @default(uuid())
+  ticketId    String
+  fromStatus  TicketStatus?
+  status      TicketStatus
+  changedById String?
+  changedAt   DateTime     @default(now())
+  note        String?
+ 
+  durationInPrevStatusMinutes Int?
+  ticket      Ticket       @relation(fields: [ticketId], references: [id])
+  changedBy   User?        @relation("TicketStatusChangedBy", fields: [changedById], references: [id])
+
+  @@index([ticketId, changedAt])
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String
+  action     String
+  entityType String
+  entityId   String?
+  createdAt  DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id])
+}
+
+model Invitation {
+  id              String            @id @default(uuid())
+  name            String
+  email           String
+  invitedById     String
+  role            UserRole
+  Password        String
+  // NOTE only for AGENTS 
+  state           String? 
+  // NOTE(added): Wind / Non-Wind / Both - AGENT only, carried over to the
+  // User row when the invitation is accepted.
+  windCategory    WindCategory?
+  categories      TicketCategory[] 
+  supportLevel    SupportLevel?
+  status          InvitationStatus  @default(PENDING)
+  token           String            @unique
+  expiresAt       DateTime
+
+  createdAt       DateTime          @default(now())
+
+  invitedBy       User              @relation("InvitedBy", fields: [invitedById], references: [id])
+  department      Department[]     
+}
+
+// NOTE(added): forgot-password flow. A row is created when a user requests
+// an OTP, the 6-digit code is stored hashed (never plaintext) with a short
+// TTL, and `verified` gates the final POST /auth/reset-password call so an
+// attacker can't skip straight to setting a new password without first
+// proving they own the inbox. `attempts` caps brute force of the 6-digit
+// code within the TTL window (see authService.verifyResetOtp).
+model PasswordResetOtp {
+  id          String    @id @default(uuid())
+  email       String
+  otpHash     String
+  expiresAt   DateTime
+  attempts    Int       @default(0)
+  verified    Boolean   @default(false)
+  consumedAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([email])
+}
+
+// NOTE(added): lets a GLOBAL_ADMIN send a message to a specific user
+// (primarily requesters), surfaced in that user's notifications panel.
+model AdminMessage {
+  id          String   @id @default(uuid())
+  userId      String
+  fromAdminId String
+  message     String
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  user      User @relation("MessageRecipient", fields: [userId], references: [id], onDelete: Cascade)
+  fromAdmin User @relation("MessageSender", fields: [fromAdminId], references: [id])
+
+  @@index([userId, createdAt])
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
