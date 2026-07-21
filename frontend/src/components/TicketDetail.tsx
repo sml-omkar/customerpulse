@@ -357,8 +357,9 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
         },
         body: JSON.stringify({
           status: newStatus,
-          // turnOverTime (TAT) is computed server-side now - it needs to
-          // account for banked ON_HOLD time the client doesn't track.
+          // Agent TAT and Ticket TAT are both computed server-side now -
+          // they need to account for banked ON_HOLD/RESOLVED time the
+          // client doesn't track.
           ...(comment && comment.trim() ? { comment: comment.trim() } : {})
         })
       });
@@ -624,18 +625,22 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
     return { text: `${hours}h ${mins}m left`, color: "text-zinc-700 bg-zinc-100 border-zinc-300" };
   };
 
-  // TAT (turnaround time): wall-clock age of the ticket *since the issue
-  // occurred* (dateOfOccurance, not createdAt/filed-in-system time) minus
-  // time spent ON_HOLD - mirrors the server-side calc in
-  // slaClock.service.ts. Editing dateOfOccurance (e.g. correcting a wrong
-  // date) naturally shifts this number since it's still measuring from
-  // the same anchor each time - that's not the same as "restarting" TAT,
-  // which would mean zeroing it out or granting a fresh window. Unlike
-  // ON_HOLD, a RESOLVED period is NOT subtracted, so time spent resolved
-  // still counts if the ticket is later reopened. While RESOLVED (and not
-  // reopened since), this is frozen at the value the backend stored at
-  // resolution time rather than continuing to tick.
-  const getTurnaroundTime = () :{display:string,seconds:number} => {
+  // Agent TAT (turnOverTime): wall-clock age of the ticket *since the
+  // issue occurred* (dateOfOccurance, not createdAt/filed-in-system time)
+  // minus time spent paused (ON_HOLD or RESOLVED) - mirrors the
+  // computeAgentTurnOverTimeSeconds calc in slaClock.service.ts. It's the
+  // "can an agent actually work this right now" clock, so both a hold and
+  // sitting resolved (pending a possible reopen) stop it. Editing
+  // dateOfOccurance (e.g. correcting a wrong date) naturally shifts this
+  // number since it's still measuring from the same anchor each time -
+  // that's not the same as "restarting" TAT, which would mean zeroing it
+  // out or granting a fresh window. While RESOLVED (and not reopened
+  // since), this is frozen at the value the backend stored at resolution
+  // time rather than continuing to tick; the "else" branch below (which
+  // live-ticks using totalHoldMinutes/holdStartedAt) is only reached for
+  // non-resolved statuses, so it still only needs to special-case ON_HOLD
+  // for the *ongoing* pause window.
+  const getAgentTurnaroundTime = () :{display:string,seconds:number} => {
     if (!ticket) return {display : "-",seconds:0};
 
     let seconds: number;
@@ -652,6 +657,35 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
       seconds = Math.max(0, Math.floor((now - createdAt) / 1000) - totalHoldSeconds);
     }
 
+    return formatTat(seconds);
+  };
+
+  // Ticket TAT (ticketTurnOverTime): same anchor and freeze-on-resolve /
+  // resume-on-reopen behavior as Agent TAT above, but it does NOT pause
+  // for ON_HOLD - a hold only stops the agent's clock, not the ticket's.
+  // It only pauses once the ticket is RESOLVED (mirrors
+  // computeTicketTurnOverTimeSeconds in slaClock.service.ts). Because the
+  // RESOLVED case is fully handled by the frozen branch below, the "else"
+  // branch is only ever reached for non-resolved statuses - so there's no
+  // ongoing-pause window to account for here, just the already-banked
+  // totalResolvedMinutes from any earlier resolve/reopen cycle.
+  const getTicketTurnaroundTime = () :{display:string,seconds:number} => {
+    if (!ticket) return {display : "-",seconds:0};
+
+    let seconds: number;
+    if (ticket.status === "RESOLVED" && typeof ticket.ticketTurnOverTime === "number") {
+      seconds = ticket.ticketTurnOverTime;
+    } else {
+      const now = Date.now();
+      const createdAt = new Date(ticket.dateOfOccurance).getTime();
+      const totalResolvedSeconds = (ticket.totalResolvedMinutes ?? 0) * 60;
+      seconds = Math.max(0, Math.floor((now - createdAt) / 1000) - totalResolvedSeconds);
+    }
+
+    return formatTat(seconds);
+  };
+
+  function formatTat(seconds: number): {display:string,seconds:number} {
     const minutes = Math.floor(seconds / 60);
     const hours = Math.floor(minutes / 60);
     const days = Math.floor(hours / 24);
@@ -1472,13 +1506,25 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
             {/* Turnaround Time (TAT) */}
             <div className="pt-3 border-t border-zinc-100">
               <span className="text-[10px] text-zinc-400 uppercase font-bold tracking-wider block mb-1 flex items-center gap-1">
-                <Clock size={11} /> Turnaround Time (TAT)
+                <Clock size={11} /> Agent TAT
               </span>
               <div className="p-2 border border-zinc-200 bg-zinc-50 text-xs font-mono font-semibold text-zinc-800">
-                {getTurnaroundTime().display} {["RESOLVED", "CLOSED"].includes(ticket.status) ? "(Resolved)" : "(Active)"}
+                {getAgentTurnaroundTime().display} {["RESOLVED", "CLOSED"].includes(ticket.status) ? "(Resolved)" : "(Active)"}
               </div>
               <span className="text-[10px] text-zinc-400 font-mono mt-1 block">
-                Excludes time spent on hold (Pending)
+                Excludes time spent on hold (Pending) and resolved
+              </span>
+            </div>
+
+            <div className="pt-3 border-t border-zinc-100">
+              <span className="text-[10px] text-zinc-400 uppercase font-bold tracking-wider block mb-1 flex items-center gap-1">
+                <Clock size={11} /> Ticket TAT
+              </span>
+              <div className="p-2 border border-zinc-200 bg-zinc-50 text-xs font-mono font-semibold text-zinc-800">
+                {getTicketTurnaroundTime().display} {["RESOLVED", "CLOSED"].includes(ticket.status) ? "(Resolved)" : "(Active)"}
+              </div>
+              <span className="text-[10px] text-zinc-400 font-mono mt-1 block">
+                Keeps running while on hold; excludes time spent resolved
               </span>
             </div>
 
