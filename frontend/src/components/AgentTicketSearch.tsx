@@ -109,7 +109,7 @@ export const AgentTicketSearch: React.FC<AgentTicketSearchProps> = ({
       <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <span className="p-2.5 bg-slate-900 text-white rounded-xl">
+            <span className="p-2.5 bg-slate-900 text-white rounded-xl inline-flex items-center justify-center shrink-0">
               <Search size={16} />
             </span>
             <div>
