@@ -131,13 +131,13 @@ export const CXOTicketSearch: React.FC<CXOTicketSearchProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-3 w-full sm:w-auto">
-            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
+            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 min-w-0">
               <Building2 size={14} className="text-slate-500 shrink-0" />
               <select
                 value={selectedDeptId}
                 onChange={(e) => setSelectedDeptId(e.target.value)}
-                className="bg-transparent text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer"
+                className="bg-transparent text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer min-w-0 w-full sm:w-auto truncate"
               >
                 <option value="">-- All Departments --</option>
                 {cxoDepartments.map((d) => (
@@ -150,7 +150,7 @@ export const CXOTicketSearch: React.FC<CXOTicketSearchProps> = ({
 
             <button
               onClick={fetchAllDeptTickets}
-              className="text-xs font-semibold text-slate-600 hover:text-slate-900 border border-slate-200 px-3 py-2 rounded-lg hover:bg-slate-50 cursor-pointer flex items-center gap-1.5 transition-all bg-white shrink-0"
+              className="text-xs font-semibold text-slate-600 hover:text-slate-900 border border-slate-200 px-3 py-2 rounded-lg hover:bg-slate-50 cursor-pointer flex items-center justify-center gap-1.5 transition-all bg-white shrink-0"
             >
               <RotateCcw size={14} /> Refresh
             </button>
