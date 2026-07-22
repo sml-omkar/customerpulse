@@ -144,7 +144,7 @@ export const UserDirectory = (
                     </h2>
 
                     <form onSubmit={handleSaveUserDetails} className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-xs font-semibold text-slate-600 mb-1">Operations Role</label>
                           <select
@@ -173,7 +173,7 @@ export const UserDirectory = (
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-xs font-semibold text-slate-600 mb-1">Support Level</label>
                           <select
