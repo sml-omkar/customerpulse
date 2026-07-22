@@ -1979,32 +1979,32 @@ export default function App() {
 
           {/* VIEW: DEPARTMENTS & SLA POLICY */}
                     {currentView === PAGES.DEPARTMENTS && (
-            <div className="space-y-6">
-              <div className="bg-white border border-zinc-200 p-6 flex justify-between items-center">
-                <div>
-                  <h1 className="text-xl font-bold text-zinc-900">
+            <div className="space-y-4 sm:space-y-6">
+              <div className="bg-white border border-zinc-200 p-4 sm:p-6 flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
+                <div className="min-w-0">
+                  <h1 className="text-lg sm:text-xl font-bold text-zinc-900">
                     Departments SLA & Knowledge Index
                   </h1>
-                  <p className="text-sm text-zinc-500 mt-1">
+                  <p className="text-xs sm:text-sm text-zinc-500 mt-1">
                     Configure service parameters, categories, and tags.
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:w-auto">
                   <button
                     onClick={() => {
                       setBulkDeptFile(null);
                       setBulkDeptResult(null);
                       setShowBulkUploadDeptDialog(true);
                     }}
-                    className="bg-white border border-zinc-300 hover:bg-zinc-50 text-zinc-800 text-xs font-semibold px-4 py-2.5 cursor-pointer flex items-center gap-2 rounded-lg transition-all"
+                    className="bg-white border border-zinc-300 hover:bg-zinc-50 text-zinc-800 text-xs font-semibold px-3 sm:px-4 py-2.5 cursor-pointer flex items-center justify-center gap-2 rounded-lg transition-all whitespace-nowrap"
                   >
-                    <Upload size={16} /> Bulk Upload
+                    <Upload size={16} /> <span>Bulk Upload</span>
                   </button>
                   <button
                     onClick={() => setShowAddDeptDialog(true)}
-                    className="bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-semibold px-4 py-2.5 cursor-pointer flex items-center gap-2 rounded-lg transition-all"
+                    className="bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-semibold px-3 sm:px-4 py-2.5 cursor-pointer flex items-center justify-center gap-2 rounded-lg transition-all whitespace-nowrap"
                   >
-                    <Plus size={16} /> Add Department
+                    <Plus size={16} /> <span>Add Department</span>
                   </button>
                 </div>
               </div>
@@ -2012,7 +2012,7 @@ export default function App() {
               {/* Bulk Upload Departments Dialog */}
               {showBulkUploadDeptDialog && (
                 <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-                  <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6">
+                  <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
                     <div className="flex justify-between items-center mb-4">
                       <h2 className="text-lg font-bold text-zinc-900">
                         Bulk Upload Departments
@@ -2115,7 +2115,7 @@ export default function App() {
               {/* Add Department Dialog */}
               {showAddDeptDialog && (
                 <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-                  <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+                  <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
                     <div className="flex justify-between items-center mb-4">
                       <h2 className="text-lg font-bold text-zinc-900">
                         Add Department
@@ -2178,51 +2178,53 @@ export default function App() {
                 </div>
               )}
 
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
                 {/* Department selectors card grid */}
                 <div className="space-y-3">
                   <h3 className="text-xs uppercase font-mono font-bold text-zinc-500 tracking-wider">
                     Select Department
                   </h3>
-                  {departments.map((d) => (
-                    <div
-                      key={d.id}
-                      onClick={() => handleSelectDeptConfig(d.id)}
-                      className={`p-4 border cursor-pointer select-none ${
-                        selectedDeptId === d.id
-                          ? "bg-white border-[#30b380] shadow-xs"
-                          : "bg-white border-zinc-200 hover:bg-zinc-50"
-                      }`}
-                    >
-                      <span className="text-[10px] font-mono text-zinc-400 block uppercase font-bold">
-                        Scope ID: {d.id}
-                      </span>
-                      <h4 className="text-sm font-semibold text-zinc-950 mt-1">
-                        {d.name}
-                      </h4>
-                      <p className="text-xs text-zinc-500 mt-1">
-                        {d.description}
-                      </p>
-                      <div className="flex justify-between gap-4 mt-3 pt-2.5 border-t border-zinc-100 text-[10px] font-mono text-zinc-400">
-                        <div className="flex gap-4 w-fit">
-                          <span>Staff: {d._count.agents || 0}</span>
-                          <span>Tickets logged: {d._count.tickets || 0}</span>
-                        </div>
-                        <div className="flex   ">
-                          <Trash className="w-4 h-4 text-red-400" onClick={(e)=>{
-                            e.stopPropagation()
-                            handleDeleteDepartment(d.id)
-                          }
-                          }/>
-                          
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3">
+                    {departments.map((d) => (
+                      <div
+                        key={d.id}
+                        onClick={() => handleSelectDeptConfig(d.id)}
+                        className={`p-4 border cursor-pointer select-none ${
+                          selectedDeptId === d.id
+                            ? "bg-white border-[#30b380] shadow-xs"
+                            : "bg-white border-zinc-200 hover:bg-zinc-50"
+                        }`}
+                      >
+                        <span className="text-[10px] font-mono text-zinc-400 block uppercase font-bold truncate">
+                          Scope ID: {d.id}
+                        </span>
+                        <h4 className="text-sm font-semibold text-zinc-950 mt-1 break-words">
+                          {d.name}
+                        </h4>
+                        <p className="text-xs text-zinc-500 mt-1 break-words">
+                          {d.description}
+                        </p>
+                        <div className="flex flex-wrap items-center justify-between gap-2 mt-3 pt-2.5 border-t border-zinc-100 text-[10px] font-mono text-zinc-400">
+                          <div className="flex flex-wrap gap-3 sm:gap-4 w-fit">
+                            <span>Staff: {d._count.agents || 0}</span>
+                            <span>Tickets logged: {d._count.tickets || 0}</span>
+                          </div>
+                          <div className="flex shrink-0">
+                            <Trash className="w-4 h-4 text-red-400" onClick={(e)=>{
+                              e.stopPropagation()
+                              handleDeleteDepartment(d.id)
+                            }
+                            }/>
+                            
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
 
                 {/* Config panel detail for categories/keywords */}
-                <div className="lg:col-span-2 bg-white border border-zinc-200 p-6 h-fit">
+                <div className="lg:col-span-2 bg-white border border-zinc-200 p-4 sm:p-6 h-fit">
                   {selectedDeptId ? (
                     <div className="space-y-8">
                       {/* Sub-Section: Sub-Departments (optional grouping) */}
@@ -2292,14 +2294,14 @@ export default function App() {
                         {/* inline category creator */}
                         <form
                           onSubmit={handleCreateCategory}
-                          className="grid grid-cols-1 sm:grid-cols-4 gap-3 bg-zinc-50 p-3 border border-zinc-200 mb-4"
+                          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 bg-zinc-50 p-3 border border-zinc-200 mb-4"
                         >
                           <input
                             type="text"
                             placeholder="Category Name"
                             value={newCatName}
                             onChange={(e) => setNewCatName(e.target.value)}
-                            className="text-xs p-2 border border-zinc-300 bg-white"
+                            className="text-xs p-2 border border-zinc-300 bg-white w-full"
                             required
                           />
                           <input
@@ -2307,7 +2309,7 @@ export default function App() {
                             placeholder="SLA Minutes (e.g. 1440)"
                             value={newCatSla}
                             onChange={(e) => setNewCatSla(e.target.value)}
-                            className="text-xs p-2 border border-zinc-300 bg-white"
+                            className="text-xs p-2 border border-zinc-300 bg-white w-full"
                             min={1}
                             required
                           />
@@ -2318,7 +2320,7 @@ export default function App() {
                                 e.target.value as TicketPriority,
                               )
                             }
-                            className="text-xs p-2 border border-zinc-300 bg-white"
+                            className="text-xs p-2 border border-zinc-300 bg-white w-full"
                           >
                             <option value="P1">P1 - Critical</option>
                             <option value="P2">P2 - High</option>
@@ -2328,7 +2330,7 @@ export default function App() {
                           <select
                             value={newCatSubDepartmentId}
                             onChange={(e) => setNewCatSubDepartmentId(e.target.value)}
-                            className="text-xs p-2 border border-zinc-300 bg-white"
+                            className="text-xs p-2 border border-zinc-300 bg-white w-full"
                           >
                             <option value="">-- Department-wide (no sub-dept) --</option>
                             {deptSubDepartmentsList.map((sd) => (
@@ -2337,7 +2339,7 @@ export default function App() {
                           </select>
 
                           {/* Admin-only classification - never surfaced to requesters/agents */}
-                          <label className="text-xs flex items-center gap-1.5 bg-white border border-zinc-300 p-2 cursor-pointer">
+                          <label className="text-xs flex items-center gap-1.5 bg-white border border-zinc-300 p-2 cursor-pointer w-full">
                             <input
                               type="checkbox"
                               checked={newCatIsWorkStopping}
@@ -2345,7 +2347,7 @@ export default function App() {
                             />
                             Work Stopping
                           </label>
-                          <label className="text-xs flex items-center gap-1.5 bg-white border border-zinc-300 p-2 cursor-pointer">
+                          <label className="text-xs flex items-center gap-1.5 bg-white border border-zinc-300 p-2 cursor-pointer w-full">
                             <input
                               type="checkbox"
                               checked={newCatIsSafetyViolation}
@@ -2356,7 +2358,7 @@ export default function App() {
 
                           <button
                             type="submit"
-                            className="bg-zinc-800 text-white text-xs py-1 cursor-pointer font-bold hover:bg-zinc-700"
+                            className="sm:col-span-2 lg:col-span-4 bg-zinc-800 text-white text-xs py-2 cursor-pointer font-bold hover:bg-zinc-700 w-full"
                           >
                             Add Category
                           </button>
@@ -2596,9 +2598,9 @@ export default function App() {
 
                       {/* Mined aggregate keyword suggestions */}
                       <div>
-                        <h3 className="text-sm font-bold uppercase tracking-wider text-zinc-900 border-b pb-2 mb-4 flex items-center justify-between">
+                        <h3 className="text-sm font-bold uppercase tracking-wider text-zinc-900 border-b pb-2 mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                           <span>Mined Unmatched Keyword Suggestions</span>
-                          <span className="text-[10px] font-mono text-zinc-400 font-normal bg-zinc-50 px-2 py-0.5 border">
+                          <span className="text-[10px] font-mono text-zinc-400 font-normal bg-zinc-50 px-2 py-0.5 border normal-case tracking-normal self-start sm:self-auto">
                             Auto-mined over time from unmatched tickets
                             narrative text.
                           </span>
