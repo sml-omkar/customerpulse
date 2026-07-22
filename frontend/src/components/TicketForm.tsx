@@ -142,7 +142,7 @@ export const TicketForm = ({setError,setSuccess,setSelectedTicketId,setCurrentVi
     if (isSubmitting) return; // already submitting - ignore extra clicks/submits
     setError("");
     setSuccess("");
-    if (!newTicketDept || !newTicketTitle || !newTicketClient || !newTicketClientEmail || !newTicketSite || !newTicketState || !newTicketDesignation || !newTicketDateOccurred) {
+    if (!newTicketDept || !newTicketTitle || !newTicketClient || !newTicketClientEmail || !newTicketSite || !newTicketDesc || !newTicketState || !newTicketDesignation || !newTicketDateOccurred) {
       setError("Please fill out all required fields.");
       return;
     }
@@ -424,6 +424,7 @@ export const TicketForm = ({setError,setSuccess,setSelectedTicketId,setCurrentVi
                     <label className="block text-xs font-semibold text-slate-700 mb-1">Issue Occurred (Date & Time) *</label>
                     <input
                       type="datetime-local"
+                      defaultValue={""}
                       value={newTicketDateOccurred}
                       onChange={(e) => setNewTicketDateOccurred(e.target.value)}
                       className="w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
@@ -483,9 +484,9 @@ export const TicketForm = ({setError,setSuccess,setSelectedTicketId,setCurrentVi
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="px-5 py-2 bg-red-600 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    {isSubmitting ? "Creating..." : "Create and File Ticket"}
+                    {isSubmitting ? "Creating..." : "Submit"}
                   </button>
                 </div>
               </form>

@@ -44,45 +44,23 @@ export default function TicketsTable({
         setCurrentView(PAGES.TICKET_DETAILS);
     };
 
-    const getTurnaroundTime = (ticket  : Ticket) :{display:string,seconds:number} => {
-    if (!ticket) return {display : "-",seconds:0};
-
-    let seconds: number;
-    if (ticket.status === "RESOLVED" && typeof ticket.turnOverTime === "number") {
-      seconds = ticket.turnOverTime;
-    } else {
-      const now = Date.now();
-      const createdAt = new Date(ticket.dateOfOccurance).getTime();
-      const totalHoldMinutes = ticket.totalHoldMinutes ?? 0;
-      const ongoingHoldMinutes = ticket.status === "ON_HOLD" && ticket.holdStartedAt
-        ? Math.max(0, Math.round((now - new Date(ticket.holdStartedAt).getTime()) / 60000))
-        : 0;
-      const totalHoldSeconds = (totalHoldMinutes + ongoingHoldMinutes) * 60;
-      seconds = Math.max(0, Math.floor((now - createdAt) / 1000) - totalHoldSeconds);
+   const getSlaStatus = (ticket:Ticket) => {
+    if (!ticket || !ticket.slaDeadline) return null;
+    if (ticket.slaBreached) {
+      return { text: "Breached", color: "text-red-700 bg-red-100 border-red-300" };
+    }
+    const diff = new Date(ticket.slaDeadline).getTime() - Date.now();
+    if (diff <= 0) {
+      return { text: "Breached", color: "text-red-700 bg-red-100 border-red-300" };
     }
 
-    const minutes = Math.floor(seconds / 60);
-    const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
+    const hours = Math.floor(diff / (3600 * 1000));
+    const mins = Math.floor((diff % (3600 * 1000)) / (60 * 1000));
 
-    if (days > 0) {
-      const remHours = hours % 24;
-      return {
-        display: `${days}d ${remHours}`,
-        seconds: seconds
-      };
-    } else if (hours > 0) {
-      const remMins = minutes % 60;
-      return {
-        display : `${hours}h ${remMins}m`,
-        seconds : seconds
-      };
-    } else {
-      return {
-        display : `${Math.max(1,minutes)}m`,
-        seconds : seconds
-      };
+    if (hours < 2) {
+      return { text: `${hours}h ${mins}m left`, color: "text-orange-700 bg-orange-100 border-orange-300 animate-pulse" };
     }
+    return { text: `${hours}h ${mins}m left`, color: "text-zinc-700 bg-zinc-100 border-zinc-300" };
   };
 
     if (!tickets?.length) {
@@ -188,7 +166,7 @@ export default function TicketsTable({
 
                   {!VIEWS_WITHOUT_SLA.includes(currentView) && (
                     <td className="px-4 py-3 text-slate-600 whitespace-nowrap">
-                      {getTurnaroundTime(ticket).display}
+                      {getSlaStatus(ticket)?.text}
                     </td>
                   )}
 

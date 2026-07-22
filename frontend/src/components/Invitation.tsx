@@ -697,7 +697,7 @@ export const InvitationComponent: React.FC<InvitationComponentProps> = ({
 
         {/* Invite dispatch panel - Attribute order: Name, Email, Role, Department, Category */}
         <div className="bg-white border border-zinc-200 p-6 h-fit shadow-sm">
-          <h3 className="text-sm font-semibold uppercase text-zinc-900 border-b pb-2 mb-4">Onboard Staff Member and users</h3>
+          <h3 className="text-sm font-semibold uppercase text-zinc-900 border-b pb-2 mb-4">User onboarding form</h3>
 
           <form onSubmit={handleSendInvite} className="space-y-4">
             {/* 1. Name */}
@@ -899,7 +899,7 @@ export const InvitationComponent: React.FC<InvitationComponentProps> = ({
               type="submit"
               className="w-full bg-[#032d26] hover:bg-[#021f1a] text-white text-xs font-semibold py-2.5 cursor-pointer text-center transition-colors"
             >
-              Issue Invitation
+              Invite
             </button>
           </form>
 

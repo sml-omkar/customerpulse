@@ -34,7 +34,6 @@ app.use(corsMiddleware);
 app.use("/uploads", uploadsRouter);
 app.use(express.json());
 app.use(requestLogger);
-app.use(cors({origin: 'http://customerpulse.sanghvimovers.com:5173'}))
 
 // app.use(generalLimiter);
 // ---- routes ----
@@ -61,6 +60,5 @@ app.use(errorHandler);
 
 const port = Number(process.env.PORT ?? 3000);
 app.listen(port, () => {
-
-  console.log(`Helpdesk API listening on :${port}`);
+    console.log(`Helpdesk API listening on :${port}`);
 });

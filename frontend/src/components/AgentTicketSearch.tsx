@@ -106,28 +106,6 @@ export const AgentTicketSearch: React.FC<AgentTicketSearchProps> = ({
 
   return (
     <div className="space-y-6 font-sans">
-      <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <span className="p-2.5 bg-slate-900 text-white rounded-xl inline-flex items-center justify-center shrink-0">
-              <Search size={16} />
-            </span>
-            <div>
-              <h1 className="text-xl font-bold text-slate-900 tracking-tight">Report</h1>
-              <p className="text-sm text-slate-500 mt-1">
-                Search and filter tickets assigned to you, or raised by you.
-              </p>
-            </div>
-          </div>
-
-          <button
-            onClick={fetchMyTickets}
-            className="text-xs font-semibold text-slate-600 hover:text-slate-900 border border-slate-200 px-3 py-2 rounded-lg hover:bg-slate-50 cursor-pointer flex items-center gap-1.5 transition-all bg-white shrink-0"
-          >
-            <RotateCcw size={14} /> Refresh
-          </button>
-        </div>
-      </div>
 
       <AdvancedTicketFilters
         tickets={myTickets}

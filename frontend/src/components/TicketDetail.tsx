@@ -809,11 +809,11 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
                   className="absolute right-0 mt-2 w-72 bg-white border border-zinc-200 shadow-lg rounded-lg p-3 space-y-2 z-10"
                 >
                   <label className="block text-[10px] font-mono font-bold uppercase text-zinc-600">
-                    Comment required to place ON-HOLD
+                    Why do you want to put this ticket on-hold?
                   </label>
                   <textarea
                     autoFocus
-                    placeholder="Why is this ticket being put on hold?"
+                    placeholder="Why is this ticket being put on-hold?"
                     value={holdComment}
                     onChange={(e) => setHoldComment(e.target.value)}
                     className="w-full text-xs p-2 border border-zinc-300 bg-white rounded"
@@ -825,7 +825,7 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
                       type="submit"
                       className="flex-1 bg-[#032d26] hover:bg-[#021f1a] text-white text-xs py-1.5 font-semibold cursor-pointer rounded"
                     >
-                      Confirm Hold
+                      Hold
                     </button>
                     <button
                       type="button"
@@ -868,11 +868,11 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
             <form onSubmit={handleResolveSubmit} className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-zinc-700 mb-1">
-                  Reason for resolving (required)
+                  Action Taken :
                 </label>
                 <textarea
                   autoFocus
-                  placeholder="How was this ticket resolved?"
+                  placeholder="Describe the action taken to resolve this issue"
                   value={resolveComment}
                   onChange={(e) => setResolveComment(e.target.value)}
                   className="w-full text-sm p-2.5 border border-zinc-200 rounded-lg bg-white"
@@ -896,7 +896,7 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
                   disabled={!resolveComment.trim()}
                   className="bg-slate-900 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-semibold px-4 py-2 rounded-lg shadow-sm transition-all duration-200 cursor-pointer"
                 >
-                  Confirm Resolve
+                  Resolve and Close
                 </button>
               </div>
             </form>
@@ -1393,112 +1393,64 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
               {statusHistories.length === 0 ? (
                 <p className="text-slate-400 italic text-xs text-center py-4">No status changes have been recorded for this ticket.</p>
               ) : (
-                <>
-                  {/* Mobile: stacked cards - avoids forcing a horizontal scroll on narrow screens */}
-                  <div className="sm:hidden space-y-3">
-                    {statusHistories.map((hist) => (
-                      <div key={hist.id} className="border border-slate-200/60 rounded-xl p-3.5 space-y-2.5">
-                        <div className="flex flex-wrap items-center gap-2 text-[10px] font-mono">
-                          {hist.fromStatus ? (
-                            <span className={`px-2 py-0.5 rounded font-bold ${
-                              hist.fromStatus === "OPEN" ? "bg-blue-50 text-blue-700 border border-blue-100" :
-                              hist.fromStatus === "IN_PROGRESS" ? "bg-indigo-50 text-indigo-700 border border-indigo-100" :
-                              hist.fromStatus === "PENDING" ? "bg-yellow-50 text-yellow-700 border border-yellow-100" :
-                              hist.fromStatus === "RESOLVED" ? "bg-emerald-50 text-emerald-700 border border-emerald-100" :
-                              "bg-slate-50 text-slate-700 border border-slate-100"
-                            }`}>
-                              {hist.fromStatus}
-                            </span>
-                          ) : (
-                            <span className="text-slate-400 italic">— Initial</span>
-                          )}
-                          <span className="text-slate-300">→</span>
-                          <span className={`px-2 py-0.5 rounded font-bold ${
-                            hist.status === "OPEN" ? "bg-blue-50 text-blue-700 border border-blue-100" :
-                            hist.status === "IN_PROGRESS" ? "bg-indigo-50 text-indigo-700 border border-indigo-100" :
-                            hist.status === "PENDING" ? "bg-yellow-50 text-yellow-700 border border-yellow-100" :
-                            hist.status === "RESOLVED" ? "bg-emerald-50 text-emerald-700 border border-emerald-100" :
-                            "bg-slate-50 text-slate-700 border border-slate-100"
-                          }`}>
-                            {hist.status}
-                          </span>
-                        </div>
-                        <div className="text-xs">
-                          <div className="font-medium text-slate-800 break-words">{hist.changedBy.fullName || "System"}</div>
-                          {hist.changerEmail && (
-                            <div className="text-[10px] text-slate-400 font-mono mt-0.5 break-all">{hist.changerEmail}</div>
-                          )}
-                        </div>
-                        <div className="text-[11px] font-mono text-slate-500">
-                          {new Date(hist.changedAt).toLocaleString()}
-                        </div>
-                        <div className="text-xs font-medium text-slate-600 break-words">
-                          {hist.note || "No comments or details provided."}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Larger screens: table */}
-                  <div className="hidden sm:block overflow-x-auto border border-slate-200/60 rounded-xl overflow-hidden shadow-xs">
-                    <table className="min-w-full divide-y divide-slate-100 text-xs text-left">
-                      <thead className="bg-slate-50 text-slate-500 font-semibold uppercase tracking-wider text-[10px]">
-                        <tr>
-                          <th className="px-5 py-3">Previous State</th>
-                          <th className="px-5 py-3">New State</th>
-                          <th className="px-5 py-3">Changed By</th>
-                          <th className="px-5 py-3">Date / Time (Local)</th>
-                          <th className="px-5 py-3">Activity / Note</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100 text-slate-700 bg-white">
-                        {statusHistories.map((hist) => (
-                          <tr key={hist.id} className="hover:bg-slate-50/50 transition-colors">
-                            <td className="px-5 py-3.5 font-mono">
-                              {hist.fromStatus ? (
-                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                                  hist.fromStatus === "OPEN" ? "bg-blue-50 text-blue-700 border border-blue-100" :
-                                  hist.fromStatus === "IN_PROGRESS" ? "bg-indigo-50 text-indigo-700 border border-indigo-100" :
-                                  hist.fromStatus === "PENDING" ? "bg-yellow-50 text-yellow-700 border border-yellow-100" :
-                                  hist.fromStatus === "RESOLVED" ? "bg-emerald-50 text-emerald-700 border border-emerald-100" :
-                                  "bg-slate-50 text-slate-700 border border-slate-100"
-                                }`}>
-                                  {hist.fromStatus}
-                                </span>
-                              ) : (
-                                <span className="text-slate-400 italic">— Initial</span>
-                              )}
-                            </td>
-                            <td className="px-5 py-3.5 font-mono">
+                <div className="overflow-x-auto border border-slate-200/60 rounded-xl overflow-hidden shadow-xs">
+                  <table className="min-w-full divide-y divide-slate-100 text-xs text-left">
+                    <thead className="bg-slate-50 text-slate-500 font-semibold uppercase tracking-wider text-[10px]">
+                      <tr>
+                        <th className="px-5 py-3">Previous State</th>
+                        <th className="px-5 py-3">New State</th>
+                        <th className="px-5 py-3">Changed By</th>
+                        <th className="px-5 py-3">Date / Time (Local)</th>
+                        <th className="px-5 py-3">Activity / Note</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 text-slate-700 bg-white">
+                      {statusHistories.map((hist) => (
+                        <tr key={hist.id} className="hover:bg-slate-50/50 transition-colors">
+                          <td className="px-5 py-3.5 font-mono">
+                            {hist.fromStatus ? (
                               <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                                
-                                hist.status === "OPEN" ? "bg-blue-50 text-blue-700 border border-blue-100" :
-                                hist.status === "IN_PROGRESS" ? "bg-indigo-50 text-indigo-700 border border-indigo-100" :
-                                hist.status === "PENDING" ? "bg-yellow-50 text-yellow-700 border border-yellow-100" :
-                                hist.status === "RESOLVED" ? "bg-emerald-50 text-emerald-700 border border-emerald-100" :
+                                hist.fromStatus === "OPEN" ? "bg-blue-50 text-blue-700 border border-blue-100" :
+                                hist.fromStatus === "IN_PROGRESS" ? "bg-indigo-50 text-indigo-700 border border-indigo-100" :
+                                hist.fromStatus === "PENDING" ? "bg-yellow-50 text-yellow-700 border border-yellow-100" :
+                                hist.fromStatus === "RESOLVED" ? "bg-emerald-50 text-emerald-700 border border-emerald-100" :
                                 "bg-slate-50 text-slate-700 border border-slate-100"
                               }`}>
-                                {hist.status}
+                                {hist.fromStatus}
                               </span>
-                            </td>
-                            <td className="px-5 py-3.5">
-                              <div className="font-medium text-slate-800">{hist.changedBy.fullName || "System"}</div>
-                              {hist.changerEmail && (
-                                <div className="text-[10px] text-slate-400 font-mono mt-0.5">{hist.changerEmail}</div>
-                              )}
-                            </td>
-                            <td className="px-5 py-3.5 font-mono text-slate-500">
-                              {new Date(hist.changedAt).toLocaleString()}
-                            </td>
-                            <td className="px-5 py-3.5 font-medium text-slate-600 max-w-xs break-words">
-                              {hist.note || "No comments or details provided."}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </>
+                            ) : (
+                              <span className="text-slate-400 italic">— Initial</span>
+                            )}
+                          </td>
+                          <td className="px-5 py-3.5 font-mono">
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                              
+                              hist.status === "OPEN" ? "bg-blue-50 text-blue-700 border border-blue-100" :
+                              hist.status === "IN_PROGRESS" ? "bg-indigo-50 text-indigo-700 border border-indigo-100" :
+                              hist.status === "PENDING" ? "bg-yellow-50 text-yellow-700 border border-yellow-100" :
+                              hist.status === "RESOLVED" ? "bg-emerald-50 text-emerald-700 border border-emerald-100" :
+                              "bg-slate-50 text-slate-700 border border-slate-100"
+                            }`}>
+                              {hist.status}
+                            </span>
+                          </td>
+                          <td className="px-5 py-3.5">
+                            <div className="font-medium text-slate-800">{hist.changedBy.fullName || "System"}</div>
+                            {hist.changerEmail && (
+                              <div className="text-[10px] text-slate-400 font-mono mt-0.5">{hist.changerEmail}</div>
+                            )}
+                          </td>
+                          <td className="px-5 py-3.5 font-mono text-slate-500">
+                            {new Date(hist.changedAt).toLocaleString()}
+                          </td>
+                          <td className="px-5 py-3.5 font-medium text-slate-600 max-w-xs break-words">
+                            {hist.note || "No comments or details provided."}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
         
