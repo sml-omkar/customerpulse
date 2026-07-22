@@ -66,6 +66,11 @@ export interface User {
   isActive: boolean;
   isAvailableForAssignment: boolean;
   maxActiveTickets: number;
+  // NOTE(added): AGENT-only routing inputs - `state` is the comma-separated
+  // list of states a Zone resolves to (see backend zoneStateMap.ts); the
+  // Zone itself isn't stored, only its resolved state(s).
+  state?: string | null;
+  windCategory?: WindCategory | null;
   _count: {
     ticketsAssigned : number
   };
