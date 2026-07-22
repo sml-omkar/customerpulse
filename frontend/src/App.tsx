@@ -78,6 +78,7 @@ import DepartmentDashboard from "./components/HODDashboardmock";
 import CXODashboardMock from "./components/CXODashboardmock";
 import { RequestorDirectory } from "./components/RequestorDirectory";
 import { CXODashboard } from "./components/CxoDashboard";
+import { ConfirmDialog } from "./components/ConfirmDialog";
 
 export const SanghviLogo = ({ className = "w-6 h-6" }: { className?: string }) => (
   <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -202,6 +203,24 @@ export default function App() {
   // Session State
   const [user, setUser] = useState<UserType | null>(null);
   const [token, setToken] = useState<string>("");
+
+  // Reusable confirmation dialog state (replaces native window.confirm popups
+  // for destructive actions like deleting departments, sub-departments,
+  // categories and keywords)
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({ open: false, title: "", message: "", onConfirm: () => {} });
+
+  const openConfirmDialog = (title: string, message: string, onConfirm: () => void) => {
+    setConfirmDialog({ open: true, title, message, onConfirm });
+  };
+
+  const closeConfirmDialog = () => {
+    setConfirmDialog((prev) => ({ ...prev, open: false }));
+  };
   const [company, setCompany] = useState<any>(null);
 
   // Auth Forms State
@@ -967,17 +986,23 @@ export default function App() {
   // Delete Sub-Department - categories mapped to it fall back to being
   // department-wide rather than being deleted (handled by the backend).
   const handleDeleteSubDepartment = async (subDeptId: string) => {
-    if (!window.confirm("Delete this sub-department? Categories mapped to it will fall back to being department-wide. This cannot be undone.")) return;
-    try {
-      const res = await fetch(`${API_BASE}/subdepartments/${subDeptId}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        handleSelectDeptConfig(selectedDeptId);
-        setSuccess("Sub-department deleted.");
+    openConfirmDialog(
+      "Delete Sub-Department",
+      "Delete this sub-department? Categories mapped to it will fall back to being department-wide. This cannot be undone.",
+      async () => {
+        closeConfirmDialog();
+        try {
+          const res = await fetch(`${API_BASE}/subdepartments/${subDeptId}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (res.ok) {
+            handleSelectDeptConfig(selectedDeptId);
+            setSuccess("Sub-department deleted.");
+          }
+        } catch (err) {}
       }
-    } catch (err) {}
+    );
   };
 
   // Create Category
@@ -1013,17 +1038,23 @@ export default function App() {
 
   // Delete Category
   const handleDeleteCategory = async (catId: string) => {
-    if (!window.confirm("Delete this category? This cannot be undone.")) return;
-    try {
-      const res = await fetch(`${API_BASE}/categories/${catId}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        handleSelectDeptConfig(selectedDeptId);
-        setSuccess("Category deleted.");
+    openConfirmDialog(
+      "Delete Category",
+      "Delete this category? This cannot be undone.",
+      async () => {
+        closeConfirmDialog();
+        try {
+          const res = await fetch(`${API_BASE}/categories/${catId}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (res.ok) {
+            handleSelectDeptConfig(selectedDeptId);
+            setSuccess("Category deleted.");
+          }
+        } catch (err) {}
       }
-    } catch (err) {}
+    );
   };
 
   // Start editing a category
@@ -1098,32 +1129,44 @@ export default function App() {
 
   // Delete Keyword
   const handleDeleteKeyword = async (kwId: string) => {
-    if (!window.confirm("Remove this keyword? This cannot be undone.")) return;
-    try {
-      const res = await fetch(`${API_BASE}/keywords/${kwId}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        handleSelectDeptConfig(selectedDeptId);
-        setSuccess("Keyword removed.");
+    openConfirmDialog(
+      "Remove Keyword",
+      "Remove this keyword? This cannot be undone.",
+      async () => {
+        closeConfirmDialog();
+        try {
+          const res = await fetch(`${API_BASE}/keywords/${kwId}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (res.ok) {
+            handleSelectDeptConfig(selectedDeptId);
+            setSuccess("Keyword removed.");
+          }
+        } catch (err) {}
       }
-    } catch (err) {}
+    );
   };
 
   const handleDeleteDepartment= async (kwId: string) => {
-    if (!window.confirm("Delete this department? This will also remove its sub-departments, categories, and keywords. This cannot be undone.")) return;
-    try {
-      const res = await fetch(`${API_BASE}/departments/${kwId}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        setDepartments(departments.filter(department => department.id != kwId))
-        handleSelectDeptConfig("");
-        setSuccess("department removed.");
+    openConfirmDialog(
+      "Delete Department",
+      "Delete this department? This will also remove its sub-departments, categories, and keywords. This cannot be undone.",
+      async () => {
+        closeConfirmDialog();
+        try {
+          const res = await fetch(`${API_BASE}/departments/${kwId}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (res.ok) {
+            setDepartments(departments.filter(department => department.id != kwId))
+            handleSelectDeptConfig("");
+            setSuccess("department removed.");
+          }
+        } catch (err) {}
       }
-    } catch (err) {}
+    );
   };
 
 
@@ -2922,6 +2965,14 @@ export default function App() {
           )}
         </main>
       </div>
+
+      <ConfirmDialog
+        open={confirmDialog.open}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={closeConfirmDialog}
+      />
     </div>
   );
 }
