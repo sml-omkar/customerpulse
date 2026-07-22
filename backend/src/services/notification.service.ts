@@ -1,10 +1,9 @@
 import { sendMail } from "../lib/mailer";
 import type { Ticket, User, TicketEscalation } from "../generated/prisma/client";
-import { email } from "zod";
+
 import {config} from "dotenv"
 config()
 
-const APP_URL = process.env.APP_URL ?? "http://localhost:3000";
 
 function layout(title: string, bodyHtml: string) {
   return `
@@ -31,7 +30,7 @@ export const notificationService = {
   },
 
   async sendInvitation(email: string, token: string, role: string,password:string) {
-    const link = `${APP_URL}?token=${token}`;
+    const link = `https://customerpulse.sanghvimovers.com?token=${token}`;
     await sendMail({
       to: email,
       subject: `You've been invited to join Sanghvi`,
@@ -65,7 +64,7 @@ export const notificationService = {
         <p>Hi ${assignee.fullName},</p>
         <p>Ticket <b>${ticket.ticketNumber}</b> - "${ticket.title}" (Priority ${ticket.priority}) has been assigned to you.</p>
         ${ticket.slaDeadline ? `<p>SLA deadline: <b>${ticket.slaDeadline.toISOString()}</b></p>` : ""}
-        <p><a href="${APP_URL}/tickets/${ticket.id}">View ticket</a></p>
+        
       `),
     });
   },
@@ -81,7 +80,6 @@ export const notificationService = {
         <p>Hi ${cxo.fullName},</p>
         <p>Ticket <b>${ticket.ticketNumber}</b> has been escalated.</p>
         <p>Reason: ${escalation.reason}</p>
-        <p><a href="${APP_URL}/tickets/${ticket.id}">View ticket</a></p>
       `),
     });
   },
@@ -105,7 +103,7 @@ export const notificationService = {
         <p>Hi ${recipient.fullName},</p>
         <p>${commenter.fullName} added a new comment on ticket <b>${ticket.ticketNumber}</b> - "${ticket.title}".</p>
         <blockquote style="margin:12px 0;padding:8px 12px;border-left:3px solid #e5e7eb;color:#374151">${commentText}</blockquote>
-        <p><a href="${APP_URL}/tickets/${ticket.id}">View ticket</a></p>
+       
       `),
     });
   },
