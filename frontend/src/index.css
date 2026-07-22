@@ -22,10 +22,28 @@
   50% { opacity: 1; }
 }
 
+html, body, #root {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 body {
   font-family: var(--font-sans);
   background-color: #fcfcfc; /* Pure soft gray/white background */
   color: #0f172a; /* Deep charcoal text */
+}
+
+/* NOTE(added): tablet/mobile responsiveness pass - long unbroken strings
+   (emails, UUIDs, URLs) inside table cells, chips, and cards were the most
+   common source of horizontal overflow on narrow viewports. This forces
+   them to wrap instead of stretching their container. Elements that
+   intentionally rely on nowrap/truncate (e.g. `truncate`, `whitespace-nowrap`)
+   are unaffected since a plain class further down the cascade / a more
+   specific rule still wins where already applied. */
+@media (max-width: 767px) {
+  td, th {
+    overflow-wrap: anywhere;
+  }
 }
 
 @theme inline {
