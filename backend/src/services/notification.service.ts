@@ -95,6 +95,19 @@ export const notificationService = {
     });
   },
 
+  async sendCommentAdded(ticket: Ticket, recipient: User, commenter: User, commentText: string) {
+    await sendMail({
+      to: recipient.email,
+      subject: `[${ticket.ticketNumber}] New comment: ${ticket.title}`,
+      html: layout("New comment added", `
+        <p>Hi ${recipient.fullName},</p>
+        <p>${commenter.fullName} added a new comment on ticket <b>${ticket.ticketNumber}</b> - "${ticket.title}".</p>
+        <blockquote style="margin:12px 0;padding:8px 12px;border-left:3px solid #e5e7eb;color:#374151">${commentText}</blockquote>
+        <p><a href="${APP_URL}/tickets/${ticket.id}">View ticket</a></p>
+      `),
+    });
+  },
+
   async sendTicketResolved(ticket: Ticket, requester: User) {
     await sendMail({
       to: requester.email,
