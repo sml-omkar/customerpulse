@@ -573,19 +573,19 @@ export const AdvancedTicketFilters: React.FC<AdvancedTicketFiltersProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm mt-4 pt-4 border-t border-slate-100">
             <div>
               <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Custom Date Filter</div>
-              <div className="flex items-center gap-2">
-                <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-xl" />
-                <span className="text-slate-400 text-xs">to</span>
-                <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-xl" />
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="w-full min-w-0 px-3 py-2 border border-slate-200 rounded-xl" />
+                <span className="text-slate-400 text-xs text-center sm:text-left shrink-0">to</span>
+                <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="w-full min-w-0 px-3 py-2 border border-slate-200 rounded-xl" />
               </div>
             </div>
 
             <div>
               <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Date of Occurrence</div>
-              <div className="flex items-center gap-2">
-                <input type="date" value={occurredFrom} onChange={(e) => setOccurredFrom(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-xl" />
-                <span className="text-slate-400 text-xs">to</span>
-                <input type="date" value={occurredTo} onChange={(e) => setOccurredTo(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-xl" />
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                <input type="date" value={occurredFrom} onChange={(e) => setOccurredFrom(e.target.value)} className="w-full min-w-0 px-3 py-2 border border-slate-200 rounded-xl" />
+                <span className="text-slate-400 text-xs text-center sm:text-left shrink-0">to</span>
+                <input type="date" value={occurredTo} onChange={(e) => setOccurredTo(e.target.value)} className="w-full min-w-0 px-3 py-2 border border-slate-200 rounded-xl" />
               </div>
             </div>
 
