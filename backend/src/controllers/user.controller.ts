@@ -5,6 +5,11 @@ import { TicketStatus, UserRole } from "../generated/prisma/enums";
 import { AppError } from "../middleware/errorHandler";
 import { roleChangeReassignmentService } from "../services/roleChangeReassignment.service";
 
+// Roles that personally work tickets and can hold an `agentsdepartmentId`.
+// Only AGENT today, but written this way so the reassignment trigger below
+// stays correct if that ever changes.
+const TICKET_WORKING_ROLES: UserRole[] = [UserRole.AGENT];
+
 export const userController = {
   // GET /users/me
   async me(req: AuthedRequest, res: Response) {
@@ -157,14 +162,28 @@ export const userController = {
   //     department they already head (e.g. a plain HOD -> CXO swap in
   //     place). Whatever department they used to head that they're no
   //     longer heading has its manager/cxo slot cleared.
-  //   - AGENT -> HOD/CXO is more involved on the ticket side: the promoted
-  //     user stops working tickets themselves, so every ticket still open
-  //     in their *old agent department* (agentsdepartmentId - unrelated to
+  //   - A department can only have ONE HOD and ONE CXO at a time. If
+  //     `headDepartmentId` already has a different HOD (when promoting to
+  //     HOD) or a different CXO (when promoting to CXO), the request is
+  //     rejected with a 409 - the existing HOD/CXO has to be reassigned or
+  //     demoted first. This applies no matter who's being promoted (agent,
+  //     requester, or anyone else).
+  //   - AGENT -> HOD/CXO/REQUESTER/GLOBAL_ADMIN (any role change away from
+  //     AGENT) is more involved on the ticket side: the moved user stops
+  //     working tickets themselves, so every ticket still open in their
+  //     *old agent department* (agentsdepartmentId - unrelated to
   //     headDepartmentId above) is either auto-assigned to another agent
   //     in that department (if one exists) or left unassigned (if the
-  //     department has no other agents). Either way the promoted user is
-  //     notified with the full breakdown. See
-  //     roleChangeReassignment.service.ts for the details.
+  //     department has no other agents).
+  //   - Transferring an AGENT to a *different* department (role unchanged)
+  //     is handled the same way: every ticket still open in their *old*
+  //     department is redistributed the same way, since they no longer
+  //     work tickets there.
+  //   - Either way, both the moved user AND the HOD of the old department
+  //     are notified (in-app + email) with the full breakdown - which
+  //     tickets got auto-assigned to whom, and which ones are sitting
+  //     unassigned because the department has nobody left to pick them up.
+  //     See roleChangeReassignment.service.ts for the details.
   async update(req: AuthedRequest, res: Response) {
     const { role, departmentId, headDepartmentId, supportLevel, isActive, isAvailableForAssignment, maxActiveTickets } = req.body;
 
@@ -177,6 +196,16 @@ export const userController = {
     }
 
     const finalRole: UserRole = role !== undefined ? role : existing.role;
+
+    // NOTE(fixed): `departmentId` is only meant to update agentsdepartmentId
+    // when the caller actually sends it. Previously this fell straight
+    // through to `departmentId || null` unconditionally below, which meant
+    // ANY profile edit that omitted departmentId (e.g. just toggling
+    // isActive) silently wiped the agent's department. Now: only change it
+    // when the field is present in the request body; an explicit `null`/""
+    // still means "unassign from any department".
+    const departmentProvided = departmentId !== undefined;
+    const finalAgentDepartmentId: string | null = departmentProvided ? departmentId || null : existing.agentsdepartmentId;
 
     // NOTE(added): department(s) this person currently heads, if any -
     // fetched up front (regardless of role) so we know what to clean up
@@ -199,26 +228,71 @@ export const userController = {
       throw new AppError("headDepartmentId is required when setting a user's role to HOD or CXO", 400);
     }
 
-    if (headDepartmentId) {
-      const headDepartment = await prisma.department.findUnique({ where: { id: headDepartmentId } });
+    // NOTE(added): a department can only ever have ONE HOD and ONE CXO at a
+    // time - Department.managerId / Department.cxoId are single-valued, not
+    // lists (see migration 20260715163713_removed_the_multiple_hod_and_cxo_
+    // for_a_particular_department). Promoting an agent/requester/anyone
+    // else into a seat that's already held by someone else would silently
+    // knock the incumbent out of their role with none of the ticket-side
+    // handling that a real role change gets - so block it outright instead.
+    // The admin has to explicitly move or demote the current HOD/CXO first.
+    // (Fetched once against `finalHeadDepartmentId`, which covers both an
+    // explicitly-given headDepartmentId and the "stay in my current seat"
+    // fallback above - the latter can never conflict since it's already
+    // this same user's own seat, but the existence check is a nice-to-have
+    // safety net either way.)
+    let headDepartment: { id: string; name: string; managerId: string | null; cxoId: string | null } | null = null;
+    if (finalHeadDepartmentId) {
+      headDepartment = await prisma.department.findUnique({
+        where: { id: finalHeadDepartmentId },
+        select: { id: true, name: true, managerId: true, cxoId: true },
+      });
       if (!headDepartment) throw new AppError("Department not found", 404);
     }
 
-    // Snapshot before the role actually flips - we need the *old agent*
-    // department to know who the ticket redistribution pool is, and the
-    // reassignment must run against the *new* role (so the promoted user
-    // is excluded from their own former candidate pool).
-    const isAgentPromotedToExecRole =
-      existing.role === UserRole.AGENT &&
-      (finalRole === UserRole.HOD || finalRole === UserRole.CXO) &&
-      existing.agentsdepartmentId;
+    if (finalRole === UserRole.HOD && headDepartment?.managerId && headDepartment.managerId !== existing.id) {
+      throw new AppError(
+        `${headDepartment.name} already has an HOD. Reassign or remove the current HOD before promoting someone else into that seat.`,
+        409
+      );
+    }
+    if (finalRole === UserRole.CXO && headDepartment?.cxoId && headDepartment.cxoId !== existing.id) {
+      throw new AppError(
+        `${headDepartment.name} already has a CXO. Reassign or remove the current CXO before promoting someone else into that seat.`,
+        409
+      );
+    }
+
+    // Snapshot before the role/department actually flip - we need the *old
+    // agent* department to know who the ticket redistribution pool is, and
+    // the reassignment must run against the *new* role/department (so the
+    // moved user is excluded from their own former candidate pool).
+    //
+    //   - roleChangedAwayFromAgent: they used to work tickets as an AGENT
+    //     and no longer do (promoted to HOD/CXO, demoted to REQUESTER,
+    //     made a GLOBAL_ADMIN - any role other than AGENT).
+    //   - departmentChangedForAgent: they're still an AGENT, but their
+    //     agentsdepartmentId is moving to a different value (a straight
+    //     team transfer, or being pulled off a department entirely).
+    // These are mutually exclusive by construction (the second requires
+    // finalRole === AGENT, the first requires finalRole !== AGENT).
     const oldAgentDepartmentId = existing.agentsdepartmentId;
+
+    const roleChangedAwayFromAgent =
+      existing.role === UserRole.AGENT && !TICKET_WORKING_ROLES.includes(finalRole) && !!oldAgentDepartmentId;
+
+    const departmentChangedForAgent =
+      existing.role === UserRole.AGENT &&
+      finalRole === UserRole.AGENT &&
+      !!oldAgentDepartmentId &&
+      departmentProvided &&
+      finalAgentDepartmentId !== oldAgentDepartmentId;
 
     const user = await prisma.user.update({
       where: { id: req.params.id },
       data: {
         ...(role !== undefined && { role }),
-        agentsdepartmentId: departmentId || null,
+        agentsdepartmentId: finalAgentDepartmentId,
         ...(supportLevel !== undefined && { supportLevel: supportLevel || null }),
         ...(isActive !== undefined && { isActive: Boolean(isActive) }),
         ...(isAvailableForAssignment !== undefined && { isAvailableForAssignment: Boolean(isAvailableForAssignment) }),
@@ -250,13 +324,15 @@ export const userController = {
     }
 
     let ticketReassignmentSummary = null;
-    if (isAgentPromotedToExecRole) {
-      ticketReassignmentSummary = await roleChangeReassignmentService.handleAgentPromotedAway({
-        promotedUserId: user.id,
-        promotedUserFullName: user.fullName,
-        promotedUserEmail: user.email,
+    if (roleChangedAwayFromAgent || departmentChangedForAgent) {
+      ticketReassignmentSummary = await roleChangeReassignmentService.handleAgentTicketReassignment({
+        movedUserId: user.id,
+        movedUserFullName: user.fullName,
+        movedUserEmail: user.email,
         oldDepartmentId: oldAgentDepartmentId,
+        reason: roleChangedAwayFromAgent ? "ROLE_CHANGE" : "DEPARTMENT_TRANSFER",
         newRole: user.role,
+        newDepartmentId: user.agentsdepartmentId,
         performedById: req.user!.id,
       });
     }
