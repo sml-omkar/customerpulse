@@ -334,13 +334,13 @@ interface KpiCardProps {
 function KpiCard({ icon: Icon, label, value, sub, tone, trend }: KpiCardProps) {
   return (
     <div className="rounded-2xl border p-3.5 sm:p-5 flex flex-col gap-2 sm:gap-3 min-w-0" style={{ borderColor: C.neutral[200], backgroundColor: "#fff" }}>
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2 flex-wrap min-w-0">
         <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: tone.bg }}>
           <Icon size={16} className="sm:hidden" style={{ color: tone.fg }} />
           <Icon size={18} className="hidden sm:block" style={{ color: tone.fg }} />
         </div>
         {trend && (
-          <span className="inline-flex items-center gap-0.5 text-[11px] sm:text-xs font-semibold whitespace-nowrap" style={{ color: trend.direction === "up" ? C.success[600] : C.destructive[600] }}>
+          <span className="inline-flex items-center gap-0.5 text-[11px] sm:text-xs font-semibold" style={{ color: trend.direction === "up" ? C.success[600] : C.destructive[600] }}>
             {trend.direction === "up" ? <TrendingUp size={13} /> : <TrendingDown size={13} />}
             {trend.value}
           </span>
@@ -721,7 +721,7 @@ export default function AgentDashboard({ token, apiFetch }: AgentDashboardProps 
     : "—";
 
   return (
-    <div className="min-h-screen w-full font-sans" style={{ backgroundColor: C.neutral[50] }}>
+    <div className="min-h-screen w-full max-w-full font-sans overflow-x-hidden" style={{ backgroundColor: C.neutral[50] }}>
       <div className="max-w-[1400px] mx-auto px-3 sm:px-6 py-4 sm:py-6">
         {/* ---------------- Top bar ---------------- */}
         <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
@@ -758,7 +758,7 @@ export default function AgentDashboard({ token, apiFetch }: AgentDashboardProps 
 
 
         {/* ---------------- KPI row ---------------- */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-6">
           <KpiCard icon={Ticket} label="Open tickets" value={kpis.open} tone={{ bg: C.primary[50], fg: C.primary[600] }} sub={`${kpis.total} total in ${displayLabel.toLowerCase()}`} trend={kpis.openTrend} />
           <KpiCard icon={CheckCircle2} label="Resolved" value={kpis.resolved} tone={{ bg: C.success[50], fg: C.success[600] }} sub="Resolved + closed in range" trend={kpis.resolvedTrend} />
           <KpiCard icon={Timer} label="Avg. resolution time" value={`${kpis.avgTat}h`} tone={{ bg: C.warning[50], fg: C.warning[600] }} sub={targetTatHours != null ? `Dept target: ${targetTatHours}h` : "Dept target: not enough data yet"} trend={kpis.tatTrendDelta} />
@@ -768,7 +768,7 @@ export default function AgentDashboard({ token, apiFetch }: AgentDashboardProps 
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5">
           {/* ---------------- Left / main column ---------------- */}
-          <div className="lg:col-span-2 flex flex-col gap-4 sm:gap-5">
+          <div className="lg:col-span-2 flex flex-col gap-4 sm:gap-5 min-w-0">
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4 sm:gap-5">
               <SectionCard title="Ticket status mix" subtitle="All tickets currently on your desk" className="md:col-span-3">
                 <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
@@ -954,7 +954,7 @@ export default function AgentDashboard({ token, apiFetch }: AgentDashboardProps 
           </div>
 
           {/* ---------------- Right / side column ---------------- */}
-          <div className="flex flex-col gap-4 sm:gap-5">
+          <div className="flex flex-col gap-4 sm:gap-5 min-w-0">
             <SectionCard title="You vs. department" subtitle={`Avg. resolution time (hours) — ${displayLabel}`}>
               <div style={{ width: "100%", height: 140 }}>
                 <ResponsiveContainer>
