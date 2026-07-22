@@ -118,4 +118,16 @@ export const notificationService = {
       `),
     });
   },
+
+  async sendTicketReopened(ticket: Ticket, assignee: User) {
+    await sendMail({
+      to: assignee.email,
+      subject: `[${ticket.ticketNumber}] Ticket reopened: ${ticket.title}`,
+      html: layout("Ticket reopened", `
+        <p>Hi ${assignee.fullName},</p>
+        <p>Ticket <b>${ticket.ticketNumber}</b> - "${ticket.title}" has been reopened and is back on your queue.</p>
+        ${ticket.slaDeadline ? `<p>SLA deadline: <b>${ticket.slaDeadline.toISOString()}</b></p>` : ""}
+      `),
+    });
+  },
 };
