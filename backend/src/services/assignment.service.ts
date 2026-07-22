@@ -91,7 +91,9 @@ export const assignmentService = {
    * All three respect maxActiveTickets - an agent at capacity is never
    * selected, regardless of how good their match score is.
    */
-  async findBestAgent(ticketId: string) {
+  async findBestAgent(ticketId: string, options?: { excludeAgentId?: string }) {
+    const excludeAgentId = options?.excludeAgentId;
+
     const ticket = await prisma.ticket.findUniqueOrThrow({
       where: { id: ticketId },
       include: { keywords: true },
@@ -120,7 +122,11 @@ export const assignmentService = {
       // base candidate pool; wind/non-wind/both and state are applied as
       // filters on top of that pool below, not the other way round.
       const categoryAgents = await prisma.categoryAgent.findMany({
-        where: { categoryId: ticket.categoryId, agent: { agentsdepartmentId: ticket.departmentId } },
+        where: {
+          categoryId: ticket.categoryId,
+          agent: { agentsdepartmentId: ticket.departmentId },
+          ...(excludeAgentId ? { userId: { not: excludeAgentId } } : {}),
+        },
         include: {
           agent: {
             include: { ticketsAssigned: { where: { status: { in: OPEN_STATUSES } }, select: { id: true } } },
@@ -179,6 +185,7 @@ export const assignmentService = {
       where: {
         agentsdepartmentId: ticket.departmentId,
         role: { in: ASSIGNABLE_AGENT_ROLES },
+        ...(excludeAgentId ? { id: { not: excludeAgentId } } : {}),
       },
       include: {
         skills: true,
@@ -232,8 +239,8 @@ export const assignmentService = {
     };
   },
 
-  async autoAssign(ticketId: string, assignedById?: string) {
-    const result = await this.findBestAgent(ticketId);
+  async autoAssign(ticketId: string, assignedById?: string, options?: { excludeAgentId?: string }) {
+    const result = await this.findBestAgent(ticketId, options);
     if (!result) {
       // Leave unassigned - it'll surface on the department's unassigned
       // queue / SLA job rather than being silently dropped.
