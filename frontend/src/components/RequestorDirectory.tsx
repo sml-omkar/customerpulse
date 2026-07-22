@@ -267,7 +267,7 @@ export const RequestorDirectory = (
             </button>
           </div>
           {bulkResult.skipped.length > 0 && (
-            <div className="border border-slate-100 rounded-lg overflow-hidden">
+            <div className="border border-slate-100 rounded-lg overflow-x-auto">
               <table className="min-w-full text-xs">
                 <thead className="bg-slate-50/75 text-slate-500 font-semibold uppercase tracking-wider">
                   <tr>
