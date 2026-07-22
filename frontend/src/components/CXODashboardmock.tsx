@@ -534,23 +534,23 @@ function MultiSelectFilter({
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen(v => !v)}
-        className="flex items-center gap-2 h-9 px-3 rounded-lg text-xs font-medium transition-colors bg-white select-none"
+        className="flex items-center gap-2 h-9 px-3 rounded-lg text-xs font-medium transition-colors bg-white select-none w-full sm:w-auto"
         style={{
           border: `1px solid ${open ? C.primary200 : C.neutral200}`,
           color: allSelected ? C.neutral700 : C.primary700,
           boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
-          minWidth: "9rem",
+          minWidth: "0",
         }}
       >
         <span className="flex-shrink-0" style={{ color: C.neutral400 }}>{icon}</span>
-        <span className="flex-1 truncate text-left max-w-[9rem]">{triggerLabel}</span>
+        <span className="flex-1 truncate text-left sm:max-w-[9rem]">{triggerLabel}</span>
         <ChevronDownIcon className="w-3.5 h-3.5 flex-shrink-0 transition-transform duration-200" style={{ color: C.neutral400, transform: open ? "rotate(180deg)" : "rotate(0deg)" }} />
       </button>
 
       {open && (
         <div
-          className="absolute left-0 z-40 bg-white rounded-xl overflow-hidden"
-          style={{ top: "calc(100% + 6px)", width: 240, maxWidth: "85vw", border: `1px solid ${C.neutral200}`, boxShadow: "0 8px 24px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.06)" }}
+          className="absolute left-0 z-40 bg-white rounded-xl overflow-hidden w-full sm:w-60"
+          style={{ top: "calc(100% + 6px)", maxWidth: "85vw", border: `1px solid ${C.neutral200}`, boxShadow: "0 8px 24px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.06)" }}
         >
           <div style={{ maxHeight: 280, overflowY: "auto" }}>
             <button
@@ -595,6 +595,20 @@ function MultiSelectFilter({
 
 const STATUS_OPTIONS: TicketStatus[] = ["OPEN", "REOPENED", "IN_PROGRESS", "ON_HOLD", "RESOLVED"];
 
+// Recharts pixel props (axis widths, radii, legend layout) are plain numbers —
+// Tailwind breakpoints don't touch them, so a chart that looks fine on
+// desktop can visually fall apart on a phone unless we adjust those numbers
+// ourselves based on real viewport width.
+function useIsCompact() {
+  const [isCompact, setIsCompact] = useState(() => (typeof window !== "undefined" ? window.innerWidth < 640 : false));
+  useEffect(() => {
+    const onResize = () => setIsCompact(window.innerWidth < 640);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+  return isCompact;
+}
+
 interface ManagerAnalyticsProps {
   token: string;
   apiFetch?: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
@@ -602,6 +616,7 @@ interface ManagerAnalyticsProps {
 
 export default function ManagerAnalyticsMock({ token, apiFetch }: ManagerAnalyticsProps) {
   const requestFn = apiFetch || window.fetch;
+  const isCompact = useIsCompact();
 
   // ── live data ───────────────────────────────────────────────────────────
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -850,39 +865,41 @@ export default function ManagerAnalyticsMock({ token, apiFetch }: ManagerAnalyti
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-xl shadow-sm p-3 mb-6 flex flex-wrap items-center gap-2 min-w-0" style={{ border: `1px solid ${C.neutral200}` }}>
+        <div className="bg-white rounded-xl shadow-sm p-3 mb-6 flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2 min-w-0" style={{ border: `1px solid ${C.neutral200}` }}>
           <span className="text-[11px] font-semibold uppercase tracking-widest px-1 flex items-center gap-1 shrink-0" style={{ color: C.neutral400 }}>Filters</span>
 
-          <MultiSelectFilter
-            label="Departments"
-            icon={<Building2 className="w-3.5 h-3.5" />}
-            options={ALL_DEPARTMENTS.map(d => ({ id: d.id, label: d.name }))}
-            selected={selectedDeptIds}
-            onChange={setSelectedDeptIds}
-          />
-          <MultiSelectFilter
-            label="Status"
-            icon={<CircleDot className="w-3.5 h-3.5" />}
-            options={STATUS_OPTIONS.map(s => ({ id: s, label: STATUS_LABEL[s] }))}
-            selected={selectedStatuses}
-            onChange={setSelectedStatuses}
-          />
-          <MultiSelectFilter
-            label="Site"
-            icon={<MapPin className="w-3.5 h-3.5" />}
-            options={availableStates}
-            selected={selectedStates}
-            onChange={setSelectedStates}
-          />
-          <MultiSelectFilter
-            label="Clients"
-            icon={<Briefcase className="w-3.5 h-3.5" />}
-            options={availableClients}
-            selected={selectedClients}
-            onChange={setSelectedClients}
-          />
+          <div className="grid grid-cols-2 gap-2 sm:contents">
+            <MultiSelectFilter
+              label="Departments"
+              icon={<Building2 className="w-3.5 h-3.5" />}
+              options={ALL_DEPARTMENTS.map(d => ({ id: d.id, label: d.name }))}
+              selected={selectedDeptIds}
+              onChange={setSelectedDeptIds}
+            />
+            <MultiSelectFilter
+              label="Status"
+              icon={<CircleDot className="w-3.5 h-3.5" />}
+              options={STATUS_OPTIONS.map(s => ({ id: s, label: STATUS_LABEL[s] }))}
+              selected={selectedStatuses}
+              onChange={setSelectedStatuses}
+            />
+            <MultiSelectFilter
+              label="Site"
+              icon={<MapPin className="w-3.5 h-3.5" />}
+              options={availableStates}
+              selected={selectedStates}
+              onChange={setSelectedStates}
+            />
+            <MultiSelectFilter
+              label="Clients"
+              icon={<Briefcase className="w-3.5 h-3.5" />}
+              options={availableClients}
+              selected={selectedClients}
+              onChange={setSelectedClients}
+            />
+          </div>
 
-          <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto sm:ml-auto justify-end">
+          <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto sm:ml-auto justify-between sm:justify-end">
             {activeFilterCount > 0 && (
               <button
                 onClick={clearAllFilters}
@@ -920,25 +937,38 @@ export default function ManagerAnalyticsMock({ token, apiFetch }: ManagerAnalyti
           {/* Status distribution + department volume */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 min-w-0">
             <SectionCard title="Ticket status distribution" subtitle={`All tickets in scope, by current status — ${rangeLabel}`}>
-              <ResponsiveContainer width="100%" height={220}>
-                <PieChart>
-                  <Pie data={statusDistribution} dataKey="count" nameKey="name" innerRadius={55} outerRadius={85} paddingAngle={3}>
+              <ResponsiveContainer width="100%" height={isCompact ? 280 : 220}>
+                <PieChart margin={isCompact ? { bottom: 24 } : undefined}>
+                  <Pie
+                    data={statusDistribution}
+                    dataKey="count"
+                    nameKey="name"
+                    cx="50%"
+                    cy={isCompact ? "42%" : "50%"}
+                    innerRadius={isCompact ? 45 : 55}
+                    outerRadius={isCompact ? 70 : 85}
+                    paddingAngle={3}
+                  >
                     {statusDistribution.map(s => (
                       <Cell key={s.status} fill={STATUS_COLOR[s.status]} />
                     ))}
                   </Pie>
                   <Tooltip contentStyle={TOOLTIP_STYLE} />
-                  <Legend verticalAlign="middle" align="right" layout="vertical" iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12, fontFamily: "ui-monospace" }} />
+                  {isCompact ? (
+                    <Legend verticalAlign="bottom" align="center" layout="horizontal" iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11, fontFamily: "ui-monospace" }} />
+                  ) : (
+                    <Legend verticalAlign="middle" align="right" layout="vertical" iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12, fontFamily: "ui-monospace" }} />
+                  )}
                 </PieChart>
               </ResponsiveContainer>
             </SectionCard>
 
             <SectionCard title="Tickets by department" subtitle={`Volume raised per department — ${rangeLabel}`}>
               <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={deptDistribution} layout="vertical" margin={{ left: 8, right: 16 }}>
+                <BarChart data={deptDistribution} layout="vertical" margin={{ left: 0, right: isCompact ? 8 : 16 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} horizontal={false} />
-                  <XAxis type="number" tick={{ fontSize: 11, fill: AXIS_TICK }} axisLine={false} tickLine={false} allowDecimals={false} />
-                  <YAxis dataKey="name" type="category" tick={{ fontSize: 11, fill: C.neutral700 }} axisLine={false} tickLine={false} width={130} />
+                  <XAxis type="number" tick={{ fontSize: isCompact ? 10 : 11, fill: AXIS_TICK }} axisLine={false} tickLine={false} allowDecimals={false} />
+                  <YAxis dataKey="name" type="category" tick={{ fontSize: isCompact ? 10 : 11, fill: C.neutral700 }} axisLine={false} tickLine={false} width={isCompact ? 84 : 130} />
                   <Tooltip contentStyle={TOOLTIP_STYLE} />
                   <Bar dataKey="count" fill={ACCENT_SECONDARY} radius={[0, 4, 4, 0]} name="Tickets" />
                 </BarChart>
@@ -953,10 +983,10 @@ export default function ManagerAnalyticsMock({ token, apiFetch }: ManagerAnalyti
                 <p className="text-sm py-8 text-center" style={{ color: C.neutral400 }}>No tickets match the current filters</p>
               ) : (
                 <ResponsiveContainer width="100%" height={Math.max(180, stateDistribution.length * 32)}>
-                  <BarChart data={stateDistribution} layout="vertical" margin={{ left: 8, right: 16 }}>
+                  <BarChart data={stateDistribution} layout="vertical" margin={{ left: 0, right: isCompact ? 8 : 16 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} horizontal={false} />
-                    <XAxis type="number" tick={{ fontSize: 11, fill: AXIS_TICK }} axisLine={false} tickLine={false} allowDecimals={false} />
-                    <YAxis dataKey="name" type="category" tick={{ fontSize: 11, fill: C.neutral700 }} axisLine={false} tickLine={false} width={100} />
+                    <XAxis type="number" tick={{ fontSize: isCompact ? 10 : 11, fill: AXIS_TICK }} axisLine={false} tickLine={false} allowDecimals={false} />
+                    <YAxis dataKey="name" type="category" tick={{ fontSize: isCompact ? 10 : 11, fill: C.neutral700 }} axisLine={false} tickLine={false} width={isCompact ? 70 : 100} />
                     <Tooltip contentStyle={TOOLTIP_STYLE} />
                     <Bar dataKey="count" fill={ACCENT_CHART_B} radius={[0, 4, 4, 0]} name="Tickets" />
                   </BarChart>
@@ -969,10 +999,10 @@ export default function ManagerAnalyticsMock({ token, apiFetch }: ManagerAnalyti
                 <p className="text-sm py-8 text-center" style={{ color: C.neutral400 }}>No tickets match the current filters</p>
               ) : (
                 <ResponsiveContainer width="100%" height={Math.max(180, clientDistribution.length * 32)}>
-                  <BarChart data={clientDistribution} layout="vertical" margin={{ left: 8, right: 16 }}>
+                  <BarChart data={clientDistribution} layout="vertical" margin={{ left: 0, right: isCompact ? 8 : 16 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} horizontal={false} />
-                    <XAxis type="number" tick={{ fontSize: 11, fill: AXIS_TICK }} axisLine={false} tickLine={false} allowDecimals={false} />
-                    <YAxis dataKey="name" type="category" tick={{ fontSize: 11, fill: C.neutral700 }} axisLine={false} tickLine={false} width={130} />
+                    <XAxis type="number" tick={{ fontSize: isCompact ? 10 : 11, fill: AXIS_TICK }} axisLine={false} tickLine={false} allowDecimals={false} />
+                    <YAxis dataKey="name" type="category" tick={{ fontSize: isCompact ? 10 : 11, fill: C.neutral700 }} axisLine={false} tickLine={false} width={isCompact ? 84 : 130} />
                     <Tooltip contentStyle={TOOLTIP_STYLE} />
                     <Bar dataKey="count" fill={ACCENT_CHART_C} radius={[0, 4, 4, 0]} name="Tickets" />
                   </BarChart>
@@ -997,10 +1027,10 @@ export default function ManagerAnalyticsMock({ token, apiFetch }: ManagerAnalyti
             <div>
               <p className="text-xs font-medium mb-2" style={{ color: C.neutral600 }}>By department</p>
               <ResponsiveContainer width="100%" height={Math.max(160, tatByDept.length * 42)}>
-                <BarChart data={tatByDept} layout="vertical" margin={{ left: 8, right: 16 }}>
+                <BarChart data={tatByDept} layout="vertical" margin={{ left: 0, right: isCompact ? 8 : 16 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} horizontal={false} />
-                  <XAxis type="number" tick={{ fontSize: 11, fill: AXIS_TICK }} axisLine={false} tickLine={false} unit="h" />
-                  <YAxis dataKey="name" type="category" tick={{ fontSize: 11, fill: C.neutral700 }} axisLine={false} tickLine={false} width={130} />
+                  <XAxis type="number" tick={{ fontSize: isCompact ? 10 : 11, fill: AXIS_TICK }} axisLine={false} tickLine={false} unit="h" />
+                  <YAxis dataKey="name" type="category" tick={{ fontSize: isCompact ? 10 : 11, fill: C.neutral700 }} axisLine={false} tickLine={false} width={isCompact ? 84 : 130} />
                   <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(v: number) => [fmtHours(v), "Avg. TAT"] as [string, string]} />
                   <Bar dataKey="avgHours" fill={C.destructive500} radius={[0, 4, 4, 0]} name="Avg. TAT (hrs)" />
                 </BarChart>
@@ -1019,10 +1049,10 @@ export default function ManagerAnalyticsMock({ token, apiFetch }: ManagerAnalyti
                 </div>
               </div>
               <ResponsiveContainer width="100%" height={Math.max(160, tatByCategory.length * 42)}>
-                <BarChart data={tatByCategory} layout="vertical" margin={{ left: 8, right: 16 }}>
+                <BarChart data={tatByCategory} layout="vertical" margin={{ left: 0, right: isCompact ? 8 : 16 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} horizontal={false} />
-                  <XAxis type="number" tick={{ fontSize: 11, fill: AXIS_TICK }} axisLine={false} tickLine={false} unit="h" />
-                  <YAxis dataKey="name" type="category" tick={{ fontSize: 11, fill: C.neutral700 }} axisLine={false} tickLine={false} width={140} />
+                  <XAxis type="number" tick={{ fontSize: isCompact ? 10 : 11, fill: AXIS_TICK }} axisLine={false} tickLine={false} unit="h" />
+                  <YAxis dataKey="name" type="category" tick={{ fontSize: isCompact ? 10 : 11, fill: C.neutral700 }} axisLine={false} tickLine={false} width={isCompact ? 90 : 140} />
                   <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(v: number) => [fmtHours(v), "Avg. TAT"] as [string, string]} />
                   <Bar dataKey="avgHours" fill={C.destructive700} radius={[0, 4, 4, 0]} name="Avg. TAT (hrs)" />
                 </BarChart>
