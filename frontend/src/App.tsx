@@ -966,6 +966,7 @@ export default function App() {
   // Delete Sub-Department - categories mapped to it fall back to being
   // department-wide rather than being deleted (handled by the backend).
   const handleDeleteSubDepartment = async (subDeptId: string) => {
+    if (!window.confirm("Delete this sub-department? Categories mapped to it will fall back to being department-wide. This cannot be undone.")) return;
     try {
       const res = await fetch(`${API_BASE}/subdepartments/${subDeptId}`, {
         method: "DELETE",
@@ -1012,6 +1013,7 @@ export default function App() {
 
   // Delete Category
   const handleDeleteCategory = async (catId: string) => {
+    if (!window.confirm("Delete this category? This cannot be undone.")) return;
     try {
       const res = await fetch(`${API_BASE}/categories/${catId}`, {
         method: "DELETE",
@@ -1098,7 +1100,7 @@ export default function App() {
 
   // Delete Keyword
   const handleDeleteKeyword = async (kwId: string) => {
-   
+    if (!window.confirm("Remove this keyword? This cannot be undone.")) return;
     try {
       const res = await fetch(`${API_BASE}/keywords/${kwId}`, {
         method: "DELETE",
@@ -1112,7 +1114,7 @@ export default function App() {
   };
 
   const handleDeleteDepartment= async (kwId: string) => {
-     
+    if (!window.confirm("Delete this department? This will also remove its sub-departments, categories, and keywords. This cannot be undone.")) return;
     try {
       const res = await fetch(`${API_BASE}/departments/${kwId}`, {
         method: "DELETE",
