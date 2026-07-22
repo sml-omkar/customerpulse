@@ -333,28 +333,29 @@ interface KpiCardProps {
 
 function KpiCard({ icon: Icon, label, value, sub, tone, trend }: KpiCardProps) {
   return (
-    <div className="rounded-2xl border p-5 flex flex-col gap-3" style={{ borderColor: C.neutral[200], backgroundColor: "#fff" }}>
+    <div className="rounded-2xl border p-3.5 sm:p-5 flex flex-col gap-2 sm:gap-3 min-w-0" style={{ borderColor: C.neutral[200], backgroundColor: "#fff" }}>
       <div className="flex items-center justify-between">
-        <div className="h-9 w-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: tone.bg }}>
-          <Icon size={18} style={{ color: tone.fg }} />
+        <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: tone.bg }}>
+          <Icon size={16} className="sm:hidden" style={{ color: tone.fg }} />
+          <Icon size={18} className="hidden sm:block" style={{ color: tone.fg }} />
         </div>
         {trend && (
-          <span className="inline-flex items-center gap-0.5 text-xs font-semibold" style={{ color: trend.direction === "up" ? C.success[600] : C.destructive[600] }}>
+          <span className="inline-flex items-center gap-0.5 text-[11px] sm:text-xs font-semibold whitespace-nowrap" style={{ color: trend.direction === "up" ? C.success[600] : C.destructive[600] }}>
             {trend.direction === "up" ? <TrendingUp size={13} /> : <TrendingDown size={13} />}
             {trend.value}
           </span>
         )}
       </div>
-      <div>
-        <div className="text-2xl font-semibold tabular-nums" style={{ color: C.neutral[900] }}>
+      <div className="min-w-0">
+        <div className="text-xl sm:text-2xl font-semibold tabular-nums truncate" style={{ color: C.neutral[900] }}>
           {value}
         </div>
-        <div className="text-sm mt-0.5" style={{ color: C.neutral[500] }}>
+        <div className="text-xs sm:text-sm mt-0.5 truncate" style={{ color: C.neutral[500] }}>
           {label}
         </div>
       </div>
       {sub && (
-        <div className="text-xs" style={{ color: C.neutral[400] }}>
+        <div className="text-[11px] sm:text-xs truncate" style={{ color: C.neutral[400] }}>
           {sub}
         </div>
       )}
@@ -372,9 +373,9 @@ interface SectionCardProps {
 
 function SectionCard({ title, subtitle, action, children, className = "" }: SectionCardProps) {
   return (
-    <div className={`rounded-2xl border p-5 ${className}`} style={{ borderColor: C.neutral[200], backgroundColor: "#fff" }}>
-      <div className="flex items-start justify-between mb-4">
-        <div>
+    <div className={`rounded-2xl border p-4 sm:p-5 min-w-0 ${className}`} style={{ borderColor: C.neutral[200], backgroundColor: "#fff" }}>
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-4 gap-2 sm:gap-3">
+        <div className="min-w-0">
           <h3 className="text-sm font-semibold" style={{ color: C.neutral[800] }}>
             {title}
           </h3>
@@ -384,7 +385,7 @@ function SectionCard({ title, subtitle, action, children, className = "" }: Sect
             </p>
           )}
         </div>
-        {action}
+        {action && <div className="shrink-0">{action}</div>}
       </div>
       {children}
     </div>
@@ -454,7 +455,7 @@ function DateRangePicker({ activeKey, displayLabel, onSelectPreset, onApplyCusto
       </button>
 
       {open && view === "list" && (
-        <div className="absolute right-0 mt-2 w-56 rounded-xl border shadow-lg z-20 py-2 max-h-80 overflow-y-auto" style={{ borderColor: C.neutral[200], backgroundColor: "#fff" }}>
+        <div className="absolute right-0 mt-2 w-56 max-w-[85vw] rounded-xl border shadow-lg z-20 py-2 max-h-80 overflow-y-auto" style={{ borderColor: C.neutral[200], backgroundColor: "#fff" }}>
           {DATE_RANGE_GROUPS.map((group, gi) => (
             <div key={group.label} className={gi > 0 ? "mt-1 pt-1 border-t" : ""} style={{ borderColor: C.neutral[100] }}>
               <div className="px-3 pt-1.5 pb-1 text-[10px] font-semibold uppercase tracking-wide" style={{ color: C.neutral[400] }}>
@@ -494,7 +495,7 @@ function DateRangePicker({ activeKey, displayLabel, onSelectPreset, onApplyCusto
       )}
 
       {open && view === "custom" && (
-        <div className="absolute right-0 mt-2 w-72 rounded-xl border shadow-lg z-20 p-4" style={{ borderColor: C.neutral[200], backgroundColor: "#fff" }}>
+        <div className="absolute right-0 mt-2 w-72 max-w-[90vw] rounded-xl border shadow-lg z-20 p-4" style={{ borderColor: C.neutral[200], backgroundColor: "#fff" }}>
           <button type="button" onClick={() => setView("list")} className="text-xs font-medium mb-3 flex items-center gap-1" style={{ color: C.neutral[500] }}>
             <ChevronDown size={12} style={{ transform: "rotate(90deg)" }} />
             Back
@@ -721,31 +722,31 @@ export default function AgentDashboard({ token, apiFetch }: AgentDashboardProps 
 
   return (
     <div className="min-h-screen w-full font-sans" style={{ backgroundColor: C.neutral[50] }}>
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-4 sm:py-6">
+      <div className="max-w-[1400px] mx-auto px-3 sm:px-6 py-4 sm:py-6">
         {/* ---------------- Top bar ---------------- */}
         <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-          <div className="flex items-center gap-3">
-            <div className="h-11 w-11 rounded-xl flex items-center justify-center text-sm font-semibold" style={{ backgroundColor: C.primary[600], color: "#fff" }}>
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-xl flex items-center justify-center text-sm font-semibold shrink-0" style={{ backgroundColor: C.primary[600], color: "#fff" }}>
               {agentInitials}
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-lg font-semibold" style={{ color: C.neutral[900] }}>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-base sm:text-lg font-semibold truncate" style={{ color: C.neutral[900] }}>
                   {agentIdentity?.fullName ?? "—"}
                 </h1>
-                <span className="text-[11px] font-semibold uppercase tracking-wide rounded-md px-2 py-0.5" style={{ backgroundColor: C.primary[50], color: C.primary[700] }}>
+                <span className="text-[11px] font-semibold uppercase tracking-wide rounded-md px-2 py-0.5 shrink-0" style={{ backgroundColor: C.primary[50], color: C.primary[700] }}>
                   Agent
                 </span>
               </div>
-              <div className="flex items-center gap-1.5 text-xs mt-0.5" style={{ color: C.neutral[500] }}>
-                <Building2 size={12} />
+              <div className="flex items-center gap-1.5 text-xs mt-0.5 flex-wrap" style={{ color: C.neutral[500] }}>
+                <Building2 size={12} className="shrink-0" />
                 {agentIdentity?.departmentName ? ` ${agentIdentity.departmentName}` : ""}
                 {agentIdentity?.managerName ? ` · reports to ${agentIdentity.managerName}` : ""}
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             {loadState === "error" && (
               <span className="text-xs font-medium" style={{ color: C.destructive[600] }}>
                 Couldn't load your data — check your connection and retry.
@@ -757,7 +758,7 @@ export default function AgentDashboard({ token, apiFetch }: AgentDashboardProps 
 
 
         {/* ---------------- KPI row ---------------- */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-6">
           <KpiCard icon={Ticket} label="Open tickets" value={kpis.open} tone={{ bg: C.primary[50], fg: C.primary[600] }} sub={`${kpis.total} total in ${displayLabel.toLowerCase()}`} trend={kpis.openTrend} />
           <KpiCard icon={CheckCircle2} label="Resolved" value={kpis.resolved} tone={{ bg: C.success[50], fg: C.success[600] }} sub="Resolved + closed in range" trend={kpis.resolvedTrend} />
           <KpiCard icon={Timer} label="Avg. resolution time" value={`${kpis.avgTat}h`} tone={{ bg: C.warning[50], fg: C.warning[600] }} sub={targetTatHours != null ? `Dept target: ${targetTatHours}h` : "Dept target: not enough data yet"} trend={kpis.tatTrendDelta} />
@@ -765,13 +766,13 @@ export default function AgentDashboard({ token, apiFetch }: AgentDashboardProps 
           <KpiCard icon={Flame} label="SLA breached" value={kpis.breached} tone={{ bg: C.destructive[50], fg: C.destructive[600] }} sub="Needs immediate action" />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5">
           {/* ---------------- Left / main column ---------------- */}
-          <div className="lg:col-span-2 flex flex-col gap-5">
-            <div className="grid grid-cols-1 sm:grid-cols-5 gap-5">
-              <SectionCard title="Ticket status mix" subtitle="All tickets currently on your desk" className="sm:col-span-3">
-                <div className="flex items-center gap-6">
-                  <div style={{ width: 150, height: 150 }}>
+          <div className="lg:col-span-2 flex flex-col gap-4 sm:gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 sm:gap-5">
+              <SectionCard title="Ticket status mix" subtitle="All tickets currently on your desk" className="md:col-span-3">
+                <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+                  <div className="shrink-0" style={{ width: 150, height: 150 }}>
                     <ResponsiveContainer>
                       <PieChart>
                         <Pie data={statusData} dataKey="value" innerRadius={45} outerRadius={70} paddingAngle={3} strokeWidth={0}>
@@ -783,14 +784,14 @@ export default function AgentDashboard({ token, apiFetch }: AgentDashboardProps 
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
-                  <div className="flex-1 flex flex-col gap-2">
+                  <div className="flex-1 w-full flex flex-col gap-2 min-w-0">
                     {statusData.map((d) => (
                       <div key={d.name} className="flex items-center justify-between text-sm">
-                        <span className="flex items-center gap-2" style={{ color: C.neutral[600] }}>
-                          <span className="h-2 w-2 rounded-full" style={{ backgroundColor: d.color }} />
-                          {d.name}
+                        <span className="flex items-center gap-2 truncate" style={{ color: C.neutral[600] }}>
+                          <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: d.color }} />
+                          <span className="truncate">{d.name}</span>
                         </span>
-                        <span className="font-semibold tabular-nums" style={{ color: C.neutral[800] }}>
+                        <span className="font-semibold tabular-nums shrink-0" style={{ color: C.neutral[800] }}>
                           {d.value}
                         </span>
                       </div>
@@ -799,7 +800,7 @@ export default function AgentDashboard({ token, apiFetch }: AgentDashboardProps 
                 </div>
               </SectionCard>
 
-              <SectionCard title="By priority" subtitle="Open + closed" className="sm:col-span-2">
+              <SectionCard title="By priority" subtitle="Open + closed" className="md:col-span-2">
                 <div style={{ width: "100%", height: 150 }}>
                   <ResponsiveContainer>
                     <BarChart data={priorityData} margin={{ left: -20 }}>
@@ -842,8 +843,8 @@ export default function AgentDashboard({ token, apiFetch }: AgentDashboardProps 
                   </div>
                 )}
                 {timeByCategory.map((row) => (
-                  <div key={row.category} className="flex items-center gap-3">
-                    <div className="w-32 shrink-0">
+                  <div key={row.category} className="flex items-center gap-2 sm:gap-3">
+                    <div className="w-20 sm:w-32 shrink-0">
                       <div className="text-xs font-semibold flex items-center gap-1.5" style={{ color: C.neutral[800] }}>
                         <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ backgroundColor: categoryMeta(row.category).dot }} />
                         <span className="truncate">{row.category}</span>
@@ -857,12 +858,12 @@ export default function AgentDashboard({ token, apiFetch }: AgentDashboardProps 
                         <div key={i} style={{ width: `${(seg.hours / row.total) * 100}%`, backgroundColor: STATUS_META[seg.status].dot }} title={`${STATUS_META[seg.status].label}: ${seg.hours.toFixed(1)}h`} />
                       ))}
                     </div>
-                    <div className="w-14 text-right text-xs font-medium tabular-nums" style={{ color: C.neutral[500] }}>
+                    <div className="w-10 sm:w-14 text-right text-xs font-medium tabular-nums shrink-0" style={{ color: C.neutral[500] }}>
                       {row.total.toFixed(1)}h
                     </div>
                   </div>
                 ))}
-                <div className="flex items-center gap-4 pt-2 mt-1 border-t" style={{ borderColor: C.neutral[100] }}>
+                <div className="flex items-center gap-3 sm:gap-4 pt-2 mt-1 border-t flex-wrap" style={{ borderColor: C.neutral[100] }}>
                   {(["OPEN", "IN_PROGRESS", "ON_HOLD"] as TicketStatus[]).map((s) => (
                     <span key={s} className="flex items-center gap-1.5 text-[11px]" style={{ color: C.neutral[500] }}>
                       <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: STATUS_META[s].dot }} />
@@ -877,7 +878,7 @@ export default function AgentDashboard({ token, apiFetch }: AgentDashboardProps 
               title="My tickets"
               subtitle="Assigned to you"
               action={
-                <div className="flex items-center gap-1 rounded-lg p-1" style={{ backgroundColor: C.neutral[100] }}>
+                <div className="flex items-center gap-1 rounded-lg p-1 flex-wrap" style={{ backgroundColor: C.neutral[100] }}>
                   {(
                     [
                       ["OPEN", "Open"],
@@ -921,7 +922,7 @@ export default function AgentDashboard({ token, apiFetch }: AgentDashboardProps 
                           <div className="font-semibold text-xs" style={{ color: C.neutral[800] }}>
                             {t.id}
                           </div>
-                          <div className="text-xs truncate max-w-[220px]" style={{ color: C.neutral[500] }}>
+                          <div className="text-xs truncate max-w-[140px] sm:max-w-[220px]" style={{ color: C.neutral[500] }}>
                             {t.subject}
                           </div>
                         </td>
@@ -953,7 +954,7 @@ export default function AgentDashboard({ token, apiFetch }: AgentDashboardProps 
           </div>
 
           {/* ---------------- Right / side column ---------------- */}
-          <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-4 sm:gap-5">
             <SectionCard title="You vs. department" subtitle={`Avg. resolution time (hours) — ${displayLabel}`}>
               <div style={{ width: "100%", height: 140 }}>
                 <ResponsiveContainer>
@@ -1056,4 +1057,3 @@ export default function AgentDashboard({ token, apiFetch }: AgentDashboardProps 
     </div>
   );
 }
-
