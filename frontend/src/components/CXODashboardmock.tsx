@@ -882,7 +882,7 @@ export default function ManagerAnalyticsMock({ token, apiFetch }: ManagerAnalyti
             onChange={setSelectedClients}
           />
 
-          <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto sm:ml-auto">
+          <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto sm:ml-auto justify-end">
             {activeFilterCount > 0 && (
               <button
                 onClick={clearAllFilters}
