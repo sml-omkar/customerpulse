@@ -919,7 +919,7 @@ export const InvitationComponent: React.FC<InvitationComponentProps> = ({
                 className="w-full flex items-center justify-center gap-1.5 border border-zinc-300 text-zinc-700 text-xs font-semibold py-2.5 hover:bg-zinc-50 disabled:opacity-50 cursor-pointer transition-colors"
               >
                 <Upload size={14} />
-                {bulkUploading ? "Uploading..." : `Bulk Upload (${inviteRole})`}
+                {bulkUploading ? "Uploading..." : `Bulk Upload (${inviteRole == "REQUESTER" ? "USER" : inviteRole})`}
               </button>
               {showBulkMenu && (
                 <>
