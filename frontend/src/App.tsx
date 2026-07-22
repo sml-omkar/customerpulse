@@ -241,6 +241,15 @@ export default function App() {
       return false;
     }
   });
+  // NOTE(added): off-canvas nav drawer toggle for tablet/mobile widths
+  // (< md). Desktop keeps using sidebarCollapsed (icon-only vs full width);
+  // this is separate so opening the mobile drawer never touches the
+  // persisted desktop preference.
+  const [mobileNavOpen, setMobileNavOpen] = useState<boolean>(false);
+  // NOTE(added): the mobile drawer is always rendered full-width, so while
+  // it's open, NavItems should always show their labels regardless of the
+  // separate desktop-only icon-collapse preference.
+  const navCollapsed = mobileNavOpen ? false : sidebarCollapsed;
 
   useEffect(() => {
     try {
@@ -250,6 +259,12 @@ export default function App() {
       // just won't persist across reloads, which is fine.
     }
   }, [sidebarCollapsed]);
+
+  // NOTE(added): close the mobile drawer whenever the active view changes,
+  // so tapping a nav item on a phone navigates AND dismisses the overlay.
+  useEffect(() => {
+    setMobileNavOpen(false);
+  }, [currentView]);
 
   // Data Lists State
   const [tickets, setTickets] = useState<TicketType[]>([]);
@@ -1381,17 +1396,25 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans antialiased text-slate-900 selection:bg-slate-200 selection:text-slate-900">
       {/* Top Navigation Banner */}
-      <header className="bg-white text-slate-900 h-14 flex items-center justify-between px-6 shrink-0 border-b border-slate-200 shadow-xs select-none">
-        <div className="flex items-center gap-3">
-          <img src={"../assets/logo.jpg"} className="w-10 h-10" />
-          <span className="text-[10px] uppercase font-bold tracking-wider font-mono text-slate-700 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200">
+      <header className="bg-white text-slate-900 h-14 flex items-center justify-between px-3 sm:px-6 shrink-0 border-b border-slate-200 shadow-xs select-none">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          {/* Mobile-only nav drawer toggle */}
+          <button
+            onClick={() => setMobileNavOpen((prev) => !prev)}
+            className="md:hidden p-1.5 -ml-1 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 cursor-pointer shrink-0"
+            aria-label={mobileNavOpen ? "Close navigation" : "Open navigation"}
+          >
+            <Menu size={18} />
+          </button>
+          <img src={"../assets/logo.jpg"} className="w-8 h-8 sm:w-10 sm:h-10 shrink-0" />
+          <span className="hidden sm:inline-flex text-[10px] uppercase font-bold tracking-wider font-mono text-slate-700 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200 truncate">
             Customer Pulse
           </span>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="text-right">
-            <div className="text-xs font-semibold text-slate-900">
+        <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+          <div className="hidden sm:block text-right min-w-0">
+            <div className="text-xs font-semibold text-slate-900 truncate max-w-[160px]">
               {user?.fullName}
             </div>
             <div className="text-[10px] text-slate-500 font-mono tracking-wider flex items-center justify-end gap-1.5 uppercase font-bold">
@@ -1400,19 +1423,21 @@ export default function App() {
             </div>
           </div>
 
-          <span className="text-slate-300">|</span>
+          <span className="hidden sm:inline text-slate-300">|</span>
 
-          {/* Profile link */}
+          {/* Profile link - icon only on mobile, icon+label from sm up */}
           <button
             onClick={() => setCurrentView(PAGES.PROFILE)}
-            className="text-xs font-semibold text-slate-600 hover:text-slate-900 cursor-pointer transition-colors"
+            className="p-1.5 sm:p-0 rounded-lg text-slate-500 sm:text-slate-600 hover:text-slate-900 hover:bg-slate-100 sm:hover:bg-transparent cursor-pointer transition-colors flex items-center gap-1.5"
+            title="My Profile"
           >
-            My Profile
+            <User size={16} className="sm:hidden" />
+            <span className="hidden sm:inline text-xs font-semibold">My Profile</span>
           </button>
 
           <button
             onClick={handleLogout}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-slate-100 cursor-pointer transition-all"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-slate-100 cursor-pointer transition-all shrink-0"
             title="Log Out"
           >
             <LogOut size={16} />
@@ -1421,20 +1446,38 @@ export default function App() {
       </header>
 
       {/* Main Body: Sidebar + Content panel */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Left Side Corporate Sidebar navigation */}
+      <div className="flex flex-1 overflow-hidden relative">
+        {/* Mobile-only backdrop, shown behind the drawer when open */}
+        {mobileNavOpen && (
+          <div
+            className="fixed inset-0 z-30 bg-black/40 md:hidden"
+            onClick={() => setMobileNavOpen(false)}
+            aria-hidden="true"
+          />
+        )}
+
+        {/* Left Side Corporate Sidebar navigation.
+            - Below md: fixed off-canvas drawer, slid in/out with mobileNavOpen.
+            - md and up: normal in-flow sidebar, width driven by sidebarCollapsed
+              exactly as before. */}
         <nav
-          className={`${sidebarCollapsed ? "w-16" : "w-64"} bg-white text-slate-600 flex flex-col border-r border-slate-200 select-none shrink-0 font-sans text-xs transition-[width] duration-200 ease-in-out`}
+          onClick={() => setMobileNavOpen(false)}
+          className={`fixed inset-y-0 left-0 z-40 w-64 top-14 md:top-0 transform transition-transform duration-200 ease-in-out ${
+            mobileNavOpen ? "translate-x-0" : "-translate-x-full"
+          } md:translate-x-0 md:static md:z-auto ${
+            sidebarCollapsed ? "md:w-16" : "md:w-64"
+          } bg-white text-slate-600 flex flex-col border-r border-slate-200 select-none shrink-0 font-sans text-xs md:transition-[width] duration-200 ease-in-out`}
         >
           <div className="p-4 flex items-center justify-between border-b border-slate-200">
-            {!sidebarCollapsed && (
-              <span className="uppercase text-[10px] font-semibold text-slate-400 tracking-wider">
-                Navigation
-              </span>
-            )}
+            <span className={`uppercase text-[10px] font-semibold text-slate-400 tracking-wider ${sidebarCollapsed ? "md:hidden" : ""}`}>
+              Navigation
+            </span>
             <button
-              onClick={() => setSidebarCollapsed((prev) => !prev)}
-              className={`p-1 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-slate-100 cursor-pointer transition-all ${sidebarCollapsed ? "mx-auto" : ""}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                setSidebarCollapsed((prev) => !prev);
+              }}
+              className={`hidden md:inline-flex p-1 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-slate-100 cursor-pointer transition-all ${sidebarCollapsed ? "mx-auto" : ""}`}
               title={sidebarCollapsed ? "Expand navigation" : "Collapse navigation"}
               aria-label={sidebarCollapsed ? "Expand navigation" : "Collapse navigation"}
             >
@@ -1447,7 +1490,7 @@ export default function App() {
               icon={<Activity size={15} />}
               label="Home"
               active={currentView === PAGES.DASHBOARD}
-              collapsed={sidebarCollapsed}
+              collapsed={navCollapsed}
               onClick={() => setCurrentView(PAGES.DASHBOARD)}
             />
 
@@ -1456,7 +1499,7 @@ export default function App() {
                 icon={<Users size={15} />}
                 label="Manager Dashboard"
                 active={currentView === PAGES.HOD_DASHBOARD}
-                collapsed={sidebarCollapsed}
+                collapsed={navCollapsed}
                 onClick={() => setCurrentView(PAGES.HOD_DASHBOARD)}
               />
             )}
@@ -1466,7 +1509,7 @@ export default function App() {
                 icon={<Layers size={15} />}
                 label="Department Analytics"
                 active={currentView === PAGES.HOD_ANALYTICS}
-                collapsed={sidebarCollapsed}
+                collapsed={navCollapsed}
                 onClick={() => setCurrentView(PAGES.HOD_ANALYTICS)}
               />
             )}
@@ -1476,7 +1519,7 @@ export default function App() {
                 icon={<Layers size={15} />}
                 label="Executive Dashboard"
                 active={currentView === PAGES.CXO_DASHBOARD}
-                collapsed={sidebarCollapsed}
+                collapsed={navCollapsed}
                 onClick={() => setCurrentView(PAGES.CXO_DASHBOARD)}
               />
             )}
@@ -1486,7 +1529,7 @@ export default function App() {
                 icon={<Layers size={15} />}
                 label="Executive Analytics"
                 active={currentView === PAGES.CXO_ANALYTICS}
-                collapsed={sidebarCollapsed}
+                collapsed={navCollapsed}
                 onClick={() => setCurrentView(PAGES.CXO_ANALYTICS)}
               />
             )}
@@ -1497,7 +1540,7 @@ export default function App() {
                 icon={<Users size={15} />}
                 label="Staff Directory"
                 active={currentView === PAGES.USER_DIRECTORY}
-                collapsed={sidebarCollapsed}
+                collapsed={navCollapsed}
                 onClick={() => setCurrentView(PAGES.USER_DIRECTORY)}
               />
             )}
@@ -1508,7 +1551,7 @@ export default function App() {
                 icon={<User size={15} />}
                 label="Users Directory"
                 active={currentView === PAGES.REQUESTOR_DIRECTORY}
-                collapsed={sidebarCollapsed}
+                collapsed={navCollapsed}
                 onClick={() => setCurrentView(PAGES.REQUESTOR_DIRECTORY)}
               />
             )}
@@ -1519,7 +1562,7 @@ export default function App() {
                 icon={<Mail size={15} />}
                 label="Invitations"
                 active={currentView === PAGES.PENDING_INVITES}
-                collapsed={sidebarCollapsed}
+                collapsed={navCollapsed}
                 onClick={() => setCurrentView(PAGES.PENDING_INVITES)}
               />
             )}
@@ -1530,7 +1573,7 @@ export default function App() {
                 icon={<Layers size={15} />}
                 label="Departments"
                 active={currentView === PAGES.DEPARTMENTS}
-                collapsed={sidebarCollapsed}
+                collapsed={navCollapsed}
                 onClick={() => {
                   setCurrentView(PAGES.DEPARTMENTS);
                   setSelectedDeptId("");
@@ -1543,7 +1586,7 @@ export default function App() {
                 icon={<Layers size={15} />}
                 label="Analytics"
                 active={currentView === PAGES.AGENT_ANALYTICS}
-                collapsed={sidebarCollapsed}
+                collapsed={navCollapsed}
                 onClick={() => {
                   setCurrentView(PAGES.AGENT_ANALYTICS);
                   setSelectedDeptId("");
@@ -1557,7 +1600,7 @@ export default function App() {
                 icon={<Settings size={15} />}
                 label="Clients Database"
                 active={currentView === PAGES.CLIENTS}
-                collapsed={sidebarCollapsed}
+                collapsed={navCollapsed}
                 onClick={() => setCurrentView(PAGES.CLIENTS)}
               />
             )}
@@ -1568,7 +1611,7 @@ export default function App() {
                 icon={<Database size={15} />}
                 label="System Audit Logs"
                 active={currentView === PAGES.AUDIT_LOGS}
-                collapsed={sidebarCollapsed}
+                collapsed={navCollapsed}
                 onClick={() => setCurrentView(PAGES.AUDIT_LOGS)}
               />
             )}
@@ -1576,7 +1619,7 @@ export default function App() {
         </nav>
 
         {/* Central Operations Viewport container */}
-        <main className="flex-1 p-8 overflow-y-auto">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto overflow-x-hidden min-w-0">
           {error && currentView !== PAGES.TICKET_DETAILS && (
             <div className="mb-6 p-3.5 bg-red-50 border border-red-200 text-red-800 text-sm flex items-center gap-2">
               <ShieldAlert size={16} />
