@@ -731,27 +731,27 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
   return (
     <div className="space-y-6">
       {/* Top breadcrumb & back bar */}
-      <div className="flex justify-between items-center bg-white border border-slate-200 px-4 py-3 rounded-xl shadow-xs">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-3 bg-white border border-slate-200 px-4 py-3 rounded-xl shadow-xs">
+        <div className="flex flex-wrap items-center gap-3 min-w-0">
           <button
             onClick={onBack}
-            className="text-xs font-semibold text-slate-600 hover:text-slate-900 border border-slate-200 hover:bg-slate-50 px-3 py-2 rounded-lg transition-all duration-200 cursor-pointer"
+            className="text-xs font-semibold text-slate-600 hover:text-slate-900 border border-slate-200 hover:bg-slate-50 px-3 py-2 rounded-lg transition-all duration-200 cursor-pointer shrink-0"
           >
             ← Back to Queue
           </button>
-          <span className="text-slate-300">|</span>
-          <span className="text-sm font-mono font-semibold text-slate-900 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-md">
+          <span className="text-slate-300 hidden sm:inline">|</span>
+          <span className="text-sm font-mono font-semibold text-slate-900 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-md break-all sm:break-normal sm:truncate sm:max-w-xs md:max-w-sm">
             {[ticket.ticketNumber, ticket.category?.name || "General", ticket.clientName].join(" _ ")}
           </span>
           {ticket.requester?.role === "REQUESTER" && (
-            <span className="text-[10px] font-bold uppercase tracking-wide bg-amber-50 text-amber-700 border border-amber-200 px-2 py-1 rounded-md">
+            <span className="text-[10px] font-bold uppercase tracking-wide bg-amber-50 text-amber-700 border border-amber-200 px-2 py-1 rounded-md shrink-0">
               External Ticket
             </span>
           )}
         </div>
 
         {/* Action button bar */}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {/* Full ticket edit - GLOBAL_ADMIN only */}
           {isAdmin && (
             <button
@@ -1161,16 +1161,16 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
         <div className="lg:col-span-2 space-y-6">
           {/* Main Record Header & Description */}
           <div className="bg-white border border-slate-200/80 shadow-sm rounded-2xl p-6">
-            <div className="flex justify-between items-start gap-4 mb-4">
-              <div>
-                <span className="text-xs font-mono font-medium text-slate-500 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200/60">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-4">
+              <div className="min-w-0">
+                <span className="text-xs font-mono font-medium text-slate-500 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200/60 break-words">
                   {ticket.department?.name || "No Dept"} • {ticket.category?.name || "General"}
                 </span>
-                <h1 className="text-xl font-bold text-slate-900 mt-2">{ticket.title}</h1>
+                <h1 className="text-xl font-bold text-slate-900 mt-2 break-words">{ticket.title}</h1>
               </div>
 
               {/* Priority Badges */}
-              <div className="flex flex-col items-end gap-1.5">
+              <div className="flex flex-row sm:flex-col items-start sm:items-end gap-1.5 shrink-0">
                
 
                 {/* Internal-only triage metric - separate from the customer-facing
@@ -1289,14 +1289,14 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
                         : "bg-white border-zinc-200"
                     }`}
                   >
-                    <div className="flex justify-between items-center text-[11px] text-zinc-500 font-mono mb-1.5 pb-1 border-b border-zinc-100">
-                      <span className="font-semibold text-zinc-700">
+                    <div className="flex flex-wrap justify-between items-center gap-x-3 gap-y-1 text-[11px] text-zinc-500 font-mono mb-1.5 pb-1 border-b border-zinc-100">
+                      <span className="font-semibold text-zinc-700 break-words">
                         {comment.user.fullName}
                         <span className="text-[10px] ml-1.5 text-zinc-400 bg-zinc-100 px-1 border">
                           {comment.user.role}
                         </span>
                       </span>
-                      <span>{new Date(comment.createdAt).toLocaleString()}</span>
+                      <span className="shrink-0">{new Date(comment.createdAt).toLocaleString()}</span>
                     </div>
                     <p className="text-sm text-zinc-800 whitespace-pre-wrap">{comment.commentText}</p>
                     {comment.attachment && (
@@ -1542,10 +1542,10 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
                 <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-bold text-xs shrink-0">
                   {ticket.requester?.fullName ? ticket.requester.fullName[0].toUpperCase() : "U"}
                 </div>
-                <div className="text-xs">
+                <div className="text-xs min-w-0">
                   <span className="text-slate-400 block font-medium">Requested by</span>
-                  <span className="font-bold text-slate-800">{ticket.requester?.fullName || "System User"}</span>
-                  <span className="text-slate-400 block font-mono text-[10px]">{ticket.requester?.email}</span>
+                  <span className="font-bold text-slate-800 break-words">{ticket.requester?.fullName || "System User"}</span>
+                  <span className="text-slate-400 block font-mono text-[10px] break-all">{ticket.requester?.email}</span>
                 </div>
               </div>
 
@@ -1553,11 +1553,11 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
                 <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-800 font-bold text-xs shrink-0">
                   {ticket.assignee?.fullName ? ticket.assignee.fullName[0].toUpperCase() : "?"}
                 </div>
-                <div className="text-xs flex-1">
+                <div className="text-xs flex-1 min-w-0">
                   <span className="text-slate-400 block font-medium">Assigned Support Agent</span>
                   {ticket.assignee ? (
                     <div>
-                      <span className="font-bold text-slate-800">{ticket.assignee.fullName}</span>
+                      <span className="font-bold text-slate-800 break-words">{ticket.assignee.fullName}</span>
                       <span className="text-slate-400 block font-mono text-[10px]">Level: {ticket.assignee.supportLevel || "L1"}</span>
                       {ticket.assignmentMethod && (
                         <span className="inline-block bg-slate-100 border border-slate-200 rounded text-[9px] font-mono px-1.5 mt-1 text-slate-500">
