@@ -4,6 +4,7 @@ import { prisma } from "../lib/database";
 import { isStaff } from "../utils/rbac";
 import { AppError } from "../middleware/errorHandler";
 import { TicketStatus } from "../generated/prisma/client";
+import { notificationService } from "../services/notification.service";
 
 const CLOSED_STATUSES: TicketStatus[] = [TicketStatus.RESOLVED];
 
@@ -14,7 +15,10 @@ export const commentController = {
   // Comments are closed once a ticket is RESOLVED or CLOSED - reopen the
   // ticket (staff/admin PATCH status) if further discussion is needed.
   async create(req: AuthedRequest, res: Response) {
-    const ticket = await prisma.ticket.findUniqueOrThrow({ where: { id: req.params.ticketId } });
+    const ticket = await prisma.ticket.findUniqueOrThrow({
+      where: { id: req.params.ticketId },
+      include: { requester: true, assignee: true },
+    });
     if (CLOSED_STATUSES.includes(ticket.status)) {
       throw new AppError("This ticket is resolved/closed - reopen it before adding new comments", 400);
     }
@@ -30,6 +34,26 @@ export const commentController = {
       include: { user: true, attachment: true },
     });
     res.status(201).json(comment);
+
+    // Notify the other party that a comment was added. Internal comments
+    // are staff-only and never surfaced to the requester, so they're
+    // excluded from the requester notification. The commenter themself
+    // is never notified about their own comment.
+    const recipients: (typeof ticket.requester)[] = [];
+    if (!isInternal && ticket.requester.id !== req.user!.id) {
+      recipients.push(ticket.requester);
+    }
+    if (ticket.assignee && ticket.assignee.id !== req.user!.id) {
+      recipients.push(ticket.assignee);
+    }
+
+    await Promise.all(
+      recipients.map((recipient) =>
+        notificationService.sendCommentAdded(ticket, recipient, comment.user, comment.commentText)
+      )
+    ).catch((err) => {
+      console.error("Failed to send comment notification:", err);
+    });
   },
 
   // GET /tickets/:ticketId/comments
