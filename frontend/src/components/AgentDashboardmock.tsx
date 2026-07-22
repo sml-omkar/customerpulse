@@ -721,9 +721,9 @@ export default function AgentDashboard({ token, apiFetch }: AgentDashboardProps 
 
   return (
     <div className="min-h-screen w-full font-sans" style={{ backgroundColor: C.neutral[50] }}>
-      <div className="max-w-[1400px] mx-auto px-6 py-6">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-4 sm:py-6">
         {/* ---------------- Top bar ---------------- */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
           <div className="flex items-center gap-3">
             <div className="h-11 w-11 rounded-xl flex items-center justify-center text-sm font-semibold" style={{ backgroundColor: C.primary[600], color: "#fff" }}>
               {agentInitials}
