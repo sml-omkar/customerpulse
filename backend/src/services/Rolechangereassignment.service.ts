@@ -129,10 +129,11 @@ export const roleChangeReassignmentService = {
         // findBestAgent only ever considers AGENT-role users in the
         // ticket's own department, and by this point the moved user's role
         // and/or agentsdepartmentId has already changed in the DB, so they
-        // can't be picked again here.
-        const best = await assignmentService.findBestAgent(ticket.id);
+        // can't be picked again here. excludeAgentId is passed anyway as a
+        // second safety net.
+        const best = await assignmentService.findBestAgent(ticket.id, { excludeAgentId: movedUserId });
         if (best) {
-          await assignmentService.autoAssign(ticket.id, performedById);
+          await assignmentService.autoAssign(ticket.id, performedById, { excludeAgentId: movedUserId });
           reassigned.push({ ticketNumber: ticket.ticketNumber, title: ticket.title, newAssigneeName: best.agent.fullName });
           handled = true;
         }
