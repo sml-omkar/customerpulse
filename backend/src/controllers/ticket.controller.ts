@@ -485,6 +485,7 @@ export const ticketController = {
         totalHoldMinutes: true,
         resolvedStartedAt: true,
         totalResolvedMinutes: true,
+        assignee: true,
         category:{
           select :{
             defaultPriority: true,
@@ -536,6 +537,13 @@ export const ticketController = {
           changedById: req.user!.id,
         });
       }
+
+      // Let whoever is currently assigned know the ticket is back on their
+      // queue - only fires when there is someone assigned to notify.
+      if (previous.assignee) {
+        await notificationService.sendTicketReopened(ticket, previous.assignee);
+      }
+
       return res.json(ticket)
     } else if (status == TicketStatus.RESOLVED && previous) {
 
