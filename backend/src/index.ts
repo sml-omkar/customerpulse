@@ -34,7 +34,7 @@ app.use(corsMiddleware);
 app.use("/uploads", uploadsRouter);
 app.use(express.json());
 app.use(requestLogger);
-app.use(cors({origin: 'http://customerpulse.sanghvimovers.com:5173',}))
+app.use(cors({origin: 'http://customerpulse.sanghvimovers.com:5173'}))
 
 // app.use(generalLimiter);
 // ---- routes ----
