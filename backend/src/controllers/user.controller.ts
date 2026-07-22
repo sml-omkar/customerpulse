@@ -1,9 +1,10 @@
 import { Response } from "express";
 import { AuthedRequest } from "../middleware/auth";
 import { prisma } from "../lib/database";
-import { TicketStatus, UserRole } from "../generated/prisma/enums";
+import { TicketStatus, UserRole, WindCategory } from "../generated/prisma/enums";
 import { AppError } from "../middleware/errorHandler";
 import { roleChangeReassignmentService } from "../services/roleChangeReassignment.service";
+import { resolveZone, statesForZone } from "../utils/zoneStateMap";
 
 // Roles that personally work tickets and can hold an `agentsdepartmentId`.
 // Only AGENT today, but written this way so the reassignment trigger below
@@ -114,6 +115,11 @@ export const userController = {
         id: true, fullName: true, email: true, role: true, 
         supportLevel: true, isActive: true, isAvailableForAssignment: true, maxActiveTickets: true,
         agentsdepartmentId: true,
+        // NOTE(added): surfaced so the admin's Staff Directory "edit" modal
+        // can show/prefill an AGENT's current Zone (derived from `state`)
+        // and Wind Category alongside their role/department.
+        state: true,
+        windCategory: true,
         _count : {
           select : {
             ticketsAssigned : true
@@ -133,6 +139,19 @@ export const userController = {
     });
     if (!user) return res.status(404).json({ error: "Not found" });
     res.json({ ...user, departmentId: user.agentsdepartmentId });
+  },
+
+  // GET /users/:id/categories  (GLOBAL_ADMIN, HOD)
+  // The categories this AGENT is currently routed for - lets the Staff
+  // Directory "edit" modal pre-check the right boxes before the admin
+  // adds/removes any. Uses the same CategoryAgent join the routing engine
+  // (assignment.service.ts) and categoryAgentController read/write.
+  async categories(req: AuthedRequest, res: Response) {
+    const links = await prisma.categoryAgent.findMany({
+      where: { userId: req.params.id },
+      select: { categoryId: true, proficiency: true },
+    });
+    res.json(links);
   },
   // PATCH /users/me/availability  { isAvailableForAssignment }
   // Self-service toggle so an agent going on break/PTO stops receiving
@@ -185,7 +204,7 @@ export const userController = {
   //     unassigned because the department has nobody left to pick them up.
   //     See roleChangeReassignment.service.ts for the details.
   async update(req: AuthedRequest, res: Response) {
-    const { role, departmentId, headDepartmentId, supportLevel, isActive, isAvailableForAssignment, maxActiveTickets } = req.body;
+    const { role, departmentId, headDepartmentId, supportLevel, isActive, isAvailableForAssignment, maxActiveTickets, zone, windCategory } = req.body;
 
     const existing = await prisma.user.findUnique({ where: { id: req.params.id } });
     if (!existing) throw new AppError("User not found", 404);
@@ -196,6 +215,40 @@ export const userController = {
     }
 
     const finalRole: UserRole = role !== undefined ? role : existing.role;
+
+    // NOTE(added): Zone and Wind Category are AGENT-only routing inputs
+    // (see assignment.service.ts's wind/state narrowing) - previously only
+    // settable at invite time (invitation.controller.ts). This lets a
+    // GLOBAL_ADMIN edit them later from the Staff Directory, same as
+    // role/department. Only meaningful once the *final* role is AGENT -
+    // sending either for a non-agent (or a user being moved off AGENT) is
+    // rejected rather than silently ignored, since it'd otherwise look
+    // like it took effect.
+    if ((zone !== undefined || windCategory !== undefined) && finalRole !== UserRole.AGENT) {
+      throw new AppError("zone and windCategory can only be set on AGENT-role users", 400);
+    }
+
+    let finalState = existing.state;
+    if (zone !== undefined) {
+      if (zone === null || zone === "") {
+        finalState = null;
+      } else {
+        const resolved = resolveZone(zone);
+        if (!resolved) throw new AppError(`Unrecognized zone: "${zone}"`, 400);
+        finalState = statesForZone(resolved);
+      }
+    }
+
+    let finalWindCategory = existing.windCategory;
+    if (windCategory !== undefined) {
+      if (windCategory === null || windCategory === "") {
+        finalWindCategory = null;
+      } else if (!Object.values(WindCategory).includes(windCategory)) {
+        throw new AppError(`Invalid windCategory: "${windCategory}"`, 400);
+      } else {
+        finalWindCategory = windCategory;
+      }
+    }
 
     // NOTE(fixed): `departmentId` is only meant to update agentsdepartmentId
     // when the caller actually sends it. Previously this fell straight
@@ -297,6 +350,8 @@ export const userController = {
         ...(isActive !== undefined && { isActive: Boolean(isActive) }),
         ...(isAvailableForAssignment !== undefined && { isAvailableForAssignment: Boolean(isAvailableForAssignment) }),
         ...(maxActiveTickets !== undefined && { maxActiveTickets: Number(maxActiveTickets) }),
+        ...(zone !== undefined && { state: finalState }),
+        ...(windCategory !== undefined && { windCategory: finalWindCategory }),
       },
     });
 
@@ -337,6 +392,12 @@ export const userController = {
       });
     }
 
-    res.json({ ...user, departmentId: user.agentsdepartmentId, headDepartmentId: finalHeadDepartmentId, ticketReassignmentSummary });
+    res.json({
+      ...user,
+      departmentId: user.agentsdepartmentId,
+      headDepartmentId: finalHeadDepartmentId,
+      zone: user.state ? resolveZone(zone) || zone : null,
+      ticketReassignmentSummary,
+    });
   },
 };
