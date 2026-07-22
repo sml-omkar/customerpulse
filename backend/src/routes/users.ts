@@ -12,6 +12,11 @@ userRouter.get("/", requireAuth, userController.list);
   
 userRouter.get("/:id", requireAuth, userController.getById);
 
+// Categories this AGENT is currently routed for - backs the Staff
+// Directory "edit" modal's category checklist (see categoryAgentController
+// for the assign/unassign endpoints these get diffed against).
+userRouter.get("/:id/categories", requireAuth, requireRole(UserRole.GLOBAL_ADMIN, UserRole.HOD), userController.categories);
+
 userRouter.get('/metric/:id',requireAuth,userController.metric)
 
 userRouter.patch("/:id", requireAuth, requireRole(UserRole.GLOBAL_ADMIN), userController.update);
