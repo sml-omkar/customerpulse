@@ -621,14 +621,14 @@ export const InvitationComponent: React.FC<InvitationComponentProps> = ({
 
           <div className="bg-white border border-zinc-200 shadow-sm">
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-zinc-200 text-xs">
+              <table className="min-w-[720px] w-full divide-y divide-zinc-200 text-xs">
                 <thead className="bg-zinc-50 text-zinc-600 font-bold uppercase">
                   <tr>
-                    <th className="px-4 py-3 text-left">Email Address</th>
-                    <th className="px-4 py-3 text-left">Target Role</th>
-                    <th className="px-4 py-3 text-left">Assigned Dept / Category</th>
-                    <th className="px-4 py-3 text-left">Onboarding Status</th>
-                    <th className="px-4 py-3 text-right">Actions</th>
+                    <th className="px-4 py-3 text-left whitespace-nowrap">Email Address</th>
+                    <th className="px-4 py-3 text-left whitespace-nowrap">Target Role</th>
+                    <th className="px-4 py-3 text-left whitespace-nowrap">Assigned Dept / Category</th>
+                    <th className="px-4 py-3 text-left whitespace-nowrap">Onboarding Status</th>
+                    <th className="px-4 py-3 text-right whitespace-nowrap">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-200 text-zinc-700">
@@ -641,20 +641,20 @@ export const InvitationComponent: React.FC<InvitationComponentProps> = ({
                   ) : (
                     invitations.map((i) => (
                       <tr key={i.id} className="hover:bg-zinc-50">
-                        <td className="px-4 py-3.5 font-mono font-medium">{i.email}</td>
-                        <td className="px-4 py-3.5 font-mono text-teal-800 font-bold">{i.role}</td>
-                        <td className="px-4 py-3.5">
-                          <div className="font-semibold text-zinc-800">
+                        <td className="px-4 py-3.5 font-mono font-medium whitespace-nowrap max-w-[220px] truncate">{i.email}</td>
+                        <td className="px-4 py-3.5 font-mono text-teal-800 font-bold whitespace-nowrap">{i.role}</td>
+                        <td className="px-4 py-3.5 max-w-[220px]">
+                          <div className="font-semibold text-zinc-800 truncate">
                             {
                               (i.department && i.department.length > 0
                                 ? i.department.map((d) => d.name).join(", ")
                                 : <span className="text-zinc-400 italic">— No Department</span>)}
                           </div>
                           {i.categoryName && (
-                            <div className="text-[10px] text-zinc-500 font-mono mt-0.5">{i.categoryName}</div>
+                            <div className="text-[10px] text-zinc-500 font-mono mt-0.5 truncate">{i.categoryName}</div>
                           )}
                         </td>
-                        <td className="px-4 py-3.5">
+                        <td className="px-4 py-3.5 whitespace-nowrap">
                           <span
                             className={`px-2 py-0.5 text-[10px] font-bold ${
                               i.status === "PENDING"
@@ -667,7 +667,7 @@ export const InvitationComponent: React.FC<InvitationComponentProps> = ({
                             {i.status}
                           </span>
                         </td>
-                        <td className="px-4 py-3.5 text-right space-x-1.5 flex justify-end">
+                        <td className="px-4 py-3.5 text-right space-x-1.5 flex justify-end whitespace-nowrap">
                           {i.status === "PENDING" && (
                             <>
                               <button
