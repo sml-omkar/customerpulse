@@ -235,13 +235,13 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-white rounded-xl shadow-sm p-5 flex flex-col gap-4" style={{ border: `1px solid ${C.neutral200}` }}>
-      <div className="flex items-start justify-between gap-4">
-        <div>
+    <div className="bg-white rounded-xl shadow-sm p-4 sm:p-5 flex flex-col gap-4 min-w-0 w-full" style={{ border: `1px solid ${C.neutral200}` }}>
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 sm:gap-4">
+        <div className="min-w-0">
           <h3 className="text-sm font-semibold tracking-tight" style={{ color: C.neutral800 }}>{title}</h3>
           {subtitle && <p className="text-xs mt-0.5" style={{ color: C.neutral500 }}>{subtitle}</p>}
         </div>
-        {right}
+        {right && <div className="shrink-0">{right}</div>}
       </div>
       {children}
     </div>
@@ -283,10 +283,10 @@ function KpiCard({
           </span>
         )}
       </div>
-      <div>
-        <p className="text-2xl font-mono font-semibold tabular-nums tracking-tight" style={{ color: C.neutral900 }}>{value}</p>
-        <p className="text-xs mt-1" style={{ color: C.neutral500 }}>{label}</p>
-        {footnote && <p className="text-[11px] mt-0.5" style={{ color: C.neutral400 }}>{footnote}</p>}
+      <div className="min-w-0">
+        <p className="text-xl sm:text-2xl font-mono font-semibold tabular-nums tracking-tight truncate" style={{ color: C.neutral900 }}>{value}</p>
+        <p className="text-xs mt-1 truncate" style={{ color: C.neutral500 }}>{label}</p>
+        {footnote && <p className="text-[11px] mt-0.5 truncate" style={{ color: C.neutral400 }}>{footnote}</p>}
       </div>
     </div>
   );
@@ -428,7 +428,7 @@ function DateRangePicker({ value, onChange }: { value: PresetKey; onChange: (key
       {open && (
         <div
           className="absolute right-0 z-40 bg-white rounded-xl overflow-hidden"
-          style={{ top: "calc(100% + 6px)", width: view === "custom" ? 288 : 224, border: `1px solid ${C.neutral200}`, boxShadow: "0 8px 24px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.06)" }}
+          style={{ top: "calc(100% + 6px)", width: view === "custom" ? 288 : 224, maxWidth: "90vw", border: `1px solid ${C.neutral200}`, boxShadow: "0 8px 24px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.06)" }}
           role="listbox"
         >
           {view === "presets" && (
@@ -550,7 +550,7 @@ function MultiSelectFilter({
       {open && (
         <div
           className="absolute left-0 z-40 bg-white rounded-xl overflow-hidden"
-          style={{ top: "calc(100% + 6px)", width: 240, border: `1px solid ${C.neutral200}`, boxShadow: "0 8px 24px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.06)" }}
+          style={{ top: "calc(100% + 6px)", width: 240, maxWidth: "85vw", border: `1px solid ${C.neutral200}`, boxShadow: "0 8px 24px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.06)" }}
         >
           <div style={{ maxHeight: 280, overflowY: "auto" }}>
             <button
@@ -833,16 +833,16 @@ export default function ManagerAnalyticsMock({ token, apiFetch }: ManagerAnalyti
   }
 
   return (
-    <div className="min-h-screen font-sans" style={{ backgroundColor: C.neutral50, color: C.neutral900 }}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+    <div className="min-h-screen w-full max-w-full font-sans overflow-x-hidden" style={{ backgroundColor: C.neutral50, color: C.neutral900 }}>
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-6">
         {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-          <div>
+          <div className="min-w-0">
             <p className="text-xs font-mono uppercase tracking-widest mb-1 flex items-center gap-1.5" style={{ color: C.neutral400 }}>
-              <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ backgroundColor: C.primary500 }} />
+              <span className="w-1.5 h-1.5 rounded-full inline-block shrink-0" style={{ backgroundColor: C.primary500 }} />
               Executive Console &middot; Analytics
             </p>
-            <h1 className="text-2xl font-semibold tracking-tight" style={{ color: C.neutral900 }}>{deptLabel}</h1>
+            <h1 className="text-xl sm:text-2xl font-semibold tracking-tight truncate" style={{ color: C.neutral900 }}>{deptLabel}</h1>
             <p className="text-sm mt-0.5" style={{ color: C.neutral500 }}>
               {ALL_DEPARTMENTS.length} departments under you &middot; as of {NOW.toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
             </p>
@@ -850,8 +850,8 @@ export default function ManagerAnalyticsMock({ token, apiFetch }: ManagerAnalyti
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-xl shadow-sm p-3 mb-6 flex flex-wrap items-center gap-2" style={{ border: `1px solid ${C.neutral200}` }}>
-          <span className="text-[11px] font-semibold uppercase tracking-widest px-1 flex items-center gap-1" style={{ color: C.neutral400 }}>Filters</span>
+        <div className="bg-white rounded-xl shadow-sm p-3 mb-6 flex flex-wrap items-center gap-2 min-w-0" style={{ border: `1px solid ${C.neutral200}` }}>
+          <span className="text-[11px] font-semibold uppercase tracking-widest px-1 flex items-center gap-1 shrink-0" style={{ color: C.neutral400 }}>Filters</span>
 
           <MultiSelectFilter
             label="Departments"
@@ -882,11 +882,11 @@ export default function ManagerAnalyticsMock({ token, apiFetch }: ManagerAnalyti
             onChange={setSelectedClients}
           />
 
-          <div className="ml-auto flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto sm:ml-auto">
             {activeFilterCount > 0 && (
               <button
                 onClick={clearAllFilters}
-                className="flex items-center gap-1 h-9 px-2.5 rounded-lg text-xs font-medium transition-colors"
+                className="flex items-center gap-1 h-9 px-2.5 rounded-lg text-xs font-medium transition-colors shrink-0"
                 style={{ color: C.neutral500 }}
               >
                 <X className="w-3.5 h-3.5" />
@@ -897,11 +897,11 @@ export default function ManagerAnalyticsMock({ token, apiFetch }: ManagerAnalyti
           </div>
         </div>
 
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-4 sm:gap-6 min-w-0">
           {/* KPI cards */}
           <div>
             <p className="text-xs font-mono uppercase tracking-widest mb-2" style={{ color: C.neutral400 }}>Period: {rangeLabel}</p>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
               <KpiCard icon={<TicketIcon className="w-4 h-4" />} label="Total complaints" value={stats.totalComplaints.toString()} tone="neutral" />
               <KpiCard icon={<CheckCircle2 className="w-4 h-4" />} label="Resolved" value={stats.resolvedCount.toString()} tone="good" />
               <KpiCard icon={<PauseCircle className="w-4 h-4" />} label="On hold" value={stats.onHoldCount.toString()} tone="warning" />
@@ -918,7 +918,7 @@ export default function ManagerAnalyticsMock({ token, apiFetch }: ManagerAnalyti
           </div>
 
           {/* Status distribution + department volume */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 min-w-0">
             <SectionCard title="Ticket status distribution" subtitle={`All tickets in scope, by current status — ${rangeLabel}`}>
               <ResponsiveContainer width="100%" height={220}>
                 <PieChart>
@@ -947,7 +947,7 @@ export default function ManagerAnalyticsMock({ token, apiFetch }: ManagerAnalyti
           </div>
 
           {/* State + client volume */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 min-w-0">
             <SectionCard title="Tickets by state" subtitle="Only states actually captured on raised tickets, top 10 shown">
               {stateDistribution.length === 0 ? (
                 <p className="text-sm py-8 text-center" style={{ color: C.neutral400 }}>No tickets match the current filters</p>
@@ -982,7 +982,7 @@ export default function ManagerAnalyticsMock({ token, apiFetch }: ManagerAnalyti
           </div>
 
           {/* Average TAT analysis */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 min-w-0">
           <SectionCard
             title="Average TAT analysis"
             subtitle={`Turnaround time on resolved tickets — ${rangeLabel}`}
