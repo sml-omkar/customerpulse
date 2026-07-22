@@ -1,6 +1,8 @@
 import { sendMail } from "../lib/mailer";
 import type { Ticket, User, TicketEscalation } from "../generated/prisma/client";
 import { email } from "zod";
+import {config} from "dotenv"
+config()
 
 const APP_URL = process.env.APP_URL ?? "http://localhost:3000";
 
@@ -29,7 +31,7 @@ export const notificationService = {
   },
 
   async sendInvitation(email: string, token: string, role: string,password:string) {
-    const link = `http://localhost:5173/invitations/accept?token=${token}`;
+    const link = `${APP_URL}?token=${token}`;
     await sendMail({
       to: email,
       subject: `You've been invited to join Sanghvi`,
