@@ -17,18 +17,21 @@ export interface AuthedRequest extends Request {
 // @ts-ignore
 export async function requireAuth(req: AuthedRequest, res: Response, next: NextFunction) {
   const token = req.headers.authorization?.replace('Bearer ', '');
-  if (!token) return res.status(401).json({ error: 'No token provided' });
+  if (!token) return res.status(401).json({ error: 'No token provided', code: 'NO_TOKEN' });
 
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET || "its-me") as AuthedRequest['user'];
     req.user = payload;
     const user = await prisma.user.findFirst({where:{id : req.user?.id}})
     if(user?.isActive == false){
-      return res.status(401).json("YOU HAVE BEEN BLOCKED")
+      return res.status(401).json({ error: 'YOU HAVE BEEN BLOCKED', code: 'ACCOUNT_BLOCKED' })
     }
     next();
   } catch {
-    res.status(401).json({ error: 'Invalid or expired token' });
+    // Covers both an expired token and a malformed/tampered one - either
+    // way the client's session is no longer valid, so it's tagged with a
+    // dedicated code the frontend can key off to log the user out.
+    res.status(401).json({ error: 'Invalid or expired token', code: 'SESSION_EXPIRED' });
   }
 }
 
