@@ -204,22 +204,22 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
 
   return (
     <div className="space-y-6 font-sans">
-      <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs">
+      <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 shadow-xs">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">
+          <div className="min-w-0">
+            <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
               Manager Dashboard
             </h1>
-            <p className="text-sm text-slate-500 mt-1">
+            <p className="text-xs sm:text-sm text-slate-500 mt-1">
               {teamData?.departmentName
                 ? `Department: ${teamData.departmentName}`
                 : "Select a department to view team metrics."}
             </p>
           </div>
 
-          <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
             {/* Department Dropdown Selector for Managers managing multiple departments */}
-            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5">
+            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 min-w-0 flex-1 sm:flex-none">
               <Building2 size={14} className="text-slate-500 shrink-0" />
               <select
                 value={selectedDeptId}
@@ -230,7 +230,7 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
                   setActiveCard(null);
                   setCardTickets([]);
                 }}
-                className="bg-transparent text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer"
+                className="bg-transparent text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer min-w-0 w-full truncate"
               >
                 <option value="">-- All Managed Departments --</option>
                 {managedDepartments.map((d) => (
@@ -243,14 +243,14 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
 
             <button
               onClick={() => fetchTeam(selectedDeptId)}
-              className="text-xs font-semibold text-slate-600 hover:text-slate-900 border border-slate-200 px-3 py-2 rounded-lg hover:bg-slate-50 cursor-pointer flex items-center gap-1.5 transition-all bg-white shrink-0"
+              className="text-xs font-semibold text-slate-600 hover:text-slate-900 border border-slate-200 px-3 py-2 rounded-lg hover:bg-slate-50 cursor-pointer flex items-center justify-center gap-1.5 transition-all bg-white shrink-0"
             >
               <RotateCcw size={14} /> Refresh
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-6 gap-4 mt-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mt-6">
           <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
             <span className="text-xs text-slate-400 uppercase font-mono font-bold tracking-wider">Team Members</span>
             <h2 className="text-2xl font-extrabold text-slate-900 mt-1">{teamData?.users.length || 0}</h2>
@@ -330,7 +330,7 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
           Loading team data...
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           <div className="lg:col-span-1">
             <div className="bg-white border border-slate-200/80 shadow-sm rounded-2xl overflow-hidden">
               <div className="p-4 border-b border-slate-100 bg-slate-50/50">
@@ -353,22 +353,22 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
                         selectedUser?.id === member.id ? "bg-indigo-50 border-l-4 border-l-indigo-500" : ""
                       }`}
                     >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-700">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-700 shrink-0">
                             {member.fullName[0]}
                           </div>
-                          <div>
-                            <div className="text-sm font-semibold text-slate-900">{member.fullName}</div>
-                            <div className="text-[10px] text-slate-400 font-mono">{member.role}</div>
+                          <div className="min-w-0">
+                            <div className="text-sm font-semibold text-slate-900 truncate">{member.fullName}</div>
+                            <div className="text-[10px] text-slate-400 font-mono truncate">{member.role}</div>
                           </div>
                         </div>
-                        <div className="text-right">
+                        <div className="text-right shrink-0">
                           <div className="text-lg font-bold text-slate-900">{member.activeTickets}</div>
                           <div className="text-[10px] text-slate-400">active</div>
                         </div>
                       </div>
-                      <div className="flex gap-3 mt-2 text-[10px] text-slate-500">
+                      <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 text-[10px] text-slate-500">
                         <span className="flex items-center gap-1">
                           <Clock size={10} /> {member.openTickets} open
                         </span>
@@ -395,14 +395,16 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
 
           <div className="lg:col-span-2">
             <div className="bg-white border border-slate-200/80 shadow-sm rounded-2xl overflow-hidden">
-              <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-                <h2 className="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-2">
-                  <Ticket size={14} />{" "}
-                  {selectedUser
-                    ? `${selectedUser.fullName}'s Tickets`
-                    : activeCard
-                      ? `${CARD_LABELS[activeCard]} Tickets`
-                      : "Select a team member or a card above"}
+              <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between gap-2">
+                <h2 className="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-2 min-w-0">
+                  <Ticket size={14} className="shrink-0" />{" "}
+                  <span className="truncate">
+                    {selectedUser
+                      ? `${selectedUser.fullName}'s Tickets`
+                      : activeCard
+                        ? `${CARD_LABELS[activeCard]} Tickets`
+                        : "Select a team member or a card above"}
+                  </span>
                 </h2>
                 {(selectedUser || activeCard) && (
                   <button
@@ -412,7 +414,7 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
                       setActiveCard(null);
                       setCardTickets([]);
                     }}
-                    className="text-slate-400 hover:text-slate-600 cursor-pointer"
+                    className="text-slate-400 hover:text-slate-600 cursor-pointer shrink-0"
                   >
                     <X size={14} />
                   </button>
@@ -433,15 +435,15 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
                 <div className="divide-y divide-slate-100 max-h-[500px] overflow-y-auto">
                   {displayedTickets.map((t) => (
                     <div key={t.id} className="p-4 hover:bg-slate-50/50 transition-colors">
-                      <div className="flex items-start justify-between gap-4">
+                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                         <div
-                          className="flex-1 cursor-pointer"
+                          className="flex-1 min-w-0 cursor-pointer"
                           onClick={() => {
                             setSelectedTicketId(t.id);
                             setCurrentView(PAGES.TICKET_DETAILS);
                           }}
                         >
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-wrap items-center gap-2">
                             <span className="text-xs font-mono font-bold text-slate-900 hover:underline">
                               {t.ticketNumber}
                             </span>
@@ -472,12 +474,12 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
                               {t.priority}
                             </span>
                           </div>
-                          <h3 className="text-sm font-semibold text-slate-900 mt-1">{t.title}</h3>
-                          <div className="flex items-center gap-3 mt-1 text-[10px] text-slate-500">
-                            <span>Client: {t.clientName}</span>
-                            <span>Created: {new Date(t.createdAt).toLocaleDateString()}</span>
+                          <h3 className="text-sm font-semibold text-slate-900 mt-1 break-words">{t.title}</h3>
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-[10px] text-slate-500">
+                            <span className="break-words">Client: {t.clientName}</span>
+                            <span className="whitespace-nowrap">Created: {new Date(t.createdAt).toLocaleDateString()}</span>
                             {t.slaBreached && (
-                              <span className="text-rose-600 font-bold flex items-center gap-1">
+                              <span className="text-rose-600 font-bold flex items-center gap-1 whitespace-nowrap">
                                 <AlertTriangle size={10} /> SLA Breached
                               </span>
                             )}
@@ -497,9 +499,9 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
                           )}
                         </div>
 
-                        <div className="shrink-0">
+                        <div className="shrink-0 sm:self-start">
                           {showReassign === t.id ? (
-                            <div className="space-y-2 w-48">
+                            <div className="space-y-2 w-full sm:w-48">
                               <select
                                 value={reassignTarget}
                                 onChange={(e) => setReassignTarget(e.target.value)}
@@ -539,7 +541,7 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
                                 e.stopPropagation();
                                 setShowReassign(t.id);
                               }}
-                              className="text-xs border border-slate-200 hover:bg-slate-50 text-slate-600 px-3 py-1.5 rounded-lg font-semibold cursor-pointer transition-colors whitespace-nowrap"
+                              className="w-full sm:w-auto text-xs border border-slate-200 hover:bg-slate-50 text-slate-600 px-3 py-1.5 rounded-lg font-semibold cursor-pointer transition-colors whitespace-nowrap"
                             >
                               Reassign
                             </button>
