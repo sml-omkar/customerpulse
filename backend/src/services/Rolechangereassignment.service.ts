@@ -17,7 +17,9 @@ interface TicketRef {
   title: string;
 }
 
-export interface PromotionReassignmentSummary {
+export type ReassignmentReason = "ROLE_CHANGE" | "DEPARTMENT_TRANSFER";
+
+export interface TicketReassignmentSummary {
   reassigned: (TicketRef & { newAssigneeName: string })[];
   unassigned: TicketRef[];
 }
@@ -39,41 +41,70 @@ function ticketList(tickets: TicketRef[]) {
 
 export const roleChangeReassignmentService = {
   /**
-   * Called from userController.update right after a GLOBAL_ADMIN flips an
-   * AGENT's role to HOD or CXO. The promoted user no longer works tickets
-   * themselves, so every ticket still open in their queue has to go
-   * somewhere:
+   * Called from userController.update, right after a GLOBAL_ADMIN commits
+   * either of the two changes that can strand an agent's open tickets:
    *
-   *   - if the (old) department still has other active agents, each
-   *     ticket is routed through the normal auto-assignment logic
-   *     (category match -> keyword match -> load balance) exactly like a
-   *     brand new ticket, and taken off the promoted user's queue.
-   *   - if there are no other agents left in the department, the ticket
-   *     is simply unassigned rather than left stuck on someone who can no
+   *   1. ROLE_CHANGE        - the user's role is flipped away from AGENT
+   *                           (promoted to HOD/CXO, demoted to REQUESTER,
+   *                           made a GLOBAL_ADMIN, etc). They stop working
+   *                           tickets in `oldDepartmentId` entirely.
+   *   2. DEPARTMENT_TRANSFER - the user stays an AGENT, but is moved out of
+   *                           `oldDepartmentId` into a different department
+   *                           (or off any department). They stop working
+   *                           tickets that belong to their *old* department,
+   *                           even though they still work tickets elsewhere.
+   *
+   * In both cases every ticket still open in the user's queue that belongs
+   * to `oldDepartmentId` has to go somewhere:
+   *
+   *   - if `oldDepartmentId` still has other active agents, each ticket is
+   *     routed through the normal auto-assignment logic (category match ->
+   *     keyword match -> load balance) exactly like a brand new ticket, and
+   *     taken off the moved user's queue.
+   *   - if there are no other agents left in that department, the ticket is
+   *     simply unassigned rather than left stuck on someone who can no
    *     longer act on it.
    *
-   * The promoted user is notified either way (in-app + email) with the
-   * full breakdown, since these were their tickets a moment ago.
+   * Two parties are notified (in-app + email) with the full breakdown:
+   *   - the moved/promoted user themselves, since these were their tickets
+   *     a moment ago.
+   *   - the HOD of `oldDepartmentId` (Department.managerId), since they now
+   *     own the outcome for that department's queue - which tickets got
+   *     auto-assigned to whom, and which ones are sitting unassigned and
+   *     need attention. If the department currently has no HOD, this step
+   *     is skipped (there's nobody to notify).
    *
-   * IMPORTANT: this must run *after* the role change has already been
-   * committed to the DB, so the promoted user's own row no longer reports
-   * role AGENT and is naturally excluded from the auto-assignment
-   * candidate pool.
+   * IMPORTANT: this must run *after* the role/department change has already
+   * been committed to the DB, so the moved user's own row no longer reports
+   * role AGENT / agentsdepartmentId = oldDepartmentId, and is naturally
+   * excluded from the auto-assignment candidate pool. As a second safety
+   * net, the "other agents" query below also explicitly excludes them by id.
    */
-  async handleAgentPromotedAway(params: {
-    promotedUserId: string;
-    promotedUserFullName: string;
-    promotedUserEmail: string;
+  async handleAgentTicketReassignment(params: {
+    movedUserId: string;
+    movedUserFullName: string;
+    movedUserEmail: string;
     oldDepartmentId: string | null;
+    reason: ReassignmentReason;
     newRole: UserRole;
+    newDepartmentId?: string | null;
     performedById: string;
-  }): Promise<PromotionReassignmentSummary | null> {
-    const { promotedUserId, promotedUserFullName, promotedUserEmail, oldDepartmentId, newRole, performedById } = params;
+  }): Promise<TicketReassignmentSummary | null> {
+    const {
+      movedUserId,
+      movedUserFullName,
+      movedUserEmail,
+      oldDepartmentId,
+      reason,
+      newRole,
+      newDepartmentId = null,
+      performedById,
+    } = params;
 
     if (!oldDepartmentId) return null;
 
     const openTickets = await prisma.ticket.findMany({
-      where: { assigneeId: promotedUserId, status: { in: OPEN_STATUSES } },
+      where: { assigneeId: movedUserId, status: { in: OPEN_STATUSES } },
       select: { id: true, ticketNumber: true, title: true },
     });
 
@@ -84,7 +115,7 @@ export const roleChangeReassignmentService = {
         role: UserRole.AGENT,
         isActive: true,
         agentsdepartmentId: oldDepartmentId,
-        id: { not: promotedUserId },
+        id: { not: movedUserId },
       },
     });
 
@@ -95,8 +126,9 @@ export const roleChangeReassignmentService = {
       let handled = false;
 
       if (otherAgentCount > 0) {
-        // findBestAgent only ever considers AGENT-role users, and the
-        // promoted user's role has already flipped by this point, so they
+        // findBestAgent only ever considers AGENT-role users in the
+        // ticket's own department, and by this point the moved user's role
+        // and/or agentsdepartmentId has already changed in the DB, so they
         // can't be picked again here.
         const best = await assignmentService.findBestAgent(ticket.id);
         if (best) {
@@ -117,21 +149,47 @@ export const roleChangeReassignmentService = {
       }
     }
 
-    await this.notifyPromotedUser({ promotedUserId, promotedUserFullName, promotedUserEmail, newRole, reassigned, unassigned, performedById });
+    const summary: TicketReassignmentSummary = { reassigned, unassigned };
 
-    return { reassigned, unassigned };
+    await this.notifyMovedUser({
+      movedUserId,
+      movedUserFullName,
+      movedUserEmail,
+      reason,
+      newRole,
+      newDepartmentId,
+      summary,
+      performedById,
+    });
+
+    await this.notifyDepartmentHod({
+      oldDepartmentId,
+      movedUserFullName,
+      reason,
+      newRole,
+      newDepartmentId,
+      summary,
+      performedById,
+    });
+
+    return summary;
   },
 
-  async notifyPromotedUser(params: {
-    promotedUserId: string;
-    promotedUserFullName: string;
-    promotedUserEmail: string;
+  async notifyMovedUser(params: {
+    movedUserId: string;
+    movedUserFullName: string;
+    movedUserEmail: string;
+    reason: ReassignmentReason;
     newRole: UserRole;
-    reassigned: (TicketRef & { newAssigneeName: string })[];
-    unassigned: TicketRef[];
+    newDepartmentId: string | null;
+    summary: TicketReassignmentSummary;
     performedById: string;
   }) {
-    const { promotedUserId, promotedUserFullName, promotedUserEmail, newRole, reassigned, unassigned, performedById } = params;
+    const { movedUserId, movedUserFullName, movedUserEmail, reason, newRole, summary, performedById } = params;
+    const { reassigned, unassigned } = summary;
+
+    const changeDescription =
+      reason === "ROLE_CHANGE" ? `your role has been changed to ${newRole}` : `you've been moved to a different department`;
 
     const lines: string[] = [];
     if (reassigned.length > 0) {
@@ -146,12 +204,12 @@ export const roleChangeReassignmentService = {
           unassigned.map((t) => t.ticketNumber).join(", ")
       );
     }
-    const message = `You've been promoted to ${newRole}. ${lines.join(" ")}`;
+    const message = `Since ${changeDescription}, here's what happened to your former tickets. ${lines.join(" ")}`;
 
     // In-app notification (surfaced the same way requester notifications are).
     await prisma.adminMessage.create({
       data: {
-        userId: promotedUserId,
+        userId: movedUserId,
         fromAdminId: performedById,
         message,
       },
@@ -159,14 +217,114 @@ export const roleChangeReassignmentService = {
 
     // Email breakdown.
     await sendMail({
-      to: promotedUserEmail,
-      subject: `Your role has changed to ${newRole} - ticket handover summary`,
-      html: layout(`You're now a ${newRole}`, `
-        <p>Hi ${promotedUserFullName},</p>
-        <p>Your role has been changed to <b>${newRole}</b>. You no longer work tickets directly, so here's what happened to the tickets that were assigned to you:</p>
-        ${reassigned.length > 0 ? `<p><b>Auto-assigned to other agents:</b></p>${ticketList(reassigned.map((t) => ({ ticketNumber: t.ticketNumber, title: `${t.title} (now with ${t.newAssigneeName})` })))}` : ""}
+      to: movedUserEmail,
+      subject:
+        reason === "ROLE_CHANGE"
+          ? `Your role has changed to ${newRole} - ticket handover summary`
+          : `You've been moved to a new department - ticket handover summary`,
+      html: layout(
+        reason === "ROLE_CHANGE" ? `You're now a ${newRole}` : `You've changed departments`,
+        `
+        <p>Hi ${movedUserFullName},</p>
+        <p>Since ${changeDescription}, you no longer work the tickets in your former department directly. Here's what happened to the tickets that were assigned to you:</p>
+        ${
+          reassigned.length > 0
+            ? `<p><b>Auto-assigned to other agents:</b></p>${ticketList(
+                reassigned.map((t) => ({ ticketNumber: t.ticketNumber, title: `${t.title} (now with ${t.newAssigneeName})` }))
+              )}`
+            : ""
+        }
         ${unassigned.length > 0 ? `<p><b>Left unassigned (no agents available in the department):</b></p>${ticketList(unassigned)}` : ""}
-      `),
+      `
+      ),
+    });
+  },
+
+  /**
+   * Notifies the HOD (Department.managerId) of the department the tickets
+   * were redistributed *out of* - not the user's new department, if any.
+   * Skips silently if that department currently has no HOD assigned.
+   */
+  async notifyDepartmentHod(params: {
+    oldDepartmentId: string;
+    movedUserFullName: string;
+    reason: ReassignmentReason;
+    newRole: UserRole;
+    newDepartmentId: string | null;
+    summary: TicketReassignmentSummary;
+    performedById: string;
+  }) {
+    const { oldDepartmentId, movedUserFullName, reason, newRole, summary, performedById } = params;
+    const { reassigned, unassigned } = summary;
+
+    const department = await prisma.department.findUnique({
+      where: { id: oldDepartmentId },
+      include: { manager: { select: { id: true, fullName: true, email: true } } },
+    });
+
+    if (!department || !department.manager) return; // no HOD to notify
+
+    const hod = department.manager;
+
+    const changeDescription =
+      reason === "ROLE_CHANGE"
+        ? `${movedUserFullName}'s role was changed to ${newRole}`
+        : `${movedUserFullName} was moved out of ${department.name}`;
+
+    const lines: string[] = [];
+    if (reassigned.length > 0) {
+      lines.push(
+        `${reassigned.length} ticket(s) previously assigned to ${movedUserFullName} have been auto-assigned to other agents in ${department.name}: ` +
+          reassigned.map((t) => `${t.ticketNumber} -> ${t.newAssigneeName}`).join(", ")
+      );
+    }
+    if (unassigned.length > 0) {
+      lines.push(
+        `${unassigned.length} ticket(s) previously assigned to ${movedUserFullName} could not be auto-assigned since ${department.name} has no other agents available, and are now sitting unassigned: ` +
+          unassigned.map((t) => t.ticketNumber).join(", ")
+      );
+    }
+    const message = `${changeDescription}. ${lines.join(" ")}`;
+
+    // In-app notification for the HOD.
+    await prisma.adminMessage.create({
+      data: {
+        userId: hod.id,
+        fromAdminId: performedById,
+        message,
+      },
+    });
+
+    // Email breakdown.
+    await sendMail({
+      to: hod.email,
+      subject:
+        unassigned.length > 0
+          ? `[${department.name}] Action needed: ${unassigned.length} ticket(s) left unassigned after ${movedUserFullName}'s ${
+              reason === "ROLE_CHANGE" ? "role change" : "department transfer"
+            }`
+          : `[${department.name}] Tickets auto-reassigned after ${movedUserFullName}'s ${
+              reason === "ROLE_CHANGE" ? "role change" : "department transfer"
+            }`,
+      html: layout(
+        `Ticket redistribution in ${department.name}`,
+        `
+        <p>Hi ${hod.fullName},</p>
+        <p>${changeDescription}, so their open tickets in <b>${department.name}</b> have been redistributed. Here's the breakdown:</p>
+        ${
+          reassigned.length > 0
+            ? `<p><b>Auto-assigned to other agents in ${department.name}:</b></p>${ticketList(
+                reassigned.map((t) => ({ ticketNumber: t.ticketNumber, title: `${t.title} (now with ${t.newAssigneeName})` }))
+              )}`
+            : ""
+        }
+        ${
+          unassigned.length > 0
+            ? `<p><b>Left unassigned - ${department.name} currently has no other agents available:</b></p>${ticketList(unassigned)}<p>These will need a manual assignment, or another agent added to the department.</p>`
+            : ""
+        }
+      `
+      ),
     });
   },
 };
