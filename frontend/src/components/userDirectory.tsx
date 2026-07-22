@@ -82,16 +82,16 @@ export const UserDirectory = (
 
               <div className="bg-white border border-slate-200/80 shadow-sm rounded-2xl overflow-hidden">
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-slate-100 text-xs">
+                  <table className="min-w-[760px] w-full divide-y divide-slate-100 text-xs">
                     <thead className="bg-slate-50/75 text-slate-500 font-semibold uppercase tracking-wider">
                       <tr>
-                        <th className="px-6 py-3.5 text-left">User</th>
-                        <th className="px-6 py-3.5 text-left">Email Address</th>
-                        <th className="px-6 py-3.5 text-left">Role Profile</th>
-                        <th className="px-6 py-3.5 text-left">Support Tier</th>
-                        <th className="px-6 py-3.5 text-left">Active Status</th>
-                        <th className="px-6 py-3.5 text-left">Assignment State</th>
-                        <th className="px-6 py-3.5 text-left">Load count</th>
+                        <th className="px-6 py-3.5 text-left whitespace-nowrap">User</th>
+                        <th className="px-6 py-3.5 text-left whitespace-nowrap">Email Address</th>
+                        <th className="px-6 py-3.5 text-left whitespace-nowrap">Role Profile</th>
+                        <th className="px-6 py-3.5 text-left whitespace-nowrap">Support Tier</th>
+                        <th className="px-6 py-3.5 text-left whitespace-nowrap">Active Status</th>
+                        <th className="px-6 py-3.5 text-left whitespace-nowrap">Assignment State</th>
+                        <th className="px-6 py-3.5 text-left whitespace-nowrap">Load count</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 text-slate-700">
@@ -101,11 +101,11 @@ export const UserDirectory = (
                           onClick={() => isAdmin && handleOpenUserEditor(u)}
                           className={`hover:bg-slate-50/50 transition-colors ${isAdmin ? "cursor-pointer" : ""}`}
                         >
-                          <td className="px-6 py-4 font-semibold text-slate-900">{u.fullName}</td>
-                          <td className="px-6 py-4 font-mono text-slate-500">{u.email}</td>
-                          <td className="px-6 py-4 font-mono font-bold text-slate-800">{u.role}</td>
-                          <td className="px-6 py-4 font-mono font-bold text-slate-600">{u.supportLevel || "--"}</td>
-                          <td className="px-6 py-4">
+                          <td className="px-6 py-4 font-semibold text-slate-900 whitespace-nowrap max-w-[200px] truncate">{u.fullName}</td>
+                          <td className="px-6 py-4 font-mono text-slate-500 whitespace-nowrap max-w-[220px] truncate">{u.email}</td>
+                          <td className="px-6 py-4 font-mono font-bold text-slate-800 whitespace-nowrap">{u.role}</td>
+                          <td className="px-6 py-4 font-mono font-bold text-slate-600 whitespace-nowrap">{u.supportLevel || "--"}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">
                             <span className={`px-2.5 py-1 rounded-full font-semibold text-[10px] border ${
                               u.isActive 
                                 ? "bg-emerald-50 text-emerald-700 border-emerald-100" 
@@ -114,7 +114,7 @@ export const UserDirectory = (
                               {u.isActive ? "ACTIVE" : "INACTIVE"}
                             </span>
                           </td>
-                          <td className="px-6 py-4 font-medium text-slate-600">
+                          <td className="px-6 py-4 font-medium text-slate-600 whitespace-nowrap">
                             {u.isAvailableForAssignment ? (
                               <span className="text-emerald-600 font-semibold flex items-center gap-1.5">
                                 <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full inline-block"></span>
@@ -124,7 +124,7 @@ export const UserDirectory = (
                               <span className="text-slate-400 font-medium">Not Available</span>
                             )}
                           </td>
-                          <td className="px-6 py-4 font-mono font-semibold text-slate-700">
+                          <td className="px-6 py-4 font-mono font-semibold text-slate-700 whitespace-nowrap">
                             {u._count.ticketsAssigned || 0} / {u.maxActiveTickets || 0}
                           </td>
                         </tr>
@@ -136,8 +136,8 @@ export const UserDirectory = (
 
               {/* Edit User drawer modal */}
               {editingUserId && (
-                <div className="fixed inset-0 bg-slate-950/45 backdrop-blur-xs flex items-center justify-center p-6 z-50">
-                  <div className="bg-white border border-slate-200 w-full max-w-lg p-6 rounded-2xl shadow-xl space-y-4">
+                <div className="fixed inset-0 bg-slate-950/45 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 z-50">
+                  <div className="bg-white border border-slate-200 w-full max-w-lg p-6 rounded-2xl shadow-xl space-y-4 max-h-[90vh] overflow-y-auto">
                     <h2 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
                       <User size={18} className="text-indigo-600" />
                       Edit Operator Operations Profile
@@ -223,7 +223,7 @@ export const UserDirectory = (
                         </label>
                       </div>
 
-                      <div className="flex gap-2 justify-between border-t border-slate-100 pt-4">
+                      <div className="flex flex-col sm:flex-row gap-2 sm:justify-between border-t border-slate-100 pt-4">
                         <button
                           type="button"
                           onClick={async () => {
@@ -257,13 +257,13 @@ export const UserDirectory = (
                           <button
                             type="button"
                             onClick={() => setEditingUserId(null)}
-                            className="px-4 py-2 border border-slate-200 text-slate-700 text-xs font-semibold rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
+                            className="flex-1 sm:flex-none px-4 py-2 border border-slate-200 text-slate-700 text-xs font-semibold rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
                           >
                             Cancel
                           </button>
                           <button
                             type="submit"
-                            className="px-4 py-2 bg-slate-900 text-white text-xs font-semibold rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
+                            className="flex-1 sm:flex-none px-4 py-2 bg-slate-900 text-white text-xs font-semibold rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
                           >
                             Save Changes
                           </button>
