@@ -769,6 +769,9 @@ export default function App() {
       setToken(data.token);
       setUser(data.user);
       setInviteToken(null);
+      // Strip the ?token=... invite link from the address bar now that it's
+      // been consumed, so it isn't left sitting in history/refresh/bookmarks.
+      window.history.replaceState({}, "", window.location.pathname);
       setCurrentView(PAGES.DASHBOARD);
     } catch (err: any) {
       setError(err.message);
