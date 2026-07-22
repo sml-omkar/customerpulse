@@ -23,6 +23,16 @@ const priorityColors: Record<string, string> = {
     P4: "bg-slate-100 text-slate-700 border-slate-200",
 };
 
+// Personal, pre-filtered ticket lists reached from the Dashboard cards.
+// SLA is not shown for these — only for the full/report ticket lists
+// (Breached Tickets, and the Global/CXO/HOD/Agent ticket search views).
+const VIEWS_WITHOUT_SLA = [
+    PAGES.MY_TICKETS,
+    PAGES.ASSINGED_TICKETS,
+    PAGES.RESOLVED_TICKETS,
+    PAGES.ON_HOLD,
+];
+
 export default function TicketsTable({
     tickets,
     currentView,
@@ -111,7 +121,7 @@ export default function TicketsTable({
                   Date of Issue
                 </th>
 
-                {currentView === PAGES.DASHBOARD && (
+                {!VIEWS_WITHOUT_SLA.includes(currentView) && (
                   <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 whitespace-nowrap">
                     SLA
                   </th>
@@ -176,7 +186,7 @@ export default function TicketsTable({
                     {new Date(ticket.createdAt).toLocaleDateString()}
                   </td>
 
-                  {currentView === PAGES.DASHBOARD && (
+                  {!VIEWS_WITHOUT_SLA.includes(currentView) && (
                     <td className="px-4 py-3 text-slate-600 whitespace-nowrap">
                       {getTurnaroundTime(ticket).display}
                     </td>
