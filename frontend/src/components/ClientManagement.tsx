@@ -294,13 +294,13 @@ export default function ClientManagement({ token }: ClientManagementProps) {
   };
 
   return (
-    <div className="bg-white border border-slate-200/80 shadow-sm rounded-2xl p-6">
-      <div className="flex justify-between items-center pb-4 border-b border-slate-100">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900 tracking-tight">Clients Management</h1>
-          <p className="text-sm text-slate-500 mt-1">Configure global business clients, mark key accounts, and manage each client's projects.</p>
+    <div className="bg-white border border-slate-200/80 shadow-sm rounded-2xl p-4 sm:p-6">
+      <div className="flex flex-col gap-4 pb-4 border-b border-slate-100 sm:flex-row sm:justify-between sm:items-center">
+        <div className="min-w-0">
+          <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">Clients Management</h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">Configure global business clients, mark key accounts, and manage each client's projects.</p>
         </div>
-        <div className="flex gap-2">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:gap-2 sm:shrink-0">
           <input
             ref={fileInputRef}
             type="file"
@@ -311,7 +311,7 @@ export default function ClientManagement({ token }: ClientManagementProps) {
           <button
             type="button"
             onClick={handleDownloadTemplate}
-            className="inline-flex items-center gap-1.5 px-3 py-2 border border-slate-200 text-slate-700 text-xs font-semibold rounded-lg hover:bg-slate-100"
+            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 border border-slate-200 text-slate-700 text-xs font-semibold rounded-lg hover:bg-slate-100 whitespace-nowrap"
           >
             <Download size={14} /> Template
           </button>
@@ -319,7 +319,7 @@ export default function ClientManagement({ token }: ClientManagementProps) {
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={importLoading}
-            className="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-900 text-white text-xs font-semibold rounded-lg hover:bg-slate-800 disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-900 text-white text-xs font-semibold rounded-lg hover:bg-slate-800 disabled:opacity-50 whitespace-nowrap"
           >
             <Upload size={14} /> {importLoading ? "Importing..." : "Import"}
           </button>
@@ -356,7 +356,7 @@ export default function ClientManagement({ token }: ClientManagementProps) {
         onConfirm={handleDeleteProject}
       />
 
-      <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Left pane: Client list */}
         <div className="lg:col-span-2">
           <h3 className="text-xs font-bold font-mono uppercase tracking-wider text-slate-400 mb-3">Seeded/Configured Clients</h3>
@@ -370,27 +370,27 @@ export default function ClientManagement({ token }: ClientManagementProps) {
                 const isExpanded = expandedClientId === c.id;
                 return (
                   <div key={c.id}>
-                    <div className="flex items-center justify-between px-6 py-4 hover:bg-slate-50/50 transition-colors">
+                    <div className="flex flex-col gap-3 px-4 sm:px-6 py-4 hover:bg-slate-50/50 transition-colors sm:flex-row sm:items-center sm:justify-between">
                       <button
-                        className="flex items-center gap-2 text-left"
+                        className="flex flex-wrap items-center gap-2 text-left min-w-0"
                         onClick={() => setExpandedClientId(isExpanded ? "" : c.id)}
                       >
-                        {isExpanded ? <ChevronUp size={14} className="text-slate-400" /> : <ChevronDown size={14} className="text-slate-400" />}
-                        <span className="font-semibold text-slate-900 text-sm">{c.name}</span>
+                        {isExpanded ? <ChevronUp size={14} className="text-slate-400 shrink-0" /> : <ChevronDown size={14} className="text-slate-400 shrink-0" />}
+                        <span className="font-semibold text-slate-900 text-sm break-words">{c.name}</span>
                         {c.isKeyClient && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-bold uppercase tracking-wide">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-bold uppercase tracking-wide whitespace-nowrap">
                             <Star size={10} /> Key Client
                           </span>
                         )}
-                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase tracking-wide ${c.isWindClient ? "bg-sky-50 border-sky-200 text-sky-700" : "bg-slate-100 border-slate-200 text-slate-600"}`}>
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase tracking-wide whitespace-nowrap ${c.isWindClient ? "bg-sky-50 border-sky-200 text-sky-700" : "bg-slate-100 border-slate-200 text-slate-600"}`}>
                           {c.isWindClient ? "Wind" : "Non-Wind"}
                         </span>
-                        <span className="text-[10px] text-slate-400 font-mono">
+                        <span className="text-[10px] text-slate-400 font-mono whitespace-nowrap">
                           {c.projects?.length || 0} project{c.projects?.length === 1 ? "" : "s"}
                         </span>
                       </button>
 
-                      <div className="inline-flex gap-2 shrink-0">
+                      <div className="inline-flex gap-2 shrink-0 self-end sm:self-auto">
                         <button
                           onClick={() => {
                             setEditingClient(c);
@@ -418,9 +418,53 @@ export default function ClientManagement({ token }: ClientManagementProps) {
                     </div>
 
                     {isExpanded && (
-                      <div className="px-6 pb-5 bg-slate-50/60">
+                      <div className="px-4 sm:px-6 pb-5 bg-slate-50/60">
                         {c.projects && c.projects.length > 0 ? (
-                          <div className="overflow-x-auto border border-slate-200 rounded-lg bg-white mb-3">
+                          <>
+                            {/* Mobile: stacked cards */}
+                            <div className="sm:hidden space-y-2 mb-3">
+                              {c.projects.map(p => (
+                                <div key={p.id} className="border border-slate-200 rounded-lg bg-white p-3 text-xs">
+                                  <div className="flex items-start justify-between gap-2">
+                                    <span className="font-medium text-slate-800 break-words">{p.name}</span>
+                                    {p.isShutdownJob ? (
+                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-50 border border-rose-200 text-rose-700 text-[10px] font-bold uppercase tracking-wide shrink-0">
+                                        <PowerOff size={10} /> Shutdown
+                                      </span>
+                                    ) : (
+                                      <span className="text-slate-400 text-[10px] font-mono shrink-0">Active</span>
+                                    )}
+                                  </div>
+                                  <div className="flex justify-end gap-2 mt-2 pt-2 border-t border-slate-100">
+                                    <button
+                                      onClick={() => {
+                                        setEditingProject(p);
+                                        setEditProjectName(p.name);
+                                        setEditProjectShutdown(p.isShutdownJob);
+                                      }}
+                                      className="p-1 text-slate-500 hover:text-slate-900 border border-slate-200 hover:bg-slate-50 rounded"
+                                      title="Edit Project"
+                                    >
+                                      <Edit2 size={12} />
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        setDeleteProjectId(p.id);
+                                        setDeleteProjectName(p.name);
+                                        setIsDeleteProjectOpen(true);
+                                      }}
+                                      className="p-1 text-red-500 hover:text-red-700 border border-slate-200 hover:bg-red-50 rounded"
+                                      title="Delete Project"
+                                    >
+                                      <Trash2 size={12} />
+                                    </button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+
+                            {/* Tablet/Desktop: table */}
+                            <div className="hidden sm:block overflow-x-auto border border-slate-200 rounded-lg bg-white mb-3">
                             <table className="min-w-full divide-y divide-slate-100 text-xs">
                               <thead className="bg-slate-50 text-slate-500 font-semibold uppercase tracking-wider text-[10px]">
                                 <tr>
@@ -472,7 +516,8 @@ export default function ClientManagement({ token }: ClientManagementProps) {
                                 ))}
                               </tbody>
                             </table>
-                          </div>
+                            </div>
+                          </>
                         ) : (
                           <div className="text-xs text-slate-400 py-3">No projects yet for this client.</div>
                         )}
@@ -480,13 +525,13 @@ export default function ClientManagement({ token }: ClientManagementProps) {
                         {/* Edit project inline form */}
                         {editingProject && c.projects.some(p => p.id === editingProject.id) && (
                           <form onSubmit={handleUpdateProject} className="flex flex-wrap items-end gap-2 mb-3 p-3 bg-white border border-slate-200 rounded-lg">
-                            <div>
+                            <div className="w-full sm:w-auto">
                               <label className="block text-[10px] font-semibold text-slate-600 mb-1">Project Name</label>
                               <input
                                 type="text"
                                 value={editProjectName}
                                 onChange={(e) => setEditProjectName(e.target.value)}
-                                className="text-xs p-2 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-slate-500/20"
+                                className="text-xs p-2 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-slate-500/20 w-full"
                                 required
                               />
                             </div>
@@ -505,14 +550,14 @@ export default function ClientManagement({ token }: ClientManagementProps) {
 
                         {/* Add project inline form */}
                         <div className="flex flex-wrap items-end gap-2">
-                          <div>
+                          <div className="w-full sm:w-auto">
                             <label className="block text-[10px] font-semibold text-slate-600 mb-1">New Project Name</label>
                             <input
                               type="text"
                               placeholder="e.g. Migration Phase 2"
                               value={newProjectName[c.id] || ""}
                               onChange={(e) => setNewProjectName((prev) => ({ ...prev, [c.id]: e.target.value }))}
-                              className="text-xs p-2 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-slate-500/20"
+                              className="text-xs p-2 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-slate-500/20 w-full"
                             />
                           </div>
                           <label className="flex items-center gap-1.5 text-[11px] font-medium text-slate-600 pb-2">
@@ -526,7 +571,7 @@ export default function ClientManagement({ token }: ClientManagementProps) {
                           <button
                             type="button"
                             onClick={() => handleCreateProject(c.id)}
-                            className="inline-flex items-center gap-1 px-3 py-2 bg-slate-900 text-white text-xs font-semibold rounded-lg hover:bg-slate-800"
+                            className="inline-flex items-center justify-center gap-1 px-3 py-2 bg-slate-900 text-white text-xs font-semibold rounded-lg hover:bg-slate-800 w-full sm:w-auto"
                           >
                             <Plus size={14} /> Add Project
                           </button>
@@ -541,7 +586,7 @@ export default function ClientManagement({ token }: ClientManagementProps) {
         </div>
 
         {/* Right pane: Create / Edit client forms */}
-        <div className="bg-slate-50 border border-slate-200 p-5 rounded-2xl h-fit">
+        <div className="bg-slate-50 border border-slate-200 p-4 sm:p-5 rounded-2xl h-fit">
           {editingClient ? (
             <form onSubmit={handleUpdateClient} className="space-y-4">
               <h3 className="text-xs font-bold font-mono uppercase tracking-wider text-slate-500 border-b border-slate-200 pb-2">Edit Client</h3>
