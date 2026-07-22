@@ -28,8 +28,8 @@ departmentRouter.post(
   asyncHandler(departmentController.bulkUpload)
 );
 
-departmentRouter.get("/:id", requireAuth, departmentController.getById);
-departmentRouter.patch("/:id", requireAuth, requireRole(UserRole.GLOBAL_ADMIN, UserRole.HOD), departmentController.update);
+departmentRouter.get("/:id", requireAuth, asyncHandler(departmentController.getById));
+departmentRouter.patch("/:id", requireAuth, requireRole(UserRole.GLOBAL_ADMIN, UserRole.HOD), asyncHandler(departmentController.update));
 
 // Categories are configured per-department - this is where the SLA hours /
 // default priority / min support level used by ticketService get set.
@@ -37,10 +37,10 @@ departmentRouter.post(
   "/:departmentId/categories",
   requireAuth,
   requireRole(UserRole.GLOBAL_ADMIN, UserRole.HOD),
-  ticketCategoryController.create
+  asyncHandler(ticketCategoryController.create)
 );
 
-departmentRouter.get("/:departmentId/categories", requireAuth, ticketCategoryController.list);
+departmentRouter.get("/:departmentId/categories", requireAuth, asyncHandler(ticketCategoryController.list));
 
 // Sub-departments are an optional grouping within a department. Categories
 // can optionally be scoped to one of these (see ticketCategory.controller).
@@ -48,9 +48,9 @@ departmentRouter.post(
   "/:departmentId/subdepartments",
   requireAuth,
   requireRole(UserRole.GLOBAL_ADMIN, UserRole.HOD),
-  subDepartmentController.create
+  asyncHandler(subDepartmentController.create)
 );
-departmentRouter.get("/:departmentId/subdepartments", requireAuth, subDepartmentController.list);
+departmentRouter.get("/:departmentId/subdepartments", requireAuth, asyncHandler(subDepartmentController.list));
 
-departmentRouter.delete("/:id",requireAuth,departmentController.delete)
+departmentRouter.delete("/:id",requireAuth,asyncHandler(departmentController.delete))
 

@@ -6,7 +6,7 @@ import { asyncHandler } from "../middleware/asyncHandler";
 
 export const invitationRouter = Router();
 
-invitationRouter.post("/", requireAuth, requireRole(UserRole.GLOBAL_ADMIN), invitationController.create);
+invitationRouter.post("/", requireAuth, requireRole(UserRole.GLOBAL_ADMIN), asyncHandler(invitationController.create));
 invitationRouter.post("/bulk", requireAuth, requireRole(UserRole.GLOBAL_ADMIN), invitationController.bulkCreate);
 invitationRouter.post("/accept",asyncHandler(invitationController.accept)); // public - invitee has no account yet
 invitationRouter.get("/", requireAuth, requireRole(UserRole.GLOBAL_ADMIN, UserRole.HOD), invitationController.list);
