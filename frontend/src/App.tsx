@@ -2837,13 +2837,13 @@ export default function App() {
 
           {/* VIEW: SYSTEM AUDIT LOGS */}
           {currentView === PAGES.AUDIT_LOGS && (
-            <div className="space-y-6">
-              <div className="bg-white border border-zinc-200 p-6 flex justify-between items-center">
-                <div>
-                  <h1 className="text-xl font-bold text-zinc-900 font-sans">
+            <div className="space-y-4 sm:space-y-6">
+              <div className="bg-white border border-zinc-200 p-4 sm:p-6 flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center">
+                <div className="min-w-0">
+                  <h1 className="text-lg sm:text-xl font-bold text-zinc-900 font-sans">
                     System Audit Logs
                   </h1>
-                  <p className="text-sm text-zinc-500 mt-1">
+                  <p className="text-xs sm:text-sm text-zinc-500 mt-1">
                     Read-only logging of user profiles, ticket updates,
                     overrides, and assignments.
                   </p>
@@ -2856,55 +2856,90 @@ export default function App() {
                     No audit logs written.
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-zinc-200 text-xs">
-                      <thead className="bg-zinc-50 text-zinc-600 font-bold uppercase">
-                        <tr>
-                          <th className="px-6 py-3.5 text-left">
-                            Action Performed
-                          </th>
-                          <th className="px-6 py-3.5 text-left">
-                            User Involved
-                          </th>
-                          <th className="px-6 py-3.5 text-left">
-                            Entity Category
-                          </th>
-                          <th className="px-6 py-3.5 text-left">
-                            Target Record ID
-                          </th>
-                          <th className="px-6 py-3.5 text-left">
-                            Timestamp (UTC)
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-zinc-200 text-zinc-700">
-                        {auditLogs.map((log) => (
-                          <tr key={log.id}>
-                            <td className="px-6 py-4 font-medium text-zinc-900">
+                  <>
+                    {/* Mobile: stacked cards */}
+                    <div className="sm:hidden divide-y divide-zinc-200">
+                      {auditLogs.map((log) => (
+                        <div key={log.id} className="p-4 text-xs space-y-1.5">
+                          <div className="flex items-start justify-between gap-2">
+                            <span className="font-medium text-zinc-900 break-words">
                               {log.action}
-                            </td>
-                            <td className="px-6 py-4">
-                              <span className="font-semibold block">
-                                {log.userFullName}
-                              </span>
-                              <span className="text-[10px] text-zinc-400 font-mono block">
-                                {log.userEmail}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 font-mono font-medium text-zinc-500">
-                              {log.entityType}
-                            </td>
-                            <td className="px-6 py-4 font-mono font-medium text-zinc-400">
-                              {log.entityId || "system"}
-                            </td>
-                            <td className="px-6 py-4 font-mono text-zinc-500">
+                            </span>
+                            <span className="font-mono text-zinc-400 shrink-0 text-right">
                               {new Date(log.createdAt).toLocaleString()}
-                            </td>
+                            </span>
+                          </div>
+                          <div>
+                            <span className="font-semibold block">
+                              {log.userFullName}
+                            </span>
+                            <span className="text-[10px] text-zinc-400 font-mono block break-all">
+                              {log.userEmail}
+                            </span>
+                          </div>
+                          <div className="flex flex-wrap gap-x-4 gap-y-1 font-mono text-zinc-500 pt-1">
+                            <span>
+                              Entity: <span className="text-zinc-500">{log.entityType}</span>
+                            </span>
+                            <span>
+                              Record: <span className="text-zinc-400">{log.entityId || "system"}</span>
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Tablet/Desktop: table */}
+                    <div className="hidden sm:block overflow-x-auto">
+                      <table className="min-w-full divide-y divide-zinc-200 text-xs">
+                        <thead className="bg-zinc-50 text-zinc-600 font-bold uppercase">
+                          <tr>
+                            <th className="px-6 py-3.5 text-left">
+                              Action Performed
+                            </th>
+                            <th className="px-6 py-3.5 text-left">
+                              User Involved
+                            </th>
+                            <th className="px-6 py-3.5 text-left">
+                              Entity Category
+                            </th>
+                            <th className="px-6 py-3.5 text-left">
+                              Target Record ID
+                            </th>
+                            <th className="px-6 py-3.5 text-left">
+                              Timestamp (UTC)
+                            </th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                        </thead>
+                        <tbody className="divide-y divide-zinc-200 text-zinc-700">
+                          {auditLogs.map((log) => (
+                            <tr key={log.id}>
+                              <td className="px-6 py-4 font-medium text-zinc-900">
+                                {log.action}
+                              </td>
+                              <td className="px-6 py-4">
+                                <span className="font-semibold block">
+                                  {log.userFullName}
+                                </span>
+                                <span className="text-[10px] text-zinc-400 font-mono block">
+                                  {log.userEmail}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 font-mono font-medium text-zinc-500">
+                                {log.entityType}
+                              </td>
+                              <td className="px-6 py-4 font-mono font-medium text-zinc-400">
+                                {log.entityId || "system"}
+                              </td>
+                              <td className="px-6 py-4 font-mono text-zinc-500">
+                                {new Date(log.createdAt).toLocaleString()}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
                 )}
               </div>
             </div>
@@ -2914,4 +2949,3 @@ export default function App() {
     </div>
   );
 }
-
