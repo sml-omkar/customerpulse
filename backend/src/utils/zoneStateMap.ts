@@ -11,11 +11,12 @@
 // Keep this in sync with the frontend's ZONES list if the frontend also
 // needs to render the zone picker/reference sheet.
 export const ZONE_STATE_MAP: Record<string, string[]> = {
-  "North": ["Delhi"],
-  "West 1": ["Maharashtra"],
-  "West 2": ["Gujarat"],
+  "North": ["Delhi", "Haryana", "Himachal Pradesh", "Jammu & Kashmir", "Ladakh", "Madhya Pradesh", "Punjab", "Uttar Pradesh", "Uttarakhand"],
+  "West 1": ["Goa", "Maharashtra"],
+  "West 2": ["Dadra & Nagar Haveli", "Daman & Diu", "Gujarat", "Rajasthan"],
   "South 1": ["Karnataka", "Kerala"],
-  "South 2": ["Tamil Nadu", "Telangana"],
+  "South 2": ["Andaman & Nicobar Islands", "Andhra Pradesh", "Lakshadweep", "Puducherry", "Tamil Nadu", "Telangana"],
+  "East": ["Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Jharkhand", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Sikkim", "Tripura", "West Bengal"],
 };
 
 export const ZONES = Object.keys(ZONE_STATE_MAP);
