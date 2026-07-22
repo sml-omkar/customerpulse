@@ -922,7 +922,7 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
               </button>
             </div>
             <form onSubmit={handleEditSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-zinc-700 mb-1">Department *</label>
                   <select
@@ -970,7 +970,7 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
                 </select>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-zinc-700 mb-1">Client Business/Company *</label>
                   <select
@@ -1002,7 +1002,7 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-zinc-700 mb-1">Client Authorized Email *</label>
                   <input
@@ -1040,7 +1040,7 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-zinc-700 mb-1">Site / Physical Location *</label>
                   <input
@@ -1461,7 +1461,7 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
           {/* Status & SLA Indicators */}
           <div className="bg-white border border-zinc-200 p-6 space-y-4">
             <h2 className="text-sm font-semibold text-zinc-900 border-b border-zinc-100 pb-2">Status & SLA Summary</h2>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <span className="text-[10px] text-zinc-400 uppercase font-bold tracking-wider block mb-1">Status</span>
                 <span
