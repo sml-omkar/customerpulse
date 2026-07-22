@@ -111,13 +111,11 @@ export default function TicketsTable({
                   Date of Issue
                 </th>
 
-                {
-                  (
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 whitespace-nowrap">
+                {currentView === PAGES.DASHBOARD && (
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 whitespace-nowrap">
                     SLA
                   </th>
-                  ) 
-                }
+                )}
 
                 <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 whitespace-nowrap">
                   Action
@@ -178,11 +176,11 @@ export default function TicketsTable({
                     {new Date(ticket.createdAt).toLocaleDateString()}
                   </td>
 
-                  {(
+                  {currentView === PAGES.DASHBOARD && (
                     <td className="px-4 py-3 text-slate-600 whitespace-nowrap">
                       {getTurnaroundTime(ticket).display}
-                    </td>)
-                  }
+                    </td>
+                  )}
 
                   <td className="px-4 py-3 text-right whitespace-nowrap">
                     <button
