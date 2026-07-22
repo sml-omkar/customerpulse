@@ -49,7 +49,7 @@ export const projectController = {
 
             const client = await prisma.client.findUnique({ where: { id: clientId } });
             if (!client) {
-                throw new AppError("The client doesnt exist", 404);
+                return res.json("The client doesnt exist").status(404);
             }
 
             const existCheck = await prisma.project.findFirst({
@@ -60,7 +60,7 @@ export const projectController = {
             });
 
             if (existCheck) {
-                throw new AppError("This project already exists for the client", 401);
+                return res.json("This project already exists for the client").status(401);
             }
 
             const project = await prisma.project.create({
