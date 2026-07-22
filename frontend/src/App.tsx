@@ -2850,7 +2850,7 @@ export default function App() {
                 </div>
               </div>
 
-              <div className="bg-white border border-zinc-200">
+              <div className="bg-white border border-zinc-200 overflow-hidden">
                 {auditLogs.length === 0 ? (
                   <div className="py-8 text-center text-zinc-400 italic text-sm">
                     No audit logs written.
@@ -2860,17 +2860,17 @@ export default function App() {
                     {/* Mobile: stacked cards */}
                     <div className="sm:hidden divide-y divide-zinc-200">
                       {auditLogs.map((log) => (
-                        <div key={log.id} className="p-4 text-xs space-y-1.5">
-                          <div className="flex items-start justify-between gap-2">
-                            <span className="font-medium text-zinc-900 break-words">
+                        <div key={log.id} className="p-4 text-xs space-y-1.5 overflow-hidden">
+                          <div className="flex flex-col gap-1">
+                            <span className="font-medium text-zinc-900 break-words min-w-0">
                               {log.action}
                             </span>
-                            <span className="font-mono text-zinc-400 shrink-0 text-right">
+                            <span className="font-mono text-zinc-400 break-words">
                               {new Date(log.createdAt).toLocaleString()}
                             </span>
                           </div>
-                          <div>
-                            <span className="font-semibold block">
+                          <div className="min-w-0">
+                            <span className="font-semibold block break-words">
                               {log.userFullName}
                             </span>
                             <span className="text-[10px] text-zinc-400 font-mono block break-all">
@@ -2878,10 +2878,10 @@ export default function App() {
                             </span>
                           </div>
                           <div className="flex flex-wrap gap-x-4 gap-y-1 font-mono text-zinc-500 pt-1">
-                            <span>
+                            <span className="break-all min-w-0">
                               Entity: <span className="text-zinc-500">{log.entityType}</span>
                             </span>
-                            <span>
+                            <span className="break-all min-w-0">
                               Record: <span className="text-zinc-400">{log.entityId || "system"}</span>
                             </span>
                           </div>
