@@ -88,6 +88,7 @@ export const TicketForm = ({setError,setSuccess,setSelectedTicketId,setCurrentVi
   const [deptCategories, setDeptCategories] = useState<TicketCategory[]>([]);
   const [deptSubDepartments, setDeptSubDepartments] = useState<SubDepartment[]>([]);
   const [newTicketSubDepartment, setNewTicketSubDepartment] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
 
 
@@ -138,6 +139,7 @@ export const TicketForm = ({setError,setSuccess,setSelectedTicketId,setCurrentVi
 
     const handleSubmitTicket = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return; // already submitting - ignore extra clicks/submits
     setError("");
     setSuccess("");
     if (!newTicketDept || !newTicketTitle || !newTicketClient || !newTicketClientEmail || !newTicketSite || !newTicketState || !newTicketDesignation || !newTicketDateOccurred) {
@@ -145,6 +147,7 @@ export const TicketForm = ({setError,setSuccess,setSelectedTicketId,setCurrentVi
       return;
     }
 
+    setIsSubmitting(true);
     try {
       const res = await fetch(`${API_BASE}/tickets`, {
         method: "POST",
@@ -212,6 +215,8 @@ export const TicketForm = ({setError,setSuccess,setSelectedTicketId,setCurrentVi
       setCurrentView(PAGES.TICKET_DETAILS);
     } catch (err: any) {
       setError(err.message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -477,9 +482,10 @@ export const TicketForm = ({setError,setSuccess,setSelectedTicketId,setCurrentVi
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                    disabled={isSubmitting}
+                    className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    Create and File Ticket
+                    {isSubmitting ? "Creating..." : "Create and File Ticket"}
                   </button>
                 </div>
               </form>
