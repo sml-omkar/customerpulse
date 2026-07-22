@@ -2370,163 +2370,321 @@ export default function App() {
                             No categories mapped to this department yet.
                           </p>
                         ) : (
-                          <div className="overflow-x-auto border border-zinc-200">
-                            <table className="min-w-full divide-y divide-zinc-200 text-xs">
-                              <thead className="bg-zinc-50 text-zinc-600">
-                                <tr>
-                                  <th className="px-4 py-2.5 text-left">
-                                    Category Name
-                                  </th>
-                                  <th className="px-4 py-2.5 text-left">
-                                    Sub-Department
-                                  </th>
-                                  <th className="px-4 py-2.5 text-left">
-                                    SLA SLA Deadline
-                                  </th>
-                                  <th className="px-4 py-2.5 text-left">
-                                    Priority
-                                  </th>
-                                  <th className="px-4 py-2.5 text-left">
-                                    Flags (admin-only)
-                                  </th>
-                                  <th className="px-4 py-2.5 text-right">
-                                    Action
-                                  </th>
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y divide-zinc-200 text-zinc-700">
-                                {deptCategoriesList.map((c) =>
-                                  editingCategoryId === c.id ? (
-                                    <tr key={c.id} className="bg-zinc-50">
-                                      <td className="px-4 py-2.5">
-                                        <input
-                                          type="text"
-                                          value={editCatName}
-                                          onChange={(e) => setEditCatName(e.target.value)}
-                                          className="text-xs p-1.5 border border-zinc-300 bg-white w-full"
-                                        />
-                                      </td>
-                                      <td className="px-4 py-2.5">
-                                        <select
-                                          value={editCatSubDepartmentId}
-                                          onChange={(e) => setEditCatSubDepartmentId(e.target.value)}
-                                          className="text-xs p-1.5 border border-zinc-300 bg-white"
-                                        >
-                                          <option value="">-- Department-wide --</option>
-                                          {deptSubDepartmentsList.map((sd) => (
-                                            <option key={sd.id} value={sd.id}>{sd.name}</option>
-                                          ))}
-                                        </select>
-                                      </td>
-                                      <td className="px-4 py-2.5">
+                          <>
+                            {/* Mobile: stacked cards */}
+                            <div className="sm:hidden space-y-3">
+                              {deptCategoriesList.map((c) =>
+                                editingCategoryId === c.id ? (
+                                  <div
+                                    key={c.id}
+                                    className="border border-zinc-200 bg-zinc-50 p-3 space-y-2 text-xs"
+                                  >
+                                    <div>
+                                      <label className="block text-[10px] font-semibold text-zinc-500 mb-1">
+                                        Category Name
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={editCatName}
+                                        onChange={(e) => setEditCatName(e.target.value)}
+                                        className="text-xs p-1.5 border border-zinc-300 bg-white w-full"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="block text-[10px] font-semibold text-zinc-500 mb-1">
+                                        Sub-Department
+                                      </label>
+                                      <select
+                                        value={editCatSubDepartmentId}
+                                        onChange={(e) => setEditCatSubDepartmentId(e.target.value)}
+                                        className="text-xs p-1.5 border border-zinc-300 bg-white w-full"
+                                      >
+                                        <option value="">-- Department-wide --</option>
+                                        {deptSubDepartmentsList.map((sd) => (
+                                          <option key={sd.id} value={sd.id}>{sd.name}</option>
+                                        ))}
+                                      </select>
+                                    </div>
+                                    <div className="flex gap-2">
+                                      <div className="flex-1">
+                                        <label className="block text-[10px] font-semibold text-zinc-500 mb-1">
+                                          SLA Minutes
+                                        </label>
                                         <input
                                           type="number"
                                           min={1}
                                           value={editCatSla}
                                           onChange={(e) => setEditCatSla(e.target.value)}
-                                          className="text-xs p-1.5 border border-zinc-300 bg-white w-24"
+                                          className="text-xs p-1.5 border border-zinc-300 bg-white w-full"
                                         />
-                                      </td>
-                                      <td className="px-4 py-2.5">
+                                      </div>
+                                      <div className="flex-1">
+                                        <label className="block text-[10px] font-semibold text-zinc-500 mb-1">
+                                          Priority
+                                        </label>
                                         <select
                                           value={editCatPriority}
                                           onChange={(e) =>
                                             setEditCatPriority(e.target.value as TicketPriority)
                                           }
-                                          className="text-xs p-1.5 border border-zinc-300 bg-white"
+                                          className="text-xs p-1.5 border border-zinc-300 bg-white w-full"
                                         >
                                           <option value="P1">P1 - Critical</option>
                                           <option value="P2">P2 - High</option>
                                           <option value="P3">P3 - Moderate</option>
                                           <option value="P4">P4 - Low</option>
                                         </select>
-                                      </td>
-                                      <td className="px-4 py-2.5">
-                                        <label className="flex items-center gap-1 mb-1">
-                                          <input
-                                            type="checkbox"
-                                            checked={editCatIsWorkStopping}
-                                            onChange={(e) => setEditCatIsWorkStopping(e.target.checked)}
-                                          />
-                                          Work Stopping
-                                        </label>
-                                        <label className="flex items-center gap-1">
-                                          <input
-                                            type="checkbox"
-                                            checked={editCatIsSafetyViolation}
-                                            onChange={(e) => setEditCatIsSafetyViolation(e.target.checked)}
-                                          />
-                                          Safety Violation
-                                        </label>
-                                      </td>
-                                      <td className="px-4 py-2.5 text-right whitespace-nowrap">
-                                        <button
-                                          onClick={() => handleUpdateCategory(c.id)}
-                                          className="text-teal-700 hover:text-teal-900 font-bold mr-3"
-                                        >
-                                          Save
-                                        </button>
-                                        <button
-                                          onClick={handleCancelEditCategory}
-                                          className="text-zinc-500 hover:text-zinc-700 font-bold"
-                                        >
-                                          Cancel
-                                        </button>
-                                      </td>
-                                    </tr>
-                                  ) : (
-                                    <tr key={c.id}>
-                                      <td className="px-4 py-2.5 font-medium">
+                                      </div>
+                                    </div>
+                                    <div className="space-y-1 pt-1">
+                                      <label className="flex items-center gap-1.5">
+                                        <input
+                                          type="checkbox"
+                                          checked={editCatIsWorkStopping}
+                                          onChange={(e) => setEditCatIsWorkStopping(e.target.checked)}
+                                        />
+                                        Work Stopping
+                                      </label>
+                                      <label className="flex items-center gap-1.5">
+                                        <input
+                                          type="checkbox"
+                                          checked={editCatIsSafetyViolation}
+                                          onChange={(e) => setEditCatIsSafetyViolation(e.target.checked)}
+                                        />
+                                        Safety Violation
+                                      </label>
+                                    </div>
+                                    <div className="flex justify-end gap-3 pt-1">
+                                      <button
+                                        onClick={() => handleUpdateCategory(c.id)}
+                                        className="text-teal-700 hover:text-teal-900 font-bold"
+                                      >
+                                        Save
+                                      </button>
+                                      <button
+                                        onClick={handleCancelEditCategory}
+                                        className="text-zinc-500 hover:text-zinc-700 font-bold"
+                                      >
+                                        Cancel
+                                      </button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div
+                                    key={c.id}
+                                    className="border border-zinc-200 bg-white p-3 text-xs space-y-2"
+                                  >
+                                    <div className="flex items-start justify-between gap-2">
+                                      <span className="font-semibold text-zinc-900 break-words">
                                         {c.name}
-                                      </td>
-                                      <td className="px-4 py-2.5 text-zinc-500">
+                                      </span>
+                                      <span className="font-mono font-bold text-teal-800 shrink-0">
+                                        {c.defaultPriority}
+                                      </span>
+                                    </div>
+                                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-zinc-500">
+                                      <span>
                                         {deptSubDepartmentsList.find((sd) => sd.id === c.subDepartmentId)?.name || (
                                           <span className="italic text-zinc-400">Department-wide</span>
                                         )}
-                                      </td>
-                                      <td className="px-4 py-2.5 font-mono">
-                                        {c.defaultSlaMinutes} minutes
-                                      </td>
-                                      <td className="px-4 py-2.5 font-mono font-bold text-teal-800">
-                                        {c.defaultPriority}
-                                      </td>
-                                      <td className="px-4 py-2.5 space-x-1">
-                                        {c.isWorkStopping && (
-                                          <span className="inline-block bg-red-100 text-red-700 font-bold px-1.5 py-0.5">
+                                      </span>
+                                      <span className="font-mono">{c.defaultSlaMinutes} minutes</span>
+                                    </div>
+                                    <div className="flex flex-wrap gap-1">
+                                      {c.isWorkStopping && (
+                                        <span className="inline-block bg-red-100 text-red-700 font-bold px-1.5 py-0.5">
+                                          Work Stopping
+                                        </span>
+                                      )}
+                                      {c.isSafetyViolation && (
+                                        <span className="inline-block bg-orange-100 text-orange-700 font-bold px-1.5 py-0.5">
+                                          Safety Violation
+                                        </span>
+                                      )}
+                                      {!c.isWorkStopping && !c.isSafetyViolation && (
+                                        <span className="text-zinc-400 italic">No flags</span>
+                                      )}
+                                    </div>
+                                    <div className="flex justify-end gap-3 pt-1 border-t border-zinc-100">
+                                      <button
+                                        onClick={() => handleStartEditCategory(c)}
+                                        className="text-zinc-600 hover:text-zinc-900 font-bold"
+                                      >
+                                        Edit
+                                      </button>
+                                      <button
+                                        onClick={() =>
+                                          handleDeleteCategory(c.id)
+                                        }
+                                        className="text-red-500 hover:text-red-700 font-bold"
+                                      >
+                                        Delete
+                                      </button>
+                                    </div>
+                                  </div>
+                                )
+                              )}
+                            </div>
+
+                            {/* Tablet/Desktop: table */}
+                            <div className="hidden sm:block overflow-x-auto border border-zinc-200">
+                              <table className="min-w-full divide-y divide-zinc-200 text-xs">
+                                <thead className="bg-zinc-50 text-zinc-600">
+                                  <tr>
+                                    <th className="px-4 py-2.5 text-left">
+                                      Category Name
+                                    </th>
+                                    <th className="px-4 py-2.5 text-left">
+                                      Sub-Department
+                                    </th>
+                                    <th className="px-4 py-2.5 text-left">
+                                      SLA SLA Deadline
+                                    </th>
+                                    <th className="px-4 py-2.5 text-left">
+                                      Priority
+                                    </th>
+                                    <th className="px-4 py-2.5 text-left">
+                                      Flags (admin-only)
+                                    </th>
+                                    <th className="px-4 py-2.5 text-right">
+                                      Action
+                                    </th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-zinc-200 text-zinc-700">
+                                  {deptCategoriesList.map((c) =>
+                                    editingCategoryId === c.id ? (
+                                      <tr key={c.id} className="bg-zinc-50">
+                                        <td className="px-4 py-2.5">
+                                          <input
+                                            type="text"
+                                            value={editCatName}
+                                            onChange={(e) => setEditCatName(e.target.value)}
+                                            className="text-xs p-1.5 border border-zinc-300 bg-white w-full"
+                                          />
+                                        </td>
+                                        <td className="px-4 py-2.5">
+                                          <select
+                                            value={editCatSubDepartmentId}
+                                            onChange={(e) => setEditCatSubDepartmentId(e.target.value)}
+                                            className="text-xs p-1.5 border border-zinc-300 bg-white"
+                                          >
+                                            <option value="">-- Department-wide --</option>
+                                            {deptSubDepartmentsList.map((sd) => (
+                                              <option key={sd.id} value={sd.id}>{sd.name}</option>
+                                            ))}
+                                          </select>
+                                        </td>
+                                        <td className="px-4 py-2.5">
+                                          <input
+                                            type="number"
+                                            min={1}
+                                            value={editCatSla}
+                                            onChange={(e) => setEditCatSla(e.target.value)}
+                                            className="text-xs p-1.5 border border-zinc-300 bg-white w-24"
+                                          />
+                                        </td>
+                                        <td className="px-4 py-2.5">
+                                          <select
+                                            value={editCatPriority}
+                                            onChange={(e) =>
+                                              setEditCatPriority(e.target.value as TicketPriority)
+                                            }
+                                            className="text-xs p-1.5 border border-zinc-300 bg-white"
+                                          >
+                                            <option value="P1">P1 - Critical</option>
+                                            <option value="P2">P2 - High</option>
+                                            <option value="P3">P3 - Moderate</option>
+                                            <option value="P4">P4 - Low</option>
+                                          </select>
+                                        </td>
+                                        <td className="px-4 py-2.5">
+                                          <label className="flex items-center gap-1 mb-1">
+                                            <input
+                                              type="checkbox"
+                                              checked={editCatIsWorkStopping}
+                                              onChange={(e) => setEditCatIsWorkStopping(e.target.checked)}
+                                            />
                                             Work Stopping
-                                          </span>
-                                        )}
-                                        {c.isSafetyViolation && (
-                                          <span className="inline-block bg-orange-100 text-orange-700 font-bold px-1.5 py-0.5">
+                                          </label>
+                                          <label className="flex items-center gap-1">
+                                            <input
+                                              type="checkbox"
+                                              checked={editCatIsSafetyViolation}
+                                              onChange={(e) => setEditCatIsSafetyViolation(e.target.checked)}
+                                            />
                                             Safety Violation
-                                          </span>
-                                        )}
-                                        {!c.isWorkStopping && !c.isSafetyViolation && (
-                                          <span className="text-zinc-400 italic">—</span>
-                                        )}
-                                      </td>
-                                      <td className="px-4 py-2.5 text-right whitespace-nowrap">
-                                        <button
-                                          onClick={() => handleStartEditCategory(c)}
-                                          className="text-zinc-600 hover:text-zinc-900 font-bold mr-3"
-                                        >
-                                          Edit
-                                        </button>
-                                        <button
-                                          onClick={() =>
-                                            handleDeleteCategory(c.id)
-                                          }
-                                          className="text-red-500 hover:text-red-700 font-bold"
-                                        >
-                                          Delete
-                                        </button>
-                                      </td>
-                                    </tr>
-                                  )
-                                )}
-                              </tbody>
-                            </table>
-                          </div>
+                                          </label>
+                                        </td>
+                                        <td className="px-4 py-2.5 text-right whitespace-nowrap">
+                                          <button
+                                            onClick={() => handleUpdateCategory(c.id)}
+                                            className="text-teal-700 hover:text-teal-900 font-bold mr-3"
+                                          >
+                                            Save
+                                          </button>
+                                          <button
+                                            onClick={handleCancelEditCategory}
+                                            className="text-zinc-500 hover:text-zinc-700 font-bold"
+                                          >
+                                            Cancel
+                                          </button>
+                                        </td>
+                                      </tr>
+                                    ) : (
+                                      <tr key={c.id}>
+                                        <td className="px-4 py-2.5 font-medium">
+                                          {c.name}
+                                        </td>
+                                        <td className="px-4 py-2.5 text-zinc-500">
+                                          {deptSubDepartmentsList.find((sd) => sd.id === c.subDepartmentId)?.name || (
+                                            <span className="italic text-zinc-400">Department-wide</span>
+                                          )}
+                                        </td>
+                                        <td className="px-4 py-2.5 font-mono">
+                                          {c.defaultSlaMinutes} minutes
+                                        </td>
+                                        <td className="px-4 py-2.5 font-mono font-bold text-teal-800">
+                                          {c.defaultPriority}
+                                        </td>
+                                        <td className="px-4 py-2.5 space-x-1">
+                                          {c.isWorkStopping && (
+                                            <span className="inline-block bg-red-100 text-red-700 font-bold px-1.5 py-0.5">
+                                              Work Stopping
+                                            </span>
+                                          )}
+                                          {c.isSafetyViolation && (
+                                            <span className="inline-block bg-orange-100 text-orange-700 font-bold px-1.5 py-0.5">
+                                              Safety Violation
+                                            </span>
+                                          )}
+                                          {!c.isWorkStopping && !c.isSafetyViolation && (
+                                            <span className="text-zinc-400 italic">—</span>
+                                          )}
+                                        </td>
+                                        <td className="px-4 py-2.5 text-right whitespace-nowrap">
+                                          <button
+                                            onClick={() => handleStartEditCategory(c)}
+                                            className="text-zinc-600 hover:text-zinc-900 font-bold mr-3"
+                                          >
+                                            Edit
+                                          </button>
+                                          <button
+                                            onClick={() =>
+                                              handleDeleteCategory(c.id)
+                                            }
+                                            className="text-red-500 hover:text-red-700 font-bold"
+                                          >
+                                            Delete
+                                          </button>
+                                        </td>
+                                      </tr>
+                                    )
+                                  )}
+                                </tbody>
+                              </table>
+                            </div>
+                          </>
                         )}
                       </div>
 
