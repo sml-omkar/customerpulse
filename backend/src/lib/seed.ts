@@ -15,13 +15,13 @@ export const CLIENT_OPTIONS: {
     projects : { name: string, isShutdownJob: boolean }[],
   }[] = [
   {
-    name : "AADITYA FINANCE & VENTURES",
+    name : "Aditya",
     isKeyClient : true,
     projects : [
       { name : "finance", isShutdownJob : false },
     ],
   },{
-    name : "AASIAN SHIPPING AGENCIES" ,
+    name : "Asian" ,
     isKeyClient : false,
     projects : [
       { name : "shipping", isShutdownJob : false },

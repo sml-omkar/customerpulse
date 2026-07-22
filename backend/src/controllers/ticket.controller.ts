@@ -95,7 +95,7 @@ export const ticketController = {
         createdAt : true,
         ticketNumber: true,
         id : true,
-        priority: true,
+        internalPriority: true,
         status: true,
         clientName: true,
         department: {
@@ -127,7 +127,7 @@ export const ticketController = {
         createdAt: true,
         ticketNumber: true,
         id: true,
-        priority: true,
+        internalPriority: true,
         status: true,
         clientName: true,
         department: {
@@ -159,7 +159,7 @@ export const ticketController = {
         createdAt: true,
         ticketNumber: true,
         id: true,
-        priority: true,
+        internalPriority: true,
         status: true,
         clientName: true,
         department: {
@@ -310,7 +310,7 @@ export const ticketController = {
         createdAt:true,
         id:true,
         ticketNumber: true,
-        priority: true,
+        internalPriority: true,
         status: true,
         clientName: true,
         department: {
@@ -347,7 +347,7 @@ export const ticketController = {
         id :true,
         createdAt:true,
         ticketNumber: true,
-        priority: true,
+        internalPriority: true,
         status: true,
         clientName: true,
         department: {
