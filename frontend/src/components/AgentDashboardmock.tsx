@@ -746,7 +746,7 @@ export default function AgentDashboard({ token, apiFetch }: AgentDashboardProps 
             </div>
           </div>
 
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-3 flex-wrap w-full sm:w-auto justify-end">
             {loadState === "error" && (
               <span className="text-xs font-medium" style={{ color: C.destructive[600] }}>
                 Couldn't load your data — check your connection and retry.
