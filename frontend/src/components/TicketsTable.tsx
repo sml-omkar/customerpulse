@@ -86,40 +86,40 @@ export default function TicketsTable({
     return (
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full min-w-[820px]">
             <thead className="bg-slate-50">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 whitespace-nowrap">
                   Ticket
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 whitespace-nowrap">
                   Department
                 </th>
                 
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 whitespace-nowrap">
                   Status
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 whitespace-nowrap">
                   Priority
                 </th>
                 {currentView != PAGES.ASSINGED_TICKETS && (
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600">
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 whitespace-nowrap">
                     Assignee
                   </th>
                 )}
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 whitespace-nowrap">
                   Date of Issue
                 </th>
 
                 {
                   (
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 whitespace-nowrap">
                     SLA
                   </th>
                   ) 
                 }
 
-                <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">
+                <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 whitespace-nowrap">
                   Action
                 </th>
               </tr>
@@ -131,7 +131,7 @@ export default function TicketsTable({
                   key={ticket.id}
                   className="border-t border-slate-100 hover:bg-slate-50"
                 >
-                  <td className="px-4 py-3 font-mono font-semibold">
+                  <td className="px-4 py-3 font-mono font-semibold whitespace-nowrap">
                     <div className="flex items-center gap-2">
                       <span>{ticket.ticketNumber}</span>
                     </div>
@@ -143,7 +143,7 @@ export default function TicketsTable({
                     </div>
                   </td>
 
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 whitespace-nowrap">
                     <span
                       className={`rounded-full border px-2 py-1 text-xs font-semibold ${
                         statusColors[ticket.status] ?? statusColors.CLOSED
@@ -153,7 +153,7 @@ export default function TicketsTable({
                     </span>
                   </td>
 
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 whitespace-nowrap">
                     <span
                       className={`rounded border px-2 py-1 text-xs font-bold ${
                         priorityColors[ticket.priority] ?? priorityColors.P4
@@ -165,7 +165,7 @@ export default function TicketsTable({
 
 
                   {currentView != PAGES.ASSINGED_TICKETS && (
-                    <td className="px-4 py-3 text-slate-700">
+                    <td className="px-4 py-3 text-slate-700 whitespace-nowrap max-w-[160px] truncate">
                       {ticket.assignee?.fullName ?? (
                         <span className="italic text-slate-400">
                           Unassigned
@@ -174,17 +174,17 @@ export default function TicketsTable({
                     </td>
                   )}
 
-                  <td className="px-4 py-3 text-slate-600">
+                  <td className="px-4 py-3 text-slate-600 whitespace-nowrap">
                     {new Date(ticket.createdAt).toLocaleDateString()}
                   </td>
 
                   {(
-                    <td className="px-4 py-3 text-slate-600">
+                    <td className="px-4 py-3 text-slate-600 whitespace-nowrap">
                       {getTurnaroundTime(ticket).display}
                     </td>)
                   }
 
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-4 py-3 text-right whitespace-nowrap">
                     <button
                       onClick={() => openTicket(ticket.id)}
                       className="rounded-md bg-slate-900 px-3 py-1 text-xs font-medium text-white transition hover:bg-slate-700"
