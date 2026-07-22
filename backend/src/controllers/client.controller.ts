@@ -3,6 +3,16 @@ import { AuthedRequest } from "../middleware/auth";
 import { prisma } from "../lib/database";
 import { AppError } from "../middleware/errorHandler";
 
+// Client/project names used to be stored fully upper-cased. That's now
+// just the first letter capitalized (rest lower-cased) - e.g. "Aditya"
+// instead of "ADITYA". Existence checks stay case-insensitive so we don't
+// end up with both "Aditya" and "ADITYA" as separate clients.
+function toSentenceCase(value: string): string {
+    const trimmed = value.trim();
+    if (!trimmed) return trimmed;
+    return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
+}
+
 export const clientController = {
 
     async getClients(req: AuthedRequest, res: Response) {
@@ -46,11 +56,12 @@ export const clientController = {
                 });
             }
 
-            // check if the client already exists or not
+            // check if the client already exists or not (case-insensitive,
+            // since we no longer store names fully upper-cased)
 
             const existCheck = await prisma.client.findFirst({
                 where: {
-                    name: name.trim().toUpperCase()
+                    name: { equals: name.trim(), mode: "insensitive" }
                 }
             })
 
@@ -67,12 +78,12 @@ export const clientController = {
 
             const client = await prisma.client.create({
                 data: {
-                    name: name.trim().toUpperCase(),
+                    name: toSentenceCase(name),
                     isKeyClient: Boolean(isKeyClient),
                     isWindClient: Boolean(isWindClient),
                     projects: {
                         create: projectNames.map((p) => ({
-                            name: p.name.trim().toUpperCase(),
+                            name: toSentenceCase(p.name),
                             isShutdownJob: Boolean(p.isShutdownJob),
                         })),
                     },
@@ -119,7 +130,7 @@ export const clientController = {
             const updatedClient = await prisma.client.update({
                 where: { id },
                 data: {
-                    name: name.trim().toUpperCase(),
+                    name: toSentenceCase(name),
                     ...(isKeyClient !== undefined ? { isKeyClient: Boolean(isKeyClient) } : {}),
                     ...(isWindClient !== undefined ? { isWindClient: Boolean(isWindClient) } : {}),
                 },
@@ -192,7 +203,7 @@ export const clientController = {
             };
 
             for (const row of clients) {
-                const clientName = (row.clientName || "").trim().toUpperCase();
+                const clientName = toSentenceCase(String(row.clientName || ""));
                 if (!clientName) {
                     results.errors.push("Skipped row with empty client name");
                     continue;
@@ -209,7 +220,7 @@ export const clientController = {
                     for (const part of parts) {
                         const eqIndex = part.lastIndexOf("=");
                         if (eqIndex > 0) {
-                            const pName = part.substring(0, eqIndex).trim().toUpperCase();
+                            const pName = toSentenceCase(part.substring(0, eqIndex));
                             const pFlag = part.substring(eqIndex + 1).trim().toLowerCase();
                             if (pName) {
                                 projectEntries.push({
@@ -218,20 +229,22 @@ export const clientController = {
                                 });
                             }
                         } else {
-                            projectEntries.push({ name: part.toUpperCase(), isShutdownJob: false });
+                            projectEntries.push({ name: toSentenceCase(part), isShutdownJob: false });
                         }
                     }
                 }
 
                 const existingClient = await prisma.client.findFirst({
-                    where: { name: clientName },
+                    where: { name: { equals: clientName, mode: "insensitive" } },
                     include: { projects: true },
                 });
 
                 if (existingClient) {
                     results.clientsSkipped++;
                     for (const pe of projectEntries) {
-                        const existingProject = existingClient.projects.find((p) => p.name === pe.name);
+                        const existingProject = existingClient.projects.find(
+                            (p) => p.name.toLowerCase() === pe.name.toLowerCase()
+                        );
                         if (existingProject) {
                             results.projectsSkipped++;
                         } else {
