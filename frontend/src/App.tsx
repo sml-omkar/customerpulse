@@ -311,7 +311,6 @@ export default function App() {
   // Category and Keyword Creator states
   const [newCatName, setNewCatName] = useState("");
   const [newCatSla, setNewCatSla] = useState("1440");
-  const [newCatPriority, setNewCatPriority] = useState<TicketPriority>(TicketPriority.P3);
   // Optional - leave "" to make the category department-wide
   const [newCatSubDepartmentId, setNewCatSubDepartmentId] = useState("");
   // Admin-only flags: never shown/known outside GLOBAL_ADMIN / HOD
@@ -321,7 +320,6 @@ export default function App() {
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [editCatName, setEditCatName] = useState("");
   const [editCatSla, setEditCatSla] = useState("1440");
-  const [editCatPriority, setEditCatPriority] = useState<TicketPriority>(TicketPriority.P3);
   const [editCatSubDepartmentId, setEditCatSubDepartmentId] = useState("");
   const [editCatIsWorkStopping, setEditCatIsWorkStopping] = useState(false);
   const [editCatIsSafetyViolation, setEditCatIsSafetyViolation] = useState(false);
@@ -996,7 +994,6 @@ export default function App() {
         body: JSON.stringify({
           name: newCatName,
           defaultSlaMinutes: Number(newCatSla),
-          defaultPriority: newCatPriority,
           minSupportLevel: newCatLevel,
           subDepartmentId: newCatSubDepartmentId || undefined,
           isWorkStopping: newCatIsWorkStopping,
@@ -1034,7 +1031,6 @@ export default function App() {
     setEditingCategoryId(c.id);
     setEditCatName(c.name);
     setEditCatSla(String(c.defaultSlaMinutes));
-    setEditCatPriority(c.defaultPriority as TicketPriority);
     setEditCatSubDepartmentId(c.subDepartmentId || "");
     setEditCatIsWorkStopping(!!c.isWorkStopping);
     setEditCatIsSafetyViolation(!!c.isSafetyViolation);
@@ -1044,7 +1040,7 @@ export default function App() {
     setEditingCategoryId(null);
   };
 
-  // Update Category (name, SLA deadline, priority)
+  // Update Category (name, SLA deadline)
   const handleUpdateCategory = async (catId: string) => {
     if (!editCatName) return;
     try {
@@ -1057,7 +1053,6 @@ export default function App() {
         body: JSON.stringify({
           name: editCatName,
           defaultSlaMinutes: Number(editCatSla),
-          defaultPriority: editCatPriority,
           subDepartmentId: editCatSubDepartmentId || null,
           isWorkStopping: editCatIsWorkStopping,
           isSafetyViolation: editCatIsSafetyViolation,
@@ -2351,20 +2346,6 @@ export default function App() {
                             required
                           />
                           <select
-                            value={newCatPriority}
-                            onChange={(e) =>
-                              setNewCatPriority(
-                                e.target.value as TicketPriority,
-                              )
-                            }
-                            className="text-xs p-2 border border-zinc-300 bg-white w-full"
-                          >
-                            <option value="P1">P1 - Critical</option>
-                            <option value="P2">P2 - High</option>
-                            <option value="P3">P3 - Moderate</option>
-                            <option value="P4">P4 - Low</option>
-                          </select>
-                          <select
                             value={newCatSubDepartmentId}
                             onChange={(e) => setNewCatSubDepartmentId(e.target.value)}
                             className="text-xs p-2 border border-zinc-300 bg-white w-full"
@@ -2442,36 +2423,17 @@ export default function App() {
                                         ))}
                                       </select>
                                     </div>
-                                    <div className="flex gap-2">
-                                      <div className="flex-1">
-                                        <label className="block text-[10px] font-semibold text-zinc-500 mb-1">
-                                          SLA Minutes
-                                        </label>
-                                        <input
-                                          type="number"
-                                          min={1}
-                                          value={editCatSla}
-                                          onChange={(e) => setEditCatSla(e.target.value)}
-                                          className="text-xs p-1.5 border border-zinc-300 bg-white w-full"
-                                        />
-                                      </div>
-                                      <div className="flex-1">
-                                        <label className="block text-[10px] font-semibold text-zinc-500 mb-1">
-                                          Priority
-                                        </label>
-                                        <select
-                                          value={editCatPriority}
-                                          onChange={(e) =>
-                                            setEditCatPriority(e.target.value as TicketPriority)
-                                          }
-                                          className="text-xs p-1.5 border border-zinc-300 bg-white w-full"
-                                        >
-                                          <option value="P1">P1 - Critical</option>
-                                          <option value="P2">P2 - High</option>
-                                          <option value="P3">P3 - Moderate</option>
-                                          <option value="P4">P4 - Low</option>
-                                        </select>
-                                      </div>
+                                    <div>
+                                      <label className="block text-[10px] font-semibold text-zinc-500 mb-1">
+                                        SLA Minutes
+                                      </label>
+                                      <input
+                                        type="number"
+                                        min={1}
+                                        value={editCatSla}
+                                        onChange={(e) => setEditCatSla(e.target.value)}
+                                        className="text-xs p-1.5 border border-zinc-300 bg-white w-full"
+                                      />
                                     </div>
                                     <div className="space-y-1 pt-1">
                                       <label className="flex items-center gap-1.5">
@@ -2514,9 +2476,6 @@ export default function App() {
                                     <div className="flex items-start justify-between gap-2">
                                       <span className="font-semibold text-zinc-900 break-words">
                                         {c.name}
-                                      </span>
-                                      <span className="font-mono font-bold text-teal-800 shrink-0">
-                                        {c.defaultPriority}
                                       </span>
                                     </div>
                                     <div className="flex flex-wrap gap-x-4 gap-y-1 text-zinc-500">
@@ -2578,9 +2537,6 @@ export default function App() {
                                       SLA SLA Deadline
                                     </th>
                                     <th className="px-4 py-2.5 text-left">
-                                      Priority
-                                    </th>
-                                    <th className="px-4 py-2.5 text-left">
                                       Flags (admin-only)
                                     </th>
                                     <th className="px-4 py-2.5 text-right">
@@ -2620,20 +2576,6 @@ export default function App() {
                                             onChange={(e) => setEditCatSla(e.target.value)}
                                             className="text-xs p-1.5 border border-zinc-300 bg-white w-24"
                                           />
-                                        </td>
-                                        <td className="px-4 py-2.5">
-                                          <select
-                                            value={editCatPriority}
-                                            onChange={(e) =>
-                                              setEditCatPriority(e.target.value as TicketPriority)
-                                            }
-                                            className="text-xs p-1.5 border border-zinc-300 bg-white"
-                                          >
-                                            <option value="P1">P1 - Critical</option>
-                                            <option value="P2">P2 - High</option>
-                                            <option value="P3">P3 - Moderate</option>
-                                            <option value="P4">P4 - Low</option>
-                                          </select>
                                         </td>
                                         <td className="px-4 py-2.5">
                                           <label className="flex items-center gap-1 mb-1">
@@ -2680,9 +2622,6 @@ export default function App() {
                                         </td>
                                         <td className="px-4 py-2.5 font-mono">
                                           {c.defaultSlaMinutes} minutes
-                                        </td>
-                                        <td className="px-4 py-2.5 font-mono font-bold text-teal-800">
-                                          {c.defaultPriority}
                                         </td>
                                         <td className="px-4 py-2.5 space-x-1">
                                           {c.isWorkStopping && (
