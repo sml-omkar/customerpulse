@@ -786,6 +786,38 @@ export default function App() {
     setCurrentView(PAGES.DASHBOARD);
   };
 
+  // Global session-expiry guard: wraps window.fetch so every API call in the
+  // app (this component's own calls, plus every child that falls back to
+  // window.fetch via its optional `apiFetch` prop) is watched for an
+  // expired/invalid session. requireAuth (backend/src/middleware/auth.ts)
+  // tags that specific case with `code: "SESSION_EXPIRED"` in its 401 body -
+  // other 401s (bad login credentials, no token sent, blocked account) use
+  // different codes and are left alone so they can show their own inline
+  // error instead of logging anyone out.
+  useEffect(() => {
+    const originalFetch = window.fetch;
+
+    window.fetch = async (...args: Parameters<typeof fetch>) => {
+      const response = await originalFetch(...args);
+      if (response.status === 401) {
+        try {
+          const body = await response.clone().json();
+          if (body?.code === "SESSION_EXPIRED") {
+            handleLogout();
+          }
+        } catch {
+          // Non-JSON 401 body - nothing to key off, leave it to the caller.
+        }
+      }
+      return response;
+    };
+
+    return () => {
+      window.fetch = originalFetch;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   
 
   // Action: Fetch Department specifics (Categories & Keywords)
