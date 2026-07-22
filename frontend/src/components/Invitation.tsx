@@ -714,7 +714,7 @@ export const InvitationComponent: React.FC<InvitationComponentProps> = ({
 
             {/* 2. Email */}
             <div>
-              <label className="block text-xs font-semibold text-zinc-600 mb-1">Corporate Email</label>
+              <label className="block text-xs font-semibold text-zinc-600 mb-1">Email</label>
               <input
                 type="email"
                 placeholder="operator@company.com"
@@ -727,7 +727,7 @@ export const InvitationComponent: React.FC<InvitationComponentProps> = ({
 
             {/* 3. Role */}
             <div>
-              <label className="block text-xs font-semibold text-zinc-600 mb-1">Operations Role Profile</label>
+              <label className="block text-xs font-semibold text-zinc-600 mb-1">User Role</label>
               <select
                 value={inviteRole}
                 onChange={(e) => handleRoleChange(e.target.value as UserRole)}
