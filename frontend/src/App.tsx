@@ -76,7 +76,6 @@ import CXOTicketSearch from "./components/CXOTicketSearch"
 import AgentDashboard from "./components/AgentDashboardmock";
 import DepartmentDashboard from "./components/HODDashboardmock";
 import CXODashboardMock from "./components/CXODashboardmock";
-import { RequestorDirectory } from "./components/RequestorDirectory";
 import { CXODashboard } from "./components/CxoDashboard";
 import { ConfirmDialog } from "./components/ConfirmDialog";
 
@@ -1609,25 +1608,14 @@ export default function App() {
               />
             )}
 
-            {/* Staff / Agent Directory */}
+            {/* User Directory - single directory listing every account (staff + requesters) */}
             {isGlobalAdmin && (
               <NavItem
                 icon={<Users size={15} />}
-                label="Staff Directory"
+                label="User Directory"
                 active={currentView === PAGES.USER_DIRECTORY}
                 collapsed={navCollapsed}
                 onClick={() => setCurrentView(PAGES.USER_DIRECTORY)}
-              />
-            )}
-
-            {/* Requestor Directory (self-registered requesters awaiting/approved for access) */}
-            {isGlobalAdmin && (
-              <NavItem
-                icon={<User size={15} />}
-                label="Users Directory"
-                active={currentView === PAGES.REQUESTOR_DIRECTORY}
-                collapsed={navCollapsed}
-                onClick={() => setCurrentView(PAGES.REQUESTOR_DIRECTORY)}
               />
             )}
 
@@ -1814,15 +1802,6 @@ export default function App() {
               departments={departments}
               fetchUsers={fetchUsers}
               token={token}
-            />
-          )}
-
-          {/* VIEW: REQUESTOR DIRECTORY */}
-          {currentView === PAGES.REQUESTOR_DIRECTORY && isGlobalAdmin && (
-            <RequestorDirectory
-              token={token}
-              setError={setError}
-              setSuccess={setSuccess}
             />
           )}
 
