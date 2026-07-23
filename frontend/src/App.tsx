@@ -1489,7 +1489,7 @@ export default function App() {
           >
             <Menu size={18} />
           </button>
-          <img src={"../assets/logo.jpg"} className="w-8 h-8 sm:w-10 sm:h-10 shrink-0" />
+          <img src={logo} className="w-8 h-8 sm:w-10 sm:h-10 shrink-0" />
           <span className="hidden sm:inline-flex text-[10px] uppercase font-bold tracking-wider font-mono text-slate-700 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200 truncate">
             Customer Pulse
           </span>

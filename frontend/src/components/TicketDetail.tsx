@@ -778,7 +778,7 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
             </button>
           )}
 
-          {(isdepartmentHeads || isStaff) && !["RESOLVED", "CLOSED"].includes(ticket.status) && (
+          {(isdepartmentHeads || isStaff) && ticket.requesterId !== currentUser.id && !["RESOLVED", "CLOSED"].includes(ticket.status) && (
             <button
               onClick={() => setShowResolveCommentForm(true)}
               className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow-sm transition-all duration-200 cursor-pointer"
@@ -788,7 +788,7 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
           )}
 
           {/* Quick status transitions for Staff */}
-          {(isStaff || isdepartmentHeads)&& !["RESOLVED", "CLOSED"].includes(ticket.status) && (
+          {(isStaff || isdepartmentHeads) && ticket.requesterId !== currentUser.id && !["RESOLVED", "CLOSED"].includes(ticket.status) && (
             <div className="relative inline-block text-left">
               <select
                 value={ticket.status}
