@@ -82,7 +82,67 @@ export const UserDirectory = (
 
     const handleSaved = async (message: string) => {
         setSuccess(message);
+        // A save from either "side" of the directory can move someone
+        // between the two lists (e.g. promoting a REQUESTER to AGENT, or
+        // demoting an AGENT back to REQUESTER via the same Edit user modal),
+        // so refresh both the staff list and the requestor list every time.
+        await Promise.all([fetchUsers(), fetchRequestors()]);
+    };
+
+    // NOTE(added): the Edit user modal (EditUserModal.tsx) was built around
+    // the staff `UserType` shape. Requesters are fetched separately (a
+    // lighter-weight `RequestorDirectoryEntry`), so this adapts one into a
+    // `UserType`-shaped object with sensible REQUESTER defaults for the
+    // fields it doesn't carry (isAvailableForAssignment, maxActiveTickets,
+    // etc. - all AGENT-only routing inputs anyway). Editing still goes
+    // through the same PATCH /users/:id the staff flow uses, which already
+    // works for a REQUESTER-role account.
+    const openEditForRequestor = (r: RequestorDirectoryEntry) => {
+      setEditingUser({
+        id: r.id,
+        companyId: "",
+        email: r.email,
+        fullName: r.fullName,
+        employeeId: r.employeeId,
+        departments: [],
+        departmentId: undefined,
+        role: "REQUESTER" as UserRole,
+        supportLevel: undefined,
+        isActive: r.isActive,
+        isAvailableForAssignment: true,
+        maxActiveTickets: 0,
+        state: null,
+        windCategory: null,
+        _count: { ticketsAssigned: 0 },
+        createdAt: r.createdAt,
+        updatedAt: r.createdAt,
+      });
+    };
+
+    // NOTE(added): staff rows only ever had "Edit user" - requester rows
+    // already had Block/Unblock. So that Actions are consistent for
+    // everyone in the directory, staff now get the same Block/Unblock
+    // toggle too (via PATCH /users/:id, the same endpoint the Edit modal's
+    // "Active" checkbox already uses - see user.controller.ts).
+    const toggleStaffActive = async (u: UserType) => {
+      setError("");
+      setSuccess("");
+      try {
+        const res = await fetch(`${API_BASE}/users/${u.id}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ isActive: !u.isActive }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to update user");
+        setSuccess(u.isActive ? "User blocked." : "User unblocked.");
         await fetchUsers();
+      } catch (err: any) {
+        setError(err.message);
+      }
     };
 
     const runAction = async (id: string, action: "approve" | "reject" | "block" | "unblock", successMsg: string) => {
@@ -386,13 +446,32 @@ export const UserDirectory = (
                               <td className="px-6 py-4 font-mono font-semibold text-slate-700 whitespace-nowrap">
                                 {u._count.ticketsAssigned || 0} / {u.maxActiveTickets || 0}
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <button
-                                  onClick={() => setEditingUser(u)}
-                                  className="text-xs font-semibold text-blue-600 hover:text-blue-800 cursor-pointer"
-                                >
-                                  Edit user
-                                </button>
+                              <td className="px-6 py-4">
+                                <div className="flex justify-start gap-1.5 flex-wrap min-w-[140px] items-center">
+                                  <button
+                                    onClick={() => setEditingUser(u)}
+                                    className="text-xs font-semibold text-blue-600 hover:text-blue-800 cursor-pointer"
+                                  >
+                                    Edit user
+                                  </button>
+                                  {u.isActive ? (
+                                    <button
+                                      onClick={() => toggleStaffActive(u)}
+                                      title="Block"
+                                      className="p-1.5 border border-red-200 text-red-700 rounded-lg hover:bg-red-50 cursor-pointer"
+                                    >
+                                      <Ban size={14} />
+                                    </button>
+                                  ) : (
+                                    <button
+                                      onClick={() => toggleStaffActive(u)}
+                                      title="Unblock"
+                                      className="p-1.5 border border-emerald-200 text-emerald-700 rounded-lg hover:bg-emerald-50 cursor-pointer"
+                                    >
+                                      <CheckCircle2 size={14} />
+                                    </button>
+                                  )}
+                                </div>
                               </td>
                             </tr>
                           ))}
@@ -421,7 +500,13 @@ export const UserDirectory = (
                               </td>
                               <td className="px-6 py-4 font-mono font-semibold whitespace-nowrap">{r._count.ticketsRequested}</td>
                               <td className="px-6 py-4">
-                                <div className="flex justify-start gap-1.5 flex-wrap min-w-[140px]">
+                                <div className="flex justify-start gap-1.5 flex-wrap min-w-[140px] items-center">
+                                  <button
+                                    onClick={() => openEditForRequestor(r)}
+                                    className="text-xs font-semibold text-blue-600 hover:text-blue-800 cursor-pointer"
+                                  >
+                                    Edit user
+                                  </button>
                                   {r.approvalStatus === "PENDING" && (
                                     <>
                                       <button
