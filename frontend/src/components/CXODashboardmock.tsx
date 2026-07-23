@@ -203,6 +203,25 @@ const TOOLTIP_STYLE = {
   boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
 };
 
+// NOTE(added): unlike department names (short, curated), category names are
+// free text an admin can type anything into, and a long one blows up this
+// chart's Y-axis label column - crowding out the bars, or overlapping the
+// next tick. This custom tick truncates the label to fit a fixed character
+// budget and adds a native SVG <title> (a plain hover tooltip, no extra
+// state/JS needed) so the full name is still just a hover away. Used only
+// on the "By category, within a department" chart below, since category
+// names are the one label in this file that's genuinely unbounded.
+const CategoryAxisTick = ({ x, y, payload, maxChars }: { x?: number; y?: number; payload?: { value: string }; maxChars: number }) => {
+  const raw = payload?.value ?? "";
+  const truncated = raw.length > maxChars ? `${raw.slice(0, maxChars - 1).trimEnd()}…` : raw;
+  return (
+    <text x={x} y={y} dy={4} textAnchor="end" fontSize={11} fill={C.neutral700}>
+      {truncated !== raw && <title>{raw}</title>}
+      {truncated}
+    </text>
+  );
+};
+
 const STATUS_COLOR: Record<TicketStatus, string> = {
   OPEN: C.primary500,
   REOPENED: C.destructive500,
@@ -1052,7 +1071,7 @@ export default function ManagerAnalyticsMock({ token, apiFetch }: ManagerAnalyti
                 <BarChart data={tatByCategory} layout="vertical" margin={{ left: 0, right: isCompact ? 8 : 16 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} horizontal={false} />
                   <XAxis type="number" tick={{ fontSize: isCompact ? 10 : 11, fill: AXIS_TICK }} axisLine={false} tickLine={false} unit="h" />
-                  <YAxis dataKey="name" type="category" tick={{ fontSize: isCompact ? 10 : 11, fill: C.neutral700 }} axisLine={false} tickLine={false} width={isCompact ? 90 : 140} />
+                  <YAxis dataKey="name" type="category" tick={<CategoryAxisTick maxChars={isCompact ? 14 : 22} />} axisLine={false} tickLine={false} width={isCompact ? 100 : 160} />
                   <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(v: number) => [fmtHours(v), "Avg. TAT"] as [string, string]} />
                   <Bar dataKey="avgHours" fill={C.destructive700} radius={[0, 4, 4, 0]} name="Avg. TAT (hrs)" />
                 </BarChart>
