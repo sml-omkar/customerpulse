@@ -4,6 +4,7 @@ import API_BASE from "../lib/api";
 import { Department, TicketCategory, Client, PAGES, SubDepartment } from "../types";
 import AttachmentUploader from "./AttachmentUploader";
 import { uploadAttachmentToS3 } from "../libs/attachmentUpload";
+import { DateTimePicker } from "./DateTimePicker";
 import {
   Select,
   SelectContent,
@@ -90,6 +91,12 @@ export const TicketForm = ({setError,setSuccess,setSelectedTicketId,setCurrentVi
   const [newTicketSubDepartment, setNewTicketSubDepartment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // NOTE(added): Project is only mandatory when the chosen client actually
+  // has projects to pick from - some clients have none, and there's no
+  // sensible option to force in that case.
+  const selectedClientProjects = Array.isArray(clients) ? (clients.find(c => c.name === newTicketClient)?.projects ?? []) : [];
+  const isProjectRequired = selectedClientProjects.length > 0;
+
 
 
 // Handles department select when submitting ticket to trigger category
@@ -142,7 +149,7 @@ export const TicketForm = ({setError,setSuccess,setSelectedTicketId,setCurrentVi
     if (isSubmitting) return; // already submitting - ignore extra clicks/submits
     setError("");
     setSuccess("");
-    if (!newTicketDept || !newTicketTitle || !newTicketClient || !newTicketClientEmail || !newTicketSite || !newTicketDesc || !newTicketState || !newTicketDesignation || !newTicketDateOccurred) {
+    if (!newTicketDept || !newTicketTitle || !newTicketClient || !newTicketClientEmail || !newTicketSite || !newTicketDesc || !newTicketState || !newTicketDesignation || !newTicketDateOccurred || (isProjectRequired && !newTicketProjectId)) {
       setError("Please fill out all required fields.");
       return;
     }
@@ -255,18 +262,18 @@ export const TicketForm = ({setError,setSuccess,setSelectedTicketId,setCurrentVi
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Project</label>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Project{isProjectRequired ? " *" : ""}</label>
                     <select
                       value={newTicketProjectId}
                       onChange={(e) => setNewTicketProjectId(e.target.value)}
                       className="w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer disabled:bg-slate-50 disabled:cursor-not-allowed"
                       disabled={!newTicketClient}
+                      required={isProjectRequired}
                     >
                       <option value="">-- Choose Project --</option>
-                      {Array.isArray(clients) && clients
-                        .find(c => c.name === newTicketClient)?.projects?.map(p => (
-                          <option key={p.id} value={p.id}>{p.name}{p.isShutdownJob ? " (Shutdown Job)" : ""}</option>
-                        ))}
+                      {selectedClientProjects.map(p => (
+                        <option key={p.id} value={p.id}>{p.name}{p.isShutdownJob ? " (Shutdown Job)" : ""}</option>
+                      ))}
                     </select>
                   </div>
                 </div>
@@ -304,13 +311,14 @@ export const TicketForm = ({setError,setSuccess,setSelectedTicketId,setCurrentVi
 
 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Site / Physical location</label>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Site / Physical location *</label>
                     <input
                       type="text"
                       placeholder="e.g. John Doe"
                       value={newTicketSite}
                       onChange={(e) => setNewTicketSite(e.target.value)}
                       className="w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                      required
                     />
                   </div>
 
@@ -422,13 +430,9 @@ export const TicketForm = ({setError,setSuccess,setSelectedTicketId,setCurrentVi
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1">Issue Occurred (Date & Time) *</label>
-                    <input
-                      type="datetime-local"
-                      defaultValue={""}
+                    <DateTimePicker
                       value={newTicketDateOccurred}
-                      onChange={(e) => setNewTicketDateOccurred(e.target.value)}
-                      className="w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                      required
+                      onChange={setNewTicketDateOccurred}
                     />
                   </div>
                 </div>
@@ -449,13 +453,14 @@ export const TicketForm = ({setError,setSuccess,setSelectedTicketId,setCurrentVi
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Description</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Description *</label>
                   <textarea
                     placeholder="Provide troubleshooting details, steps to reproduce, or notes."
                     value={newTicketDesc}
                     onChange={(e) => setNewTicketDesc(e.target.value)}
                     className="w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                     rows={4}
+                    required
                   />
                 </div>
 
