@@ -1,2 +1,2 @@
-const API_BASE = "http://localhost:3000";
+const API_BASE = "https://customerpulse.sanghvimovers.com/api" ;
 export default API_BASE;
