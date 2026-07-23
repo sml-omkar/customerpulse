@@ -91,78 +91,127 @@ export const SanghviLogo = ({ className = "w-6 h-6" }: { className?: string }) =
 );
 
 
-// ====================== AUTH SHELL (public / unauthenticated frame) ======================
-// Shared "front door" layout for login, signup, forgot-password and invite-accept.
-// Left panel sells the product to whoever lands here — requester, agent, HOD or CXO.
-// Right panel hosts the actual form for whichever step the visitor is on.
-const AuthShell = ({ children }: { children: React.ReactNode }) => (
-  <div className="min-h-screen w-full flex bg-white font-sans">
-    <div className="hidden lg:flex lg:w-[44%] xl:w-[40%] relative flex-col justify-between bg-[#111214] text-white px-12 py-11 overflow-hidden">
-      {/* faint grid texture */}
-      <div
-        className="absolute inset-0 opacity-[0.05] pointer-events-none"
-        style={{
-          backgroundImage:
-            "linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)",
-          backgroundSize: "42px 42px",
-        }}
-      />
-      <div
-        className="absolute -top-24 -right-24 w-80 h-80 rounded-full pointer-events-none"
-        style={{ background: "radial-gradient(circle, rgba(225,53,42,0.25) 0%, rgba(225,53,42,0) 70%)" }}
-      />
+// ====================== AUTH SHELL (dark full-page layout) ======================
+const SchematicSVG = () => (
+  <div className="hidden lg:block fixed top-0 right-0 h-screen w-[62vw] max-w-[980px] z-0 pointer-events-none opacity-90">
+    <svg viewBox="0 0 980 900" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+      <defs>
+        <linearGradient id="edgeGradRed" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#ff3b4a" />
+          <stop offset="100%" stopColor="#8f0f1a" />
+        </linearGradient>
+        <radialGradient id="padGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#e11c2b" stopOpacity="0.30" />
+          <stop offset="65%" stopColor="#e11c2b" stopOpacity="0.08" />
+          <stop offset="100%" stopColor="#e11c2b" stopOpacity="0" />
+        </radialGradient>
+        <linearGradient id="surfaceFill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#d9dce2" stopOpacity="0.14" />
+          <stop offset="100%" stopColor="#d9dce2" stopOpacity="0.02" />
+        </linearGradient>
+      </defs>
+      <ellipse cx="698" cy="800" rx="150" ry="16" fill="url(#padGlow)" />
+      <g stroke="#d9dce2" strokeWidth="1.3" opacity="0.85" strokeLinejoin="round" strokeLinecap="round" fill="none" className="login-holo-line">
+        <path d="M683 800 L695 178" />
+        <path d="M713 800 L701 178" />
+        <path d="M655 800 L741 800 L724 762 L672 762 Z" fill="url(#surfaceFill)" />
+        <path d="M691 778 L691 800 L705 800 L705 778" />
+        <path d="M698 160 L748 160 L748 178 L698 178 Z" fill="url(#surfaceFill)" />
+        <path d="M748 165 L760 168 L748 173" />
+      </g>
+      <circle cx="698" cy="168" r="6" stroke="#e11c2b" strokeWidth="1.2" opacity="0.9" fill="none" className="login-holo-glow" />
+      <g className="login-turbine-blades" stroke="#e2e4e9" strokeWidth="1.1" opacity="0.85" strokeLinejoin="round" fill="none">
+        <path d="M692 168 L695 66 Q698 58 701 66 L704 168 Z" />
+        <path d="M692 168 L695 66 Q698 58 701 66 L704 168 Z" transform="rotate(120 698 168)" />
+        <path d="M692 168 L695 66 Q698 58 701 66 L704 168 Z" transform="rotate(240 698 168)" />
+      </g>
+      <circle className="login-node login-node-d2" cx="698" cy="168" r="3" fill="#e11c2b" />
+      <circle cx="698" cy="168" r="60" stroke="#e11c2b" strokeWidth="0.7" opacity="0.22" className="login-holo-glow" />
+      <circle cx="698" cy="168" r="95" stroke="#e11c2b" strokeWidth="0.6" opacity="0.12" />
+      <circle cx="300" cy="655" r="50" stroke="#e11c2b" strokeWidth="0.7" opacity="0.18" className="login-holo-glow" />
+    </svg>
+  </div>
+);
 
-      <div className="relative z-10 flex items-center gap-3">
-        <img src={logo.jpg} className="w-8 h-8" />
-        <span className="text-[11px] font-mono font-semibold tracking-[0.28em] text-slate-400 uppercase">
-          Sanghvi Group
-        </span>
-      </div>
-
-      <div className="relative z-10">
-        <p className="font-mono text-[11px] tracking-[0.28em] text-red-400 uppercase mb-4">
-          Internal Operations Platform
-        </p>
-        <h1 className="font-display text-[2.65rem] leading-[1.08] font-semibold text-white mb-5">
-          Every ticket
-          <br />
-          has a <span className="text-red-500">pulse.</span>
-        </h1>
-        <p className="text-sm text-slate-400 leading-relaxed max-w-sm mb-10">
-          One sign-in for requesters raising issues, agents resolving them, and leaders watching it
-          all move. Customer Pulse keeps everyone on the same beat.
-        </p>
-
-        <svg viewBox="0 0 380 56" className="w-full max-w-sm h-12 mb-9" fill="none" aria-hidden="true">
-          <path
-            d="M0 30 H108 L128 8 L150 52 L172 16 L188 30 H380"
-            stroke="#ef4444"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            pathLength={420}
-            style={{ strokeDasharray: 420, animation: "pulse-draw 2.4s ease-out forwards" }}
-          />
-          <circle cx="150" cy="52" r="3.5" fill="#ef4444" style={{ animation: "pulse-dot 1.8s ease-in-out infinite 1.2s" }} />
-        </svg>
-
-        
-      </div>
-
-      <div className="relative z-10 flex items-center gap-2 text-[11px] font-mono text-slate-500">
+const RequestLifecycleRail = () => {
+  const steps = [
+    { label: "Log", icon: <path d="M4 21V5a2 2 0 0 1 2-2h8l6 6v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z" /> },
+    { label: "Track", icon: <><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></> },
+    { label: "Updates", icon: <path d="M6 8a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6Z" /> },
+    { label: "Communicate", icon: <path d="M4 4h16v12H8l-4 4Z" /> },
+    { label: "Feedback", icon: <><path d="M7 11v9H4v-9Z" /><path d="M7 11l3-8a2 2 0 0 1 4 1v5h4a2 2 0 0 1 2 2l-1.5 6a2 2 0 0 1-2 1.5H7" /></> },
+    { label: "Resolved", icon: <path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.3 5.9 20.6l1.4-6.8-5.1-4.7 6.9-.8Z" /> },
+  ];
+  return (
+    <div className="max-w-[1180px] mx-auto mt-14 w-full px-4">
+      <div className="font-mono text-[9.5px] tracking-[0.2em] uppercase text-[#6f7178] mb-4">Request Lifecycle</div>
+      <div className="relative flex justify-between">
+        <div className="absolute left-[18px] right-[18px] top-[11px] h-px" style={{ background: "linear-gradient(90deg, #e11c2b, rgba(255,255,255,0.15))" }} />
+        {steps.map((s, i) => (
+          <div key={i} className="relative z-10 flex flex-col items-center gap-2.5 flex-1">
+            <div className="w-[22px] h-[22px] rounded-full bg-[#101113] border-[1.5px] border-[#e11c2b] flex items-center justify-center">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#e11c2b" strokeWidth="2" className="w-[11px] h-[11px]">{s.icon}</svg>
+            </div>
+            <div className="font-mono text-[9.5px] tracking-[0.08em] uppercase text-[#6f7178] text-center">{s.label}</div>
+          </div>
+        ))}
       </div>
     </div>
+  );
+};
 
-    <div className="flex-1 flex items-center justify-center px-6 py-10 sm:px-10 bg-white">
-      <div className="w-full max-w-sm">
-        <div className="lg:hidden flex items-center gap-2.5 mb-9">
-          <img src={logo.jpg} alt="logo" />
-          <span className="text-xs font-mono font-semibold tracking-[0.22em] text-slate-500 uppercase">
-            Customer Pulse
-          </span>
+const AuthShell = ({ children }: { children: React.ReactNode }) => (
+  <div className="relative min-h-screen w-full overflow-hidden" style={{ background: "#08090a" }}>
+    <div className="login-backdrop" />
+    <div className="login-grid-overlay" />
+    <div className="login-scanline" />
+    <SchematicSVG />
+    <div className="relative z-10 min-h-screen flex flex-col px-[6vw] py-10">
+      {/* Top Bar */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3.5">
+          <div className="w-9 h-9 border-[1.5px] border-[#e11c2b] flex items-center justify-center font-display font-semibold text-[17px] text-[#e11c2b] relative">
+            S
+            <div className="absolute inset-[-5px] border border-[rgba(225,28,43,0.25)]" />
+          </div>
+          <div>
+            <div className="font-display text-[14.5px] font-semibold tracking-[0.06em] text-[#f2f3f5]">SANGHVI MOVERS</div>
+            <div className="font-mono text-[9px] tracking-[0.18em] text-[#6f7178] uppercase">Heavy Lift &amp; Logistics</div>
+          </div>
         </div>
-        {children}
+        <div className="text-right">
+          <div className="font-display text-[14.5px] font-semibold tracking-[0.04em] text-[#f2f3f5]">Customer <span className="text-[#e11c2b]">Pulse</span></div>
+          <div className="font-mono text-[9px] tracking-[0.14em] text-[#6f7178]">WE LISTEN. WE ACT.</div>
+        </div>
       </div>
+
+      {/* Main Content */}
+      <div className="flex-1 flex items-center mt-[2vh]">
+        {/* Left: Copy column */}
+        <div className="hidden lg:flex flex-1 max-w-[520px] pr-10 flex-col">
+          <div className="font-mono text-[10.5px] tracking-[0.22em] text-[#e11c2b] uppercase flex items-center gap-2.5 mb-5">
+            <span className="w-[26px] h-px bg-[#e11c2b]" />
+            Service Portal
+          </div>
+          <h1 className="font-display font-medium text-[clamp(30px,3.6vw,46px)] leading-[1.12] tracking-[-0.01em] text-[#f2f3f5] mb-5">
+            Every ticket <span className="text-[#e11c2b]">has a pulse.</span>
+          </h1>
+          <svg viewBox="0 0 420 46" className="w-[220px] h-auto mb-5 overflow-visible login-pulse-line" fill="none">
+            <path d="M0 23 H150 L165 23 L175 6 L188 40 L198 12 L208 30 L218 23 H420" stroke="#e11c2b" strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" />
+          </svg>
+          <p className="text-[14.5px] leading-[1.65] text-[#b9bcc3] max-w-[420px] mb-9">
+            One sign-in for requesters raising issues, agents resolving them, and leaders watching it all move. Customer Pulse keeps everyone on the same beat.
+          </p>
+        </div>
+
+        {/* Right: Form card slot */}
+        <div className="flex-none w-full max-w-[400px] lg:ml-auto">
+          {children}
+        </div>
+      </div>
+
+      {/* Request Lifecycle Rail */}
+      <RequestLifecycleRail />
     </div>
   </div>
 );
@@ -1220,38 +1269,42 @@ export default function App() {
     if (inviteToken) {
       return (
         <AuthShell>
-          <span className="inline-flex p-2.5 bg-red-50 border border-red-100 text-red-600 rounded-xl mb-4">
-            <Mail size={20} />
-          </span>
-          <h1 className="font-display text-2xl font-semibold text-slate-900 tracking-tight">Accept invitation</h1>
-          <p className="text-sm text-slate-500 mt-1.5 mb-7">Set up your profile to join Customer Pulse.</p>
+          <div className="login-card p-[34px_32px_28px]">
+            <div className="login-corner login-corner-tl" />
+            <div className="login-corner login-corner-br" />
+            <div className="font-mono text-[9.5px] tracking-[0.16em] text-[#6f7178] uppercase mb-2">Authenticated Access</div>
+            <h1 className="font-display text-[21px] font-semibold text-[#f2f3f5] mb-6">Accept invitation</h1>
 
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-800 text-xs flex items-center gap-2 rounded-lg">
-              <ShieldAlert size={16} />
-              {error}
+            {error && (
+              <div className="mb-4 p-3 bg-red-950/40 border border-red-900/50 text-red-300 text-xs flex items-center gap-2">
+                <ShieldAlert size={16} />
+                {error}
+              </div>
+            )}
+
+            <form onSubmit={handleAcceptInvite} className="space-y-[18px]">
+              <div className="login-field">
+                <label className="block font-mono text-[9.5px] tracking-[0.12em] uppercase text-[#6f7178] mb-2">Full Name</label>
+                <input type="text" placeholder="Your full name" value={inviteFullName} onChange={e => setInviteFullName(e.target.value)} required />
+              </div>
+              <div className="login-field">
+                <label className="block font-mono text-[9.5px] tracking-[0.12em] uppercase text-[#6f7178] mb-2">Password</label>
+                <input type="password" placeholder="••••••••••" value={invitePassword} onChange={e => setInvitePassword(e.target.value)} required minLength={8} />
+              </div>
+              <div className="login-field">
+                <label className="block font-mono text-[9.5px] tracking-[0.12em] uppercase text-[#6f7178] mb-2">Confirm Password</label>
+                <input type="password" placeholder="••••••••••" value={invitePasswordConfirm} onChange={e => setInvitePasswordConfirm(e.target.value)} required minLength={8} />
+              </div>
+              <button type="submit" disabled={loading} className="login-btn-gradient">
+                {loading ? "Activating profile…" : "Activate account & sign in"}
+              </button>
+            </form>
+
+            <div className="mt-5 text-center">
+              <button onClick={() => setInviteToken(null)} className="font-mono text-[10px] text-[#b9bcc3] hover:text-[#e11c2b] transition-colors">
+                Back to sign in
+              </button>
             </div>
-          )}
-
-          <form onSubmit={handleAcceptInvite} className="space-y-4">
-           
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-[#E1352A] hover:bg-[#c62a20] text-white font-medium text-sm py-2.5 rounded-lg transition-all duration-200 cursor-pointer disabled:opacity-60"
-            >
-              {loading ? "Activating profile…" : "Activate account & sign in"}
-            </button>
-          </form>
-
-          <div className="mt-5 text-center">
-            <button
-              onClick={() => setInviteToken(null)}
-              className="text-xs text-red-600 hover:text-red-700 font-semibold hover:underline"
-            >
-              Back to sign in
-            </button>
           </div>
         </AuthShell>
       );
@@ -1261,215 +1314,201 @@ export default function App() {
     if (forgotMode) {
       return (
         <AuthShell>
-          <span className="inline-flex p-2.5 bg-red-50 border border-red-100 text-red-600 rounded-xl mb-4">
-            <Key size={20} />
-          </span>
-          <h1 className="font-display text-2xl font-semibold text-slate-900 tracking-tight">Reset password</h1>
-          <p className="text-sm text-slate-500 mt-1.5 mb-7">
-            {forgotStep === "request"
-              ? "Enter your account email and we'll send you a verification code."
-              : forgotOtpVerified
-              ? "Choose a new password for your account."
-              : "Enter the 6-digit code we emailed you."}
-          </p>
+          <div className="login-card p-[34px_32px_28px]">
+            <div className="login-corner login-corner-tl" />
+            <div className="login-corner login-corner-br" />
+            <div className="font-mono text-[9.5px] tracking-[0.16em] text-[#6f7178] uppercase mb-2">Password Recovery</div>
+            <h1 className="font-display text-[21px] font-semibold text-[#f2f3f5] mb-6">Reset password</h1>
 
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-800 text-xs flex items-center gap-2 rounded-lg">
-              <ShieldAlert size={16} />
-              {error}
+            <p className="font-mono text-[9.5px] text-[#6f7178] mb-6">
+              {forgotStep === "request"
+                ? "Enter your account email and we'll send you a verification code."
+                : forgotOtpVerified
+                ? "Choose a new password for your account."
+                : "Enter the 6-digit code we emailed you."}
+            </p>
+
+            {error && (
+              <div className="mb-4 p-3 bg-red-950/40 border border-red-900/50 text-red-300 text-xs flex items-center gap-2">
+                <ShieldAlert size={16} />
+                {error}
+              </div>
+            )}
+
+            {success && (
+              <div className="mb-4 p-3 bg-emerald-950/40 border border-emerald-900/50 text-emerald-300 text-xs flex items-center gap-2">
+                {success}
+              </div>
+            )}
+
+            {forgotStep === "request" && (
+              <form onSubmit={handleRequestOtp} className="space-y-[18px]">
+                <div className="login-field">
+                  <label className="block font-mono text-[9.5px] tracking-[0.12em] uppercase text-[#6f7178] mb-2">Corporate email</label>
+                  <input type="email" placeholder="you@company.com" value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} required />
+                </div>
+                <button type="submit" disabled={loading} className="login-btn-gradient">
+                  {loading ? "Sending code…" : "Send verification code"}
+                </button>
+              </form>
+            )}
+
+            {forgotStep === "verify" && !forgotOtpVerified && (
+              <form onSubmit={handleVerifyOtp} className="space-y-[18px]">
+                <div className="login-field">
+                  <label className="block font-mono text-[9.5px] tracking-[0.12em] uppercase text-[#6f7178] mb-2">Verification code</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
+                    placeholder="6-digit code"
+                    value={forgotOtp}
+                    onChange={(e) => setForgotOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    className="!tracking-[0.3em] !text-center !font-semibold"
+                    required
+                  />
+                  <p className="font-mono text-[9px] text-[#6f7178] mt-1.5">Sent to {forgotEmail}. Expires in 10 minutes.</p>
+                </div>
+                <button type="submit" disabled={loading || forgotOtp.length !== 6} className="login-btn-gradient">
+                  {loading ? "Verifying…" : "Verify code"}
+                </button>
+                <button type="button" onClick={handleRequestOtp} disabled={loading} className="w-full font-mono text-[10px] text-[#b9bcc3] hover:text-[#e11c2b] transition-colors">
+                  Resend code
+                </button>
+              </form>
+            )}
+
+            {forgotStep === "verify" && forgotOtpVerified && (
+              <form onSubmit={handleResetPassword} className="space-y-[18px]">
+                <div className="login-field">
+                  <label className="block font-mono text-[9.5px] tracking-[0.12em] uppercase text-[#6f7178] mb-2">New password</label>
+                  <input type="password" placeholder="Choose a new password" value={forgotNewPassword} onChange={(e) => setForgotNewPassword(e.target.value)} required minLength={8} />
+                </div>
+                <div className="login-field">
+                  <label className="block font-mono text-[9.5px] tracking-[0.12em] uppercase text-[#6f7178] mb-2">Confirm new password</label>
+                  <input type="password" placeholder="Re-enter new password" value={forgotConfirmPassword} onChange={(e) => setForgotConfirmPassword(e.target.value)} required minLength={8} />
+                </div>
+                <button type="submit" disabled={loading} className="login-btn-gradient">
+                  {loading ? "Resetting…" : "Reset password"}
+                </button>
+              </form>
+            )}
+
+            <div className="mt-5 text-center">
+              <button onClick={exitForgotPasswordFlow} className="font-mono text-[10px] text-[#b9bcc3] hover:text-[#e11c2b] transition-colors">
+                Back to sign in
+              </button>
             </div>
-          )}
-
-          {success && (
-            <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2 rounded-lg">
-              {success}
-            </div>
-          )}
-
-          {forgotStep === "request" && (
-            <form onSubmit={handleRequestOtp} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Corporate email</label>
-                <input
-                  type="email"
-                  placeholder="you@company.com"
-                  value={forgotEmail}
-                  onChange={(e) => setForgotEmail(e.target.value)}
-                  className="w-full text-sm p-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all duration-200"
-                  required
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-[#E1352A] hover:bg-[#c62a20] text-white font-medium text-sm py-2.5 rounded-lg transition-all duration-200 cursor-pointer disabled:opacity-60"
-              >
-                {loading ? "Sending code…" : "Send verification code"}
-              </button>
-            </form>
-          )}
-
-          {forgotStep === "verify" && !forgotOtpVerified && (
-            <form onSubmit={handleVerifyOtp} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Verification code</label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={6}
-                  placeholder="6-digit code"
-                  value={forgotOtp}
-                  onChange={(e) => setForgotOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                  className="w-full text-sm p-2.5 border border-slate-200 rounded-lg bg-white tracking-[0.3em] text-center font-semibold focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all duration-200"
-                  required
-                />
-                <p className="text-[11px] text-slate-400 mt-1">Sent to {forgotEmail}. Expires in 10 minutes.</p>
-              </div>
-              <button
-                type="submit"
-                disabled={loading || forgotOtp.length !== 6}
-                className="w-full bg-[#E1352A] hover:bg-[#c62a20] text-white font-medium text-sm py-2.5 rounded-lg transition-all duration-200 cursor-pointer disabled:opacity-50"
-              >
-                {loading ? "Verifying…" : "Verify code"}
-              </button>
-              <button
-                type="button"
-                onClick={handleRequestOtp}
-                disabled={loading}
-                className="w-full text-xs text-red-600 hover:text-red-700 font-semibold hover:underline"
-              >
-                Resend code
-              </button>
-            </form>
-          )}
-
-          {forgotStep === "verify" && forgotOtpVerified && (
-            <form onSubmit={handleResetPassword} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">New password</label>
-                <input
-                  type="password"
-                  placeholder="Choose a new password"
-                  value={forgotNewPassword}
-                  onChange={(e) => setForgotNewPassword(e.target.value)}
-                  className="w-full text-sm p-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all duration-200"
-                  required
-                  minLength={8}
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Confirm new password</label>
-                <input
-                  type="password"
-                  placeholder="Re-enter new password"
-                  value={forgotConfirmPassword}
-                  onChange={(e) => setForgotConfirmPassword(e.target.value)}
-                  className="w-full text-sm p-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all duration-200"
-                  required
-                  minLength={8}
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-[#E1352A] hover:bg-[#c62a20] text-white font-medium text-sm py-2.5 rounded-lg transition-all duration-200 cursor-pointer disabled:opacity-60"
-              >
-                {loading ? "Resetting…" : "Reset password"}
-              </button>
-            </form>
-          )}
-
-          <div className="mt-5 text-center">
-            <button
-              onClick={exitForgotPasswordFlow}
-              className="text-xs text-red-600 hover:text-red-700 font-semibold hover:underline"
-            >
-              Back to sign in
-            </button>
           </div>
         </AuthShell>
       );
     }
 
     // 3. Main Login / Public Requester Signup
-      return (
+    return (
       <AuthShell>
-        <h1 className="font-display text-2xl font-semibold text-slate-900 tracking-tight">
-          {signupMode ? "Create your account" : "Welcome back"}
-        </h1>
-        <p className="text-sm text-slate-500 mt-1.5 mb-7">
-          {signupMode
-            ? "Self-register as a requester to raise, view, and track tickets."
-            : "Sign in to Customer Pulse — for requesters, agents, and leadership alike."}
-        </p>
+        <div className="login-card p-[34px_32px_28px]">
+          <div className="login-corner login-corner-tl" />
+          <div className="login-corner login-corner-br" />
+          <div className="font-mono text-[9.5px] tracking-[0.16em] text-[#6f7178] uppercase mb-2">Authenticated Access</div>
+          <h1 className="font-display text-[21px] font-semibold text-[#f2f3f5] mb-6">
+            {signupMode ? "Create your account" : "Sign in to your account"}
+          </h1>
 
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-800 text-xs flex items-center gap-2 rounded-lg">
-            <ShieldAlert size={16} />
-            {error}
-          </div>
-        )}
+          {error && (
+            <div className="mb-4 p-3 bg-red-950/40 border border-red-900/50 text-red-300 text-xs flex items-center gap-2">
+              <ShieldAlert size={16} />
+              {error}
+            </div>
+          )}
 
-        {success && (
-          <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2 rounded-lg">
-            {success}
-          </div>
-        )}
+          {success && (
+            <div className="mb-4 p-3 bg-emerald-950/40 border border-emerald-900/50 text-emerald-300 text-xs flex items-center gap-2">
+              {success}
+            </div>
+          )}
 
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Email</label>
+          <form onSubmit={signupMode ? handleSignup : handleLogin} className="space-y-[18px]">
+            {signupMode && (
+              <>
+                <div className="login-field">
+                  <label className="block font-mono text-[9.5px] tracking-[0.12em] uppercase text-[#6f7178] mb-2">Full Name</label>
+                  <input type="text" placeholder="John Doe" value={signupFullName} onChange={(e) => setSignupFullName(e.target.value)} required />
+                </div>
+                <div className="login-field">
+                  <label className="block font-mono text-[9.5px] tracking-[0.12em] uppercase text-[#6f7178] mb-2">Employee ID</label>
+                  <input type="text" placeholder="EMP001" value={signupEmployeeId} onChange={(e) => setSignupEmployeeId(e.target.value)} required />
+                </div>
+              </>
+            )}
+
+            <div className="login-field">
+              <label className="block font-mono text-[9.5px] tracking-[0.12em] uppercase text-[#6f7178] mb-2">
+                {signupMode ? "Email" : "Username or email"}
+              </label>
               <input
                 type="email"
-                placeholder="admin@company.com"
-                value={loginEmail}
-                onChange={(e) => setLoginEmail(e.target.value)}
-                className="w-full text-sm p-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all duration-200"
+                placeholder="you@company.com"
+                value={signupMode ? signupEmail : loginEmail}
+                onChange={(e) => signupMode ? setSignupEmail(e.target.value) : setLoginEmail(e.target.value)}
                 required
               />
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Password</label>
+            <div className="login-field">
+              <label className="block font-mono text-[9.5px] tracking-[0.12em] uppercase text-[#6f7178] mb-2">Password</label>
               <input
                 type="password"
-                placeholder="••••••••"
-                value={loginPassword}
-                onChange={(e) => setLoginPassword(e.target.value)}
-                className="w-full text-sm p-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all duration-200"
+                placeholder="••••••••••"
+                value={signupMode ? signupPassword : loginPassword}
+                onChange={(e) => signupMode ? setSignupPassword(e.target.value) : setLoginPassword(e.target.value)}
                 required
               />
             </div>
 
-            <div className="flex justify-end -mt-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setForgotMode(true);
-                  setForgotEmail(loginEmail);
-                  setError("");
-                  setSuccess("");
-                }}
-                className="text-[11px] text-red-600 hover:text-red-700 font-semibold hover:underline"
-              >
-                Forgot password?
-              </button>
-            </div>
+            {!signupMode && (
+              <div className="flex justify-between items-center -mt-1 mb-1">
+                <label className="flex items-center gap-[7px] font-mono text-[10px] text-[#6f7178] cursor-pointer">
+                  <input type="checkbox" className="accent-[#e11c2b]" />
+                  Keep me signed in
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setForgotMode(true);
+                    setForgotEmail(loginEmail);
+                    setError("");
+                    setSuccess("");
+                  }}
+                  className="font-mono text-[10px] text-[#b9bcc3] border-b border-[rgba(255,255,255,0.2)] hover:text-[#e11c2b] hover:border-[#e11c2b] transition-colors"
+                >
+                  Forgot password?
+                </button>
+              </div>
+            )}
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-[#E1352A] hover:bg-[#c62a20] text-white font-medium text-sm py-2.5 rounded-lg transition-all duration-200 cursor-pointer disabled:opacity-60"
-            >
-              {loading ? "Signing in…" : "Sign in to Customer Pulse"}
+            <button type="submit" disabled={loading} className="login-btn-gradient">
+              {loading ? (signupMode ? "Creating account…" : "Signing in…") : (signupMode ? "Create account" : "Log in")}
             </button>
-
-            
           </form>
 
-          <p className="mt-7 text-center text-[11px] text-slate-400">
-            Trouble getting in? Contact your department admin for access.
-          </p>
+          <div className="mt-5 pt-4 border-t border-[rgba(255,255,255,0.08)] flex justify-between items-center font-mono text-[9.5px] text-[#6f7178]">
+            <span className="flex items-center">
+              <span className="inline-block w-[6px] h-[6px] rounded-full bg-[#3ecf6b] mr-1.5" style={{ boxShadow: "0 0 6px #3ecf6b" }} />
+              Secure connection
+            </span>
+            {!signupMode && (
+              <span className="cursor-pointer hover:text-[#e11c2b] transition-colors" onClick={() => { setSignupMode(true); setError(""); setSuccess(""); }}>
+                Create account
+              </span>
+            )}
+            {signupMode && (
+              <span className="cursor-pointer hover:text-[#e11c2b] transition-colors" onClick={() => { setSignupMode(false); setError(""); setSuccess(""); }}>
+                Sign in instead
+              </span>
+            )}
+          </div>
+        </div>
       </AuthShell>
     );
   }
@@ -1731,7 +1770,6 @@ export default function App() {
 
           {/* VIEW: DASHBOARD */}
           {currentView === PAGES.DASHBOARD && (
-            
             <Dashboard
               token={token}
               setCurrentView={setCurrentView}
