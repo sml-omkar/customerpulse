@@ -809,11 +809,16 @@ export default function App() {
   // Global session-expiry guard: wraps window.fetch so every API call in the
   // app (this component's own calls, plus every child that falls back to
   // window.fetch via its optional `apiFetch` prop) is watched for an
-  // expired/invalid session. requireAuth (backend/src/middleware/auth.ts)
-  // tags that specific case with `code: "SESSION_EXPIRED"` in its 401 body -
-  // other 401s (bad login credentials, no token sent, blocked account) use
-  // different codes and are left alone so they can show their own inline
-  // error instead of logging anyone out.
+  // expired/invalid session, or an account that just got blocked while the
+  // person was still logged in. requireAuth (backend/src/middleware/auth.ts)
+  // tags an expired/invalid token with `code: "SESSION_EXPIRED"`, and a
+  // now-blocked account with `code: "ACCOUNT_BLOCKED"` - both mean the
+  // current session is no longer valid, so both force an immediate logout
+  // (the blocked user is kicked back to the login screen and can't log back
+  // in until an admin unblocks them - see auth.service.ts's login()). Other
+  // 401s (bad login credentials, no token sent) use different codes and are
+  // left alone so they can show their own inline error instead of logging
+  // anyone out.
   useEffect(() => {
     const originalFetch = window.fetch;
 
@@ -824,6 +829,9 @@ export default function App() {
           const body = await response.clone().json();
           if (body?.code === "SESSION_EXPIRED") {
             handleLogout();
+          } else if (body?.code === "ACCOUNT_BLOCKED") {
+            handleLogout();
+            setError("Your account has been blocked by an administrator. Please contact your admin for access.");
           }
         } catch {
           // Non-JSON 401 body - nothing to key off, leave it to the caller.
