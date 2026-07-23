@@ -113,7 +113,7 @@ const AuthShell = ({ children }: { children: React.ReactNode }) => (
       />
 
       <div className="relative z-10 flex items-center gap-3">
-        <img src={logo} className="w-8 h-8" />
+        <img src={logo.jpg} className="w-8 h-8" />
         <span className="text-[11px] font-mono font-semibold tracking-[0.28em] text-slate-400 uppercase">
           Sanghvi Group
         </span>
@@ -156,7 +156,7 @@ const AuthShell = ({ children }: { children: React.ReactNode }) => (
     <div className="flex-1 flex items-center justify-center px-6 py-10 sm:px-10 bg-white">
       <div className="w-full max-w-sm">
         <div className="lg:hidden flex items-center gap-2.5 mb-9">
-          <SanghviLogo className="w-8 h-8" />
+          <img src={logo.jpg} alt="logo" />
           <span className="text-xs font-mono font-semibold tracking-[0.22em] text-slate-500 uppercase">
             Customer Pulse
           </span>
