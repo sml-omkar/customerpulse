@@ -41,6 +41,11 @@ import {
 /* ------------------------------------------------------------------ */
 type TicketStatus = "OPEN" | "IN_PROGRESS" | "ON_HOLD" | "RESOLVED" | "REOPENED";
 type TicketPriority = "LOW" | "MEDIUM" | "HIGH" | "URGENT";
+// Separate triage metric (backend InternalPriorityLevel, see
+// internalPriority.service.ts) - distinct from TicketPriority above, which
+// still drives SLA/TAT and can be manually overridden. The "By priority"
+// analytics chart groups tickets by this metric, not by TicketPriority.
+type InternalPriorityLevel = "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
 type TicketTab = "OPEN" | "BREACHED" | "ALL";
 type TicketCategoryName = string;
 
@@ -71,6 +76,7 @@ interface MockTicket {
   subject: string;
   requester: string;
   priority: TicketPriority;
+  internalPriority: InternalPriorityLevel;
   status: TicketStatus;
   category: TicketCategoryName;
   createdAt: number;
@@ -134,6 +140,15 @@ const PRIORITY_META: Record<TicketPriority, PriorityMeta> = {
   URGENT: { label: "Urgent", fg: C.destructive[700], bg: C.destructive[100] },
 };
 
+// Styling for the internal triage metric (CRITICAL/HIGH/MEDIUM/LOW) - kept
+// separate from PRIORITY_META above since it's a different scale entirely.
+const INTERNAL_PRIORITY_META: Record<InternalPriorityLevel, PriorityMeta> = {
+  LOW: { label: "Low", fg: C.neutral[600], bg: C.neutral[100] },
+  MEDIUM: { label: "Medium", fg: C.primary[700], bg: C.primary[50] },
+  HIGH: { label: "High", fg: C.warning[700], bg: C.warning[100] },
+  CRITICAL: { label: "Critical", fg: C.destructive[700], bg: C.destructive[100] },
+};
+
 // Category names now come from real data (backend TicketCategory rows) as
 // well as the local mock generator, so instead of a fixed lookup table we
 // pick a stable color per name from a small palette (same name -> same
@@ -154,6 +169,7 @@ function categoryMeta(name: TicketCategoryName): { fg: string; bg: string; dot: 
 
 const STATUS_ORDER: TicketStatus[] = ["OPEN", "IN_PROGRESS", "ON_HOLD", "RESOLVED", "REOPENED"];
 const PRIORITY_ORDER: TicketPriority[] = ["LOW", "MEDIUM", "HIGH", "URGENT"];
+const INTERNAL_PRIORITY_ORDER: InternalPriorityLevel[] = ["LOW", "MEDIUM", "HIGH", "CRITICAL"];
 const OPEN_STATUSES: TicketStatus[] = ["OPEN", "IN_PROGRESS", "ON_HOLD", "REOPENED"];
 const SLA_HOURS: Record<TicketPriority, number> = { URGENT: 4, HIGH: 8, MEDIUM: 24, LOW: 48 };
 const BASE_TAT_HOURS: Record<TicketPriority, number> = { URGENT: 4, HIGH: 7, MEDIUM: 12, LOW: 20 };
@@ -181,6 +197,7 @@ interface ApiTicket {
   subject: string;
   requester: string;
   priority: string; // "P1" | "P2" | "P3" | "P4"
+  internalPriority: string; // "CRITICAL" | "HIGH" | "MEDIUM" | "LOW"
   status: TicketStatus;
   categoryId: string | null;
   categoryName: string;
@@ -232,6 +249,7 @@ function mapApiTicketToMockTicket(t: ApiTicket): MockTicket {
     subject: t.subject,
     requester: t.requester,
     priority: API_PRIORITY_MAP[t.priority] ?? "MEDIUM",
+    internalPriority: (t.internalPriority as InternalPriorityLevel) ?? "LOW",
     status: t.status,
     category: t.categoryName,
     createdAt,
@@ -641,7 +659,12 @@ export default function AgentDashboard({ token, apiFetch }: AgentDashboardProps 
   );
 
   const priorityData = useMemo(
-    () => PRIORITY_ORDER.map((p) => ({ name: PRIORITY_META[p].label, value: ticketsInRange.filter((t) => t.priority === p).length, fill: PRIORITY_META[p].fg })),
+    () =>
+      INTERNAL_PRIORITY_ORDER.map((p) => ({
+        name: INTERNAL_PRIORITY_META[p].label,
+        value: ticketsInRange.filter((t) => t.internalPriority === p).length,
+        fill: INTERNAL_PRIORITY_META[p].fg,
+      })),
     [ticketsInRange]
   );
 
@@ -800,7 +823,7 @@ export default function AgentDashboard({ token, apiFetch }: AgentDashboardProps 
                 </div>
               </SectionCard>
 
-              <SectionCard title="By priority" subtitle="Open + closed" className="md:col-span-2">
+              <SectionCard title="By priority" subtitle="Internal triage priority — open + closed" className="md:col-span-2">
                 <div style={{ width: "100%", height: 150 }}>
                   <ResponsiveContainer>
                     <BarChart data={priorityData} margin={{ left: -20 }}>
