@@ -1731,6 +1731,7 @@ export default function App() {
 
           {/* VIEW: DASHBOARD */}
           {currentView === PAGES.DASHBOARD && (
+            
             <Dashboard
               token={token}
               setCurrentView={setCurrentView}

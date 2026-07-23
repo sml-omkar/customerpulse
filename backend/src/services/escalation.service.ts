@@ -138,7 +138,7 @@ export const escalationService = {
 
       const breachedTicket = await prisma.ticket.update({ 
         where: { id: ticket.id }, 
-        data: { slaBreached: true },
+        data: { slaBreached: true,supportLevel:"L2" },
         select:{assignee:{select:{fullName:true}}} 
       });
 
