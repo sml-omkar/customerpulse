@@ -109,6 +109,7 @@ export const agentDashboardController = {
           ticketNumber: true,
           title: true,
           priority: true,
+          internalPriority: true,
           status: true,
           categoryId: true,
           category: { select: { name: true } },
@@ -162,6 +163,11 @@ export const agentDashboardController = {
         subject: t.title,
         requester: t.requester?.fullName ?? "Unknown",
         priority: t.priority,
+        // NOTE(added): separate triage metric (CRITICAL/HIGH/MEDIUM/LOW,
+        // see internalPriority.service.ts) - distinct from `priority`
+        // (P1-P4, which drives SLA/TAT). The "By priority" analytics chart
+        // groups tickets by this, not by `priority`.
+        internalPriority: t.internalPriority,
         status: t.status,
         categoryId: t.categoryId,
         categoryName: t.category?.name ?? "Uncategorized",
