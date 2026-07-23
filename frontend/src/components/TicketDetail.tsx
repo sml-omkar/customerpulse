@@ -746,7 +746,7 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
             ← Back to Queue
           </button>
           <span className="text-slate-300 hidden sm:inline">|</span>
-          <span className="text-sm font-mono font-semibold text-slate-900 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-md break-all sm:break-normal sm:truncate sm:max-w-xs md:max-w-sm">
+          <span className="text-sm font-mono font-semibold text-slate-900 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-md break-all">
             {[ticket.ticketNumber, ticket.category?.name || "General", ticket.clientName].join(" _ ")}
           </span>
           {ticket.requester?.role === "REQUESTER" && (
