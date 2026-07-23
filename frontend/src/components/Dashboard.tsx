@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Plus,Inbox,User,CheckCircle,Clock,Layers } from "lucide-react";
 import { PAGES, Ticket, User as UserType, metric } from "../types";
-import { RequesterNotifications } from "./RequesterNotifications";
 import {GlobalAdminTicketSearch} from "./GlobalAdminTicketSearch"
 import AgentTicketSearch from "./AgentTicketSearch"
 import CXOTicketSearch from "./CXOTicketSearch";
@@ -36,9 +35,6 @@ export const Dashboard = ({setCurrentView,user,setSelectedTicketId,token,metric}
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
-                  {user.role === "REQUESTER" && (
-                    <RequesterNotifications token={token} />
-                  )}
                   <button
                     onClick={() => setCurrentView(PAGES.NEW_TICKET)}
                     className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold px-4 py-2.5 cursor-pointer flex items-center gap-2 rounded-lg transition-all shadow-xs"
