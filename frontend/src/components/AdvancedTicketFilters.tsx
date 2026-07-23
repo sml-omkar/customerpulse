@@ -356,17 +356,28 @@ export const AdvancedTicketFilters: React.FC<AdvancedTicketFiltersProps> = ({
     slaTo,
   ]);
 
-  useEffect(() => {
-    onFilteredTicketsChange(filteredTickets);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // NOTE(added): open work should surface before resolved history across
+  // every ticket search view - AGENT/HOD/CXO's "my queue"/"my department"
+  // views as well as GLOBAL_ADMIN's company-wide search. A stable sort
+  // (guaranteed by the spec since ES2019) that only distinguishes RESOLVED
+  // from everything else, so relative order within each group (e.g.
+  // whatever GET /tickets already sorted by) is left untouched.
+  const sortedFilteredTickets = useMemo(() => {
+    const rank = (t: Ticket) => (t.status === TicketStatus.RESOLVED ? 1 : 0);
+    return [...filteredTickets].sort((a, b) => rank(a) - rank(b));
   }, [filteredTickets]);
 
-  // Export every currently-filtered ticket (i.e. whatever `filteredTickets`
-  // resolves to right now, respecting search + all key/value + date-range
-  // filters above) to an .xlsx workbook with one row per ticket and every
-  // field on the Ticket record as its own column.
+  useEffect(() => {
+    onFilteredTicketsChange(sortedFilteredTickets);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sortedFilteredTickets]);
+
+  // Export every currently-filtered ticket, in the same order shown on
+  // screen (respecting search + all key/value + date-range filters, and
+  // the open-first ordering above), to an .xlsx workbook with one row per
+  // ticket and every field on the Ticket record as its own column.
   const exportToExcel = () => {
-    const rows = filteredTickets.map((t) => ({
+    const rows = sortedFilteredTickets.map((t) => ({
       "Ticket Number": t.ticketNumber,
       "Title": t.title,
       "Description": t.description || "",
