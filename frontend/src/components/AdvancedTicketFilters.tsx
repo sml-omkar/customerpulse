@@ -356,14 +356,13 @@ export const AdvancedTicketFilters: React.FC<AdvancedTicketFiltersProps> = ({
     slaTo,
   ]);
 
-  // NOTE(added): open work should surface before resolved history across
-  // every ticket search view - AGENT/HOD/CXO's "my queue"/"my department"
-  // views as well as GLOBAL_ADMIN's company-wide search. A stable sort
-  // (guaranteed by the spec since ES2019) that only distinguishes RESOLVED
-  // from everything else, so relative order within each group (e.g.
-  // whatever GET /tickets already sorted by) is left untouched.
+  // NOTE(added): tickets with status OPEN specifically (not IN_PROGRESS/
+  // ON_HOLD/REOPENED/etc.) should surface first, across every ticket search
+  // view. A stable sort (guaranteed by the spec since ES2019) that only
+  // distinguishes OPEN from everything else, so relative order within each
+  // group (e.g. whatever GET /tickets already sorted by) is left untouched.
   const sortedFilteredTickets = useMemo(() => {
-    const rank = (t: Ticket) => (t.status === TicketStatus.RESOLVED ? 1 : 0);
+    const rank = (t: Ticket) => (t.status === TicketStatus.OPEN ? 0 : 1);
     return [...filteredTickets].sort((a, b) => rank(a) - rank(b));
   }, [filteredTickets]);
 
