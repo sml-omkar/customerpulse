@@ -78,7 +78,7 @@ import DepartmentDashboard from "./components/HODDashboardmock";
 import CXODashboardMock from "./components/CXODashboardmock";
 import { CXODashboard } from "./components/CxoDashboard";
 import { ConfirmDialog } from "./components/ConfirmDialog";
-import {logo} from "../assets/logo.jpg"
+import logo from "../assets/logo.jpg"
 
 export const SanghviLogo = ({ className = "w-6 h-6" }: { className?: string }) => (
   <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
