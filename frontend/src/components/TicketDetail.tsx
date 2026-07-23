@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import API_BASE from "../lib/api";
+import { DateTimePicker } from "./DateTimePicker";
 import {
   ShieldAlert,
   CheckCircle,
@@ -114,6 +115,11 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
   const isStaff = ["AGENT"].includes(currentUser.role);
   const isdepartmentHeads = ["CXO","HOD"].includes(currentUser.role)
   const isAdmin = ["GLOBAL_ADMIN"].includes(currentUser.role);
+
+  // NOTE(added): Project is only mandatory when the chosen client actually
+  // has projects to pick from - mirrors TicketForm.tsx's create-ticket logic.
+  const editSelectedClientProjects = Array.isArray(clients) ? (clients.find(c => c.name === editForm.clientName)?.projects ?? []) : [];
+  const isEditProjectRequired = editSelectedClientProjects.length > 0;
 
   const [sla,setSla] = useState<{
     text: string;
@@ -986,18 +992,18 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-700 mb-1">Project</label>
+                  <label className="block text-xs font-semibold text-zinc-700 mb-1">Project{isEditProjectRequired ? " *" : ""}</label>
                   <select
                     value={editForm.projectId}
                     onChange={(e) => setEditForm({ ...editForm, projectId: e.target.value })}
                     className="w-full text-sm p-2.5 border border-zinc-200 rounded-lg bg-white cursor-pointer disabled:bg-slate-50 disabled:cursor-not-allowed"
                     disabled={!editForm.clientName}
+                    required={isEditProjectRequired}
                   >
                     <option value="">-- Choose Project --</option>
-                    {Array.isArray(clients) && clients
-                      .find(c => c.name === editForm.clientName)?.projects?.map(p => (
-                        <option key={p.id} value={p.id}>{p.name}{p.isShutdownJob ? " (Shutdown Job)" : ""}</option>
-                      ))}
+                    {editSelectedClientProjects.map(p => (
+                      <option key={p.id} value={p.id}>{p.name}{p.isShutdownJob ? " (Shutdown Job)" : ""}</option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -1032,11 +1038,9 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
 
               <div>
                 <label className="block text-xs font-semibold text-zinc-700 mb-1">Issue Occurred (Date & Time)</label>
-                <input
-                  type="datetime-local"
+                <DateTimePicker
                   value={editForm.dateOfOccurance}
-                  onChange={(e) => setEditForm({ ...editForm, dateOfOccurance: e.target.value })}
-                  className="w-full text-sm p-2.5 border border-zinc-200 rounded-lg bg-white"
+                  onChange={(v) => setEditForm({ ...editForm, dateOfOccurance: v })}
                 />
               </div>
 
@@ -1111,12 +1115,13 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-zinc-700 mb-1">Detailed Outage Narrative / Description</label>
+                <label className="block text-xs font-semibold text-zinc-700 mb-1">Detailed Outage Narrative / Description *</label>
                 <textarea
                   value={editForm.description}
                   onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
                   className="w-full text-sm p-2.5 border border-zinc-200 rounded-lg bg-white"
                   rows={4}
+                  required
                 />
               </div>
 
