@@ -1,0 +1,24 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.departmentRouter = void 0;
+const express_1 = require("express");
+const client_1 = require("../generated/prisma/client");
+const auth_1 = require("../middleware/auth");
+const department_controller_1 = require("../controllers/department.controller");
+const ticketCategory_controller_1 = require("../controllers/ticketCategory.controller");
+const subDepartment_controller_1 = require("../controllers/subDepartment.controller");
+const asyncHandler_1 = require("../middleware/asyncHandler");
+const upload_1 = require("../middleware/upload");
+exports.departmentRouter = (0, express_1.Router)();
+exports.departmentRouter.post("/", auth_1.requireAuth, (0, auth_1.requireRole)(client_1.UserRole.GLOBAL_ADMIN), department_controller_1.departmentController.create);
+exports.departmentRouter.get("/", auth_1.requireAuth, department_controller_1.departmentController.list);
+exports.departmentRouter.get("/bulk-upload/template", auth_1.requireAuth, (0, auth_1.requireRole)(client_1.UserRole.GLOBAL_ADMIN), (0, asyncHandler_1.asyncHandler)(department_controller_1.departmentController.downloadTemplate));
+exports.departmentRouter.post("/bulk-upload", auth_1.requireAuth, (0, auth_1.requireRole)(client_1.UserRole.GLOBAL_ADMIN), upload_1.uploadSpreadsheet, (0, asyncHandler_1.asyncHandler)(department_controller_1.departmentController.bulkUpload));
+exports.departmentRouter.get("/:id", auth_1.requireAuth, (0, asyncHandler_1.asyncHandler)(department_controller_1.departmentController.getById));
+exports.departmentRouter.patch("/:id", auth_1.requireAuth, (0, auth_1.requireRole)(client_1.UserRole.GLOBAL_ADMIN, client_1.UserRole.HOD), (0, asyncHandler_1.asyncHandler)(department_controller_1.departmentController.update));
+exports.departmentRouter.post("/:departmentId/categories", auth_1.requireAuth, (0, auth_1.requireRole)(client_1.UserRole.GLOBAL_ADMIN, client_1.UserRole.HOD), (0, asyncHandler_1.asyncHandler)(ticketCategory_controller_1.ticketCategoryController.create));
+exports.departmentRouter.get("/:departmentId/categories", auth_1.requireAuth, (0, asyncHandler_1.asyncHandler)(ticketCategory_controller_1.ticketCategoryController.list));
+exports.departmentRouter.post("/:departmentId/subdepartments", auth_1.requireAuth, (0, auth_1.requireRole)(client_1.UserRole.GLOBAL_ADMIN, client_1.UserRole.HOD), (0, asyncHandler_1.asyncHandler)(subDepartment_controller_1.subDepartmentController.create));
+exports.departmentRouter.get("/:departmentId/subdepartments", auth_1.requireAuth, (0, asyncHandler_1.asyncHandler)(subDepartment_controller_1.subDepartmentController.list));
+exports.departmentRouter.delete("/:id", auth_1.requireAuth, (0, asyncHandler_1.asyncHandler)(department_controller_1.departmentController.delete));
+//# sourceMappingURL=departments.js.map

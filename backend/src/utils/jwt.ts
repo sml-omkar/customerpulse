@@ -16,7 +16,7 @@ const EXPIRES_IN = "12h";
  * just reads req.user off AuthedRequest either way.
  */
 export function signAuthToken(payload: AuthTokenPayload): string {
-  return jwt.sign(payload, process.env.JWT_SECRET || "its-me", { expiresIn: EXPIRES_IN });
+  return jwt.sign(payload, process.env.JWT_SECRET || "its-me", { expiresIn: "6h" });
 }
 
 export function verifyAuthToken(token: string): AuthTokenPayload {

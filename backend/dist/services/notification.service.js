@@ -1,0 +1,122 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.notificationService = void 0;
+const mailer_1 = require("../lib/mailer");
+const dotenv_1 = require("dotenv");
+(0, dotenv_1.config)();
+function layout(title, bodyHtml) {
+    return `
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1f2937">
+      <h2 style="color:#111827">${title}</h2>
+      ${bodyHtml}
+      <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0" />
+      <p style="font-size:12px;color:#9ca3af">This is an automated message from the Helpdesk system.</p>
+    </div>
+  `;
+}
+exports.notificationService = {
+    async sendPasswordResetOtp(email, otp) {
+        await (0, mailer_1.sendMail)({
+            to: email,
+            subject: `Your password reset code`,
+            html: layout("Reset your password", `
+        <p>We received a request to reset the password for this account.</p>
+        <p style="font-size:28px;font-weight:bold;letter-spacing:6px;margin:16px 0">${otp}</p>
+        <p>This code expires in 10 minutes. If you didn't request this, you can safely ignore this email.</p>
+      `),
+        });
+    },
+    async sendInvitation(email, token, role, password) {
+        const link = `https://customerpulse.sanghvimovers.com?token=${token}`;
+        await (0, mailer_1.sendMail)({
+            to: email,
+            subject: `You've been invited to join Sanghvi`,
+            html: layout("You're invited", `
+        <p>You have been invited to join <b>Sanghvi</b> as <b>${role}</b>.</p>
+        <p>You're password is pre set as ${password}</p>
+        <p><a href="${link}" style="background:#2563eb;color:#fff;padding:10px 16px;border-radius:6px;text-decoration:none">Accept Invitation</a></p>
+        <p>This link expires in 7 days.</p>
+      `),
+        });
+    },
+    async sendTicketCreated(ticket, requester) {
+        await (0, mailer_1.sendMail)({
+            to: requester.email,
+            subject: `[${ticket.ticketNumber}] Ticket received: ${ticket.title}`,
+            html: layout("Ticket received", `
+        <p>Hi ${requester.fullName},</p>
+        <p>We've logged your ticket <b>${ticket.ticketNumber}</b> - "${ticket.title}".</p>
+        <p>Priority: <b>${ticket.priority}</b></p>
+        <p>We'll notify you as it progresses.</p>
+      `),
+        });
+    },
+    async sendTicketAssigned(ticket, assignee) {
+        await (0, mailer_1.sendMail)({
+            to: assignee.email,
+            subject: `[${ticket.ticketNumber}] New ticket assigned to you: ${ticket.title}`,
+            html: layout("New assignment", `
+        <p>Hi ${assignee.fullName},</p>
+        <p>Ticket <b>${ticket.ticketNumber}</b> - "${ticket.title}" (Priority ${ticket.priority}) has been assigned to you.</p>
+        ${ticket.slaDeadline ? `<p>SLA deadline: <b>${ticket.slaDeadline.toISOString()}</b></p>` : ""}
+        
+      `),
+        });
+    },
+    async sendTicketEscalated(ticket, escalation, cxo) {
+        console.log(cxo.email);
+        await (0, mailer_1.sendMail)({
+            to: cxo.email,
+            subject: `[${ticket.ticketNumber}] has been escalated.`,
+            html: layout(`Ticket ${ticket.id} has been escalated`, `
+        <p>Hi ${cxo.fullName},</p>
+        <p>Ticket <b>${ticket.ticketNumber}</b> has been escalated.</p>
+        <p>Reason: ${escalation.reason}</p>
+      `),
+        });
+    },
+    async sendSlaBreachWarning(ticket, managerorcxoDetails) {
+        await (0, mailer_1.sendMail)({
+            to: managerorcxoDetails.email,
+            subject: `⚠ SLA breach: [${ticket.ticketNumber}] ${ticket.title}`,
+            html: layout("SLA breached", `
+        <p>Ticket <b>${ticket.ticketNumber}</b> under the department <b>${managerorcxoDetails.departmentName}</b> has breached its SLA deadline (${ticket.slaDeadline?.toISOString()}).</p>
+        <p>This ticket is currently assigned to ${managerorcxoDetails.assigneeName}</p>
+      `),
+        });
+    },
+    async sendCommentAdded(ticket, recipient, commenter, commentText) {
+        await (0, mailer_1.sendMail)({
+            to: recipient.email,
+            subject: `[${ticket.ticketNumber}] New comment: ${ticket.title}`,
+            html: layout("New comment added", `
+        <p>Hi ${recipient.fullName},</p>
+        <p>${commenter.fullName} added a new comment on ticket <b>${ticket.ticketNumber}</b> - "${ticket.title}".</p>
+        <blockquote style="margin:12px 0;padding:8px 12px;border-left:3px solid #e5e7eb;color:#374151">${commentText}</blockquote>
+       
+      `),
+        });
+    },
+    async sendTicketResolved(ticket, requester) {
+        await (0, mailer_1.sendMail)({
+            to: requester.email,
+            subject: `[${ticket.ticketNumber}] Resolved: ${ticket.title}`,
+            html: layout("Your ticket was resolved", `
+        <p>Hi ${requester.fullName},</p>
+        <p>Ticket <b>${ticket.ticketNumber}</b> has been marked resolved. Reply if you need it reopened.</p>
+      `),
+        });
+    },
+    async sendTicketReopened(ticket, assignee) {
+        await (0, mailer_1.sendMail)({
+            to: assignee.email,
+            subject: `[${ticket.ticketNumber}] Ticket reopened: ${ticket.title}`,
+            html: layout("Ticket reopened", `
+        <p>Hi ${assignee.fullName},</p>
+        <p>Ticket <b>${ticket.ticketNumber}</b> - "${ticket.title}" has been reopened and is back on your queue.</p>
+        ${ticket.slaDeadline ? `<p>SLA deadline: <b>${ticket.slaDeadline.toISOString()}</b></p>` : ""}
+      `),
+        });
+    },
+};
+//# sourceMappingURL=notification.service.js.map

@@ -1,0 +1,20 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.cxoRouter = void 0;
+const express_1 = require("express");
+const auth_1 = require("../middleware/auth");
+const asyncHandler_1 = require("../middleware/asyncHandler");
+const cxodashboard_controller_1 = require("../controllers/cxodashboard.controller");
+exports.cxoRouter = (0, express_1.Router)();
+exports.cxoRouter.get("/departments-overview", auth_1.requireAuth, (0, asyncHandler_1.asyncHandler)(cxodashboard_controller_1.cxoDashboardController.getDepartmentOverview));
+exports.cxoRouter.get("/manager-performance", auth_1.requireAuth, (0, asyncHandler_1.asyncHandler)(cxodashboard_controller_1.cxoDashboardController.getManagerPerformance));
+exports.cxoRouter.get("/agent-performance", auth_1.requireAuth, (0, asyncHandler_1.asyncHandler)(cxodashboard_controller_1.cxoDashboardController.getAgentPerformance));
+exports.cxoRouter.get("/risk-metrics", auth_1.requireAuth, (0, asyncHandler_1.asyncHandler)(cxodashboard_controller_1.cxoDashboardController.getRiskMetrics));
+exports.cxoRouter.get("/department-comparison", auth_1.requireAuth, (0, asyncHandler_1.asyncHandler)(cxodashboard_controller_1.cxoDashboardController.getDepartmentComparison));
+exports.cxoRouter.get("/departments", auth_1.requireAuth, (0, asyncHandler_1.asyncHandler)(cxodashboard_controller_1.cxoDashboardController.getDepartments));
+exports.cxoRouter.get("/analytics", auth_1.requireAuth, (0, asyncHandler_1.asyncHandler)(cxodashboard_controller_1.cxoDashboardController.getAnalytics));
+exports.cxoRouter.get("/team", auth_1.requireAuth, (0, asyncHandler_1.asyncHandler)(cxodashboard_controller_1.cxoDashboardController.getTeam));
+exports.cxoRouter.get("/tickets", auth_1.requireAuth, (0, asyncHandler_1.asyncHandler)(cxodashboard_controller_1.cxoDashboardController.getDepartmentTickets));
+exports.cxoRouter.get("/user/:userId/tickets", auth_1.requireAuth, (0, asyncHandler_1.asyncHandler)(cxodashboard_controller_1.cxoDashboardController.getUserTickets));
+exports.cxoRouter.post("/reassign", auth_1.requireAuth, (0, asyncHandler_1.asyncHandler)(cxodashboard_controller_1.cxoDashboardController.reassignTicket));
+//# sourceMappingURL=cxoDashboard.js.map

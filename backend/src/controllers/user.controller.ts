@@ -3,7 +3,7 @@ import { AuthedRequest } from "../middleware/auth";
 import { prisma } from "../lib/database";
 import { TicketStatus, UserRole, WindCategory } from "../generated/prisma/enums";
 import { AppError } from "../middleware/errorHandler";
-import { roleChangeReassignmentService } from "../services/roleChangeReassignment.service";
+import { roleChangeReassignmentService } from "../services/Rolechangereassignment.service";
 import { resolveZone, statesForZone } from "../utils/zoneStateMap";
 
 // Roles that personally work tickets and can hold an `agentsdepartmentId`.

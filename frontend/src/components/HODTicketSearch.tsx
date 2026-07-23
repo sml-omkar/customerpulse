@@ -123,8 +123,6 @@ export const HODTicketSearch: React.FC<HODTicketSearchProps> = ({
 
   return (
     <div className="space-y-6 font-sans">
-      
-
       <AdvancedTicketFilters
         tickets={allDeptTickets}
         departments={departmentOptions}

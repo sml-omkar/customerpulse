@@ -1,0 +1,26 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.diffInSeconds = exports.diffInMinutes = exports.minutesFromNow = exports.addMinutes = exports.daysFromNow = exports.hoursFromNow = exports.addDays = exports.addHours = exports.daysToMs = exports.hoursToMs = void 0;
+const MS_PER_HOUR = 60 * 60 * 1000;
+const hoursToMs = (hours) => hours * MS_PER_HOUR;
+exports.hoursToMs = hoursToMs;
+const daysToMs = (days) => days * 24 * MS_PER_HOUR;
+exports.daysToMs = daysToMs;
+const addHours = (date, hours) => new Date(date.getTime() + (0, exports.hoursToMs)(hours));
+exports.addHours = addHours;
+const addDays = (date, days) => new Date(date.getTime() + (0, exports.daysToMs)(days));
+exports.addDays = addDays;
+const hoursFromNow = (hours) => (0, exports.addHours)(new Date(), hours);
+exports.hoursFromNow = hoursFromNow;
+const daysFromNow = (days) => (0, exports.addDays)(new Date(), days);
+exports.daysFromNow = daysFromNow;
+const MS_PER_MINUTE = 60 * 1000;
+const addMinutes = (date, minutes) => new Date(date.getTime() + minutes * MS_PER_MINUTE);
+exports.addMinutes = addMinutes;
+const minutesFromNow = (minutes) => (0, exports.addMinutes)(new Date(), minutes);
+exports.minutesFromNow = minutesFromNow;
+const diffInMinutes = (from, to) => Math.max(0, Math.round((to.getTime() - from.getTime()) / MS_PER_MINUTE));
+exports.diffInMinutes = diffInMinutes;
+const diffInSeconds = (from, to) => Math.max(0, Math.round((to.getTime() - from.getTime()) / 1000));
+exports.diffInSeconds = diffInSeconds;
+//# sourceMappingURL=time.js.map
