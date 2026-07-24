@@ -253,7 +253,7 @@ export interface Ticket {
   requester?: { fullName: string; email: string; employeeId?: string; role?: UserRole,id :string };
   assignee?: { fullName: string; email: string; supportLevel?: SupportLevel };
   department?: { id:string , name: string };
-  category?: { id?: string; name: string; defaultSlaMinutes?: number };
+  category?: { id?: string; name: string; defaultSlaMinutes?: number; isWorkStopping?: boolean; isSafetyViolation?: boolean };
   project?: { id: string; name: string };
   comments?: TicketComment[];
 }
