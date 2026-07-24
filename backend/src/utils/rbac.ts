@@ -24,6 +24,13 @@ export const REQUESTER_ONLY_ROLES: UserRole[] = [
 
 export const ASSIGNABLE_AGENT_ROLES: UserRole[] = [UserRole.AGENT];
 
+/** Roles allowed to raise an AdminTicket (internal request to GLOBAL_ADMIN). */
+export const ADMIN_TICKET_RAISER_ROLES: UserRole[] = [
+  UserRole.HOD,
+  UserRole.CXO,
+  UserRole.AGENT,
+];
+
 export const isStaff = (role: UserRole) => STAFF_ROLES.includes(role);
 export const isRequesterOnly = (role: UserRole) => REQUESTER_ONLY_ROLES.includes(role);
 export const isAdmin = (role: UserRole) => ADMIN_ROLES.includes(role);
