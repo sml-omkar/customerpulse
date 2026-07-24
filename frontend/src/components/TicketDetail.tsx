@@ -788,20 +788,26 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
           )}
 
 
-              {(isAdmin || isStaff) && ticket.assignee == undefined ? <div className="pt-3 border-t border-slate-100  space-y-2 w-full">
-                <div className="flex w-full">
-                    <button
-                      onClick={() => setShowAssignForm(!showAssignForm)}
-                      className="flex justify-center w-full items-center gap-1 border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs py-2 rounded-lg cursor-pointer font-semibold transition-colors"
-                    >
-                     Assign 
-                    </button>
-                  </div>
+              {(isAdmin || isdepartmentHeads) && !ticket.assignee && (
+                <div className="relative inline-block text-left">
+                  <button
+                    onClick={() => setShowAssignForm(!showAssignForm)}
+                    className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold px-4 py-2 rounded-lg shadow-xs transition-all duration-200 cursor-pointer"
+                  >
+                    Assign Agent
+                  </button>
 
-                  {/* Agent Selector form dropdown */}
+                  {/* Agent Selector - floats above the page, same treatment
+                      as the ON-HOLD comment popover, so it never pushes the
+                      title/action bar around. */}
                   {showAssignForm && (
-                    <form onSubmit={handleAssignAgent} className="p-3 bg-slate-50 border border-slate-100 rounded-xl mt-2 space-y-2.5">
-                      <label className="block text-[10px] font-mono font-bold uppercase text-slate-500">Select Available Agent</label>
+                    <form
+                      onSubmit={handleAssignAgent}
+                      className="absolute right-0 mt-2 w-72 max-w-[90vw] bg-white border border-slate-200 shadow-lg rounded-lg p-3 space-y-2.5 z-20"
+                    >
+                      <label className="block text-[10px] font-mono font-bold uppercase text-slate-500">
+                        Select Available Agent
+                      </label>
                       <select
                         value={selectedAgentId}
                         onChange={(e) => setSelectedAgentId(e.target.value)}
@@ -815,16 +821,29 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
                           </option>
                         ))}
                       </select>
-                      <button
-                        type="submit"
-                        className="w-full bg-slate-900 text-white text-xs py-2 rounded-lg font-semibold hover:bg-slate-800 transition-colors cursor-pointer"
-                      >
-                        Confirm Assignment
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          type="submit"
+                          className="flex-1 bg-slate-900 text-white text-xs py-1.5 rounded-lg font-semibold hover:bg-slate-800 transition-colors cursor-pointer"
+                        >
+                          Confirm Assignment
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowAssignForm(false);
+                            setSelectedAgentId("");
+                          }}
+                          className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs py-1.5 rounded-lg font-semibold cursor-pointer transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
                     </form>
                   )}
-                </div>: null }
-              
+                </div>
+              )}
+
 
           {/* Quick status transitions for Staff */}
           {(isStaff || isdepartmentHeads) && ticket.requesterId !== currentUser.id && !["RESOLVED", "CLOSED"].includes(ticket.status) && (
@@ -1450,21 +1469,21 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
               {statusHistories.length === 0 ? (
                 <p className="text-slate-400 italic text-xs text-center py-4">No status changes have been recorded for this ticket.</p>
               ) : (
-                <div className="overflow-x-auto border border-slate-200/60 rounded-xl overflow-hidden shadow-xs">
-                  <table className="min-w-full divide-y divide-slate-100 text-xs text-left">
+                <div className="overflow-x-auto border border-slate-200/60 rounded-xl shadow-xs">
+                  <table className="min-w-[720px] w-full divide-y divide-slate-100 text-xs text-left">
                     <thead className="bg-slate-50 text-slate-500 font-semibold uppercase tracking-wider text-[10px]">
                       <tr>
-                        <th className="px-5 py-3">Previous State</th>
-                        <th className="px-5 py-3">New State</th>
-                        <th className="px-5 py-3">Changed By</th>
-                        <th className="px-5 py-3">Date / Time (Local)</th>
+                        <th className="px-5 py-3 whitespace-nowrap">Previous State</th>
+                        <th className="px-5 py-3 whitespace-nowrap">New State</th>
+                        <th className="px-5 py-3 whitespace-nowrap">Changed By</th>
+                        <th className="px-5 py-3 whitespace-nowrap">Date / Time (Local)</th>
                         <th className="px-5 py-3">Activity / Note</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 text-slate-700 bg-white">
                       {statusHistories.map((hist) => (
                         <tr key={hist.id} className="hover:bg-slate-50/50 transition-colors">
-                          <td className="px-5 py-3.5 font-mono">
+                          <td className="px-5 py-3.5 font-mono whitespace-nowrap">
                             {hist.fromStatus ? (
                               <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                                 hist.fromStatus === "OPEN" ? "bg-blue-50 text-blue-700 border border-blue-100" :
@@ -1479,7 +1498,7 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
                               <span className="text-slate-400 italic">— Initial</span>
                             )}
                           </td>
-                          <td className="px-5 py-3.5 font-mono">
+                          <td className="px-5 py-3.5 font-mono whitespace-nowrap">
                             <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                               
                               hist.status === "OPEN" ? "bg-blue-50 text-blue-700 border border-blue-100" :
@@ -1491,13 +1510,13 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
                               {hist.status}
                             </span>
                           </td>
-                          <td className="px-5 py-3.5">
+                          <td className="px-5 py-3.5 whitespace-nowrap">
                             <div className="font-medium text-slate-800">{hist.changedBy.fullName || "System"}</div>
                             {hist.changerEmail && (
                               <div className="text-[10px] text-slate-400 font-mono mt-0.5">{hist.changerEmail}</div>
                             )}
                           </td>
-                          <td className="px-5 py-3.5 font-mono text-slate-500">
+                          <td className="px-5 py-3.5 font-mono text-slate-500 whitespace-nowrap">
                             {new Date(hist.changedAt).toLocaleString()}
                           </td>
                           <td className="px-5 py-3.5 font-medium text-slate-600 max-w-xs break-words">
