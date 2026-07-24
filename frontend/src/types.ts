@@ -370,6 +370,40 @@ export interface TicketStatusHistory {
   changerEmail?: string;
 }
 
+// NOTE(added): status lifecycle for AdminTicket - the internal request a
+// HOD/CXO/AGENT raises directly to the GLOBAL_ADMIN.
+export enum AdminTicketStatus {
+  OPEN = "OPEN",
+  IN_PROGRESS = "IN_PROGRESS",
+  RESOLVED = "RESOLVED"
+}
+
+// NOTE(added): a lightweight internal ticket raised by staff (HOD, CXO,
+// AGENT) directly to the GLOBAL_ADMIN - separate from the client-facing
+// Ticket above, no department/client/category involved.
+export interface AdminTicket {
+  id: string;
+  ticketNumber: string;
+  subject: string;
+  description: string;
+  status: AdminTicketStatus;
+  raisedBy: {
+    id: string;
+    fullName: string;
+    email: string;
+    role: string;
+  };
+  adminResponse?: string;
+  resolvedBy?: {
+    id: string;
+    fullName: string;
+    email: string;
+  };
+  resolvedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export const PAGES = { 
   DASHBOARD : "DASHBOARD",
   ASSINGED_TICKETS : "ASSINGED_TICKETS",
@@ -394,7 +428,8 @@ export const PAGES = {
   GLOBAL_TICKET_SEARCH : "GLOBAL_TICKET_SEARCH",
   AGENT_TICKET_SEARCH : "AGENT_TICKET_SEARCH",
   HOD_TICKET_SEARCH : "HOD_TICKET_SEARCH",
-  CXO_TICKET_SEARCH : "CXO_TICKET_SEARCH"
+  CXO_TICKET_SEARCH : "CXO_TICKET_SEARCH",
+  ADMIN_REQUESTS : "ADMIN_REQUESTS"
 }
 
 
