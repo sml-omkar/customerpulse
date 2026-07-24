@@ -36,7 +36,8 @@ import {
   Trash,
   Ticket,
   Upload,
-  Download
+  Download,
+  Megaphone
 } from "lucide-react";
 
 import {
@@ -67,6 +68,7 @@ import { Profile } from "./components/profile";
 import { UserDirectory } from "./components/userDirectory";
 import { InvitationComponent } from "./components/Invitation";
 import { Dashboard } from "./components/Dashboard";
+import { AdminRequests } from "./components/AdminRequests";
 import TicketsTable from "./components/TicketsTable"
 import ManagerDashboard from "./components/ManagerDashboard"
 import GlobalAdminTicketSearch from "./components/GlobalAdminTicketSearch"
@@ -1981,6 +1983,28 @@ export default function App() {
               />
             )}
 
+            {/* Raise a request directly to the admin - HOD, CXO, Agent only */}
+            {(isManager || isCxo || isAgent) && (
+              <NavItem
+                icon={<Megaphone size={15} />}
+                label="Raise Ticket to Admin"
+                active={currentView === PAGES.ADMIN_REQUESTS}
+                collapsed={navCollapsed}
+                onClick={() => setCurrentView(PAGES.ADMIN_REQUESTS)}
+              />
+            )}
+
+            {/* Review requests staff have raised - Global Admin only */}
+            {isGlobalAdmin && (
+              <NavItem
+                icon={<Megaphone size={15} />}
+                label="Requests From Staff"
+                active={currentView === PAGES.ADMIN_REQUESTS}
+                collapsed={navCollapsed}
+                onClick={() => setCurrentView(PAGES.ADMIN_REQUESTS)}
+              />
+            )}
+
             {/* Clients Management (Global Admin only) */}
             {isGlobalAdmin && (
               <NavItem
@@ -2076,6 +2100,16 @@ export default function App() {
               setSelectedTicketId={setSelectedTicketId}
               setCurrentView={setCurrentView}
               departments={departments}
+            />
+          )}
+
+          {/* VIEW: ADMIN REQUESTS - raise (HOD/CXO/Agent) or review (Global Admin) */}
+          {currentView === PAGES.ADMIN_REQUESTS && (
+            <AdminRequests
+              token={token}
+              currentUser={user!}
+              setError={setError}
+              setSuccess={setSuccess}
             />
           )}
 
