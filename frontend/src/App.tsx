@@ -115,16 +115,14 @@ const AuthShell = ({ children }: { children: React.ReactNode }) => (
       />
 
       <div className="relative z-10 flex items-center gap-3">
-        <img src={logo.jpg} className="w-8 h-8" />
+        <img src={logo} className="w-8 h-8" />
         <span className="text-[11px] font-mono font-semibold tracking-[0.28em] text-slate-400 uppercase">
           Sanghvi Group
         </span>
       </div>
 
       <div className="relative z-10">
-        <p className="font-mono text-[11px] tracking-[0.28em] text-red-400 uppercase mb-4">
-          Internal Operations Platform
-        </p>
+        
         <h1 className="font-display text-[2.65rem] leading-[1.08] font-semibold text-white mb-5">
           Every ticket
           <br />
@@ -158,7 +156,7 @@ const AuthShell = ({ children }: { children: React.ReactNode }) => (
     <div className="flex-1 flex items-center justify-center px-6 py-10 sm:px-10 bg-white">
       <div className="w-full max-w-sm">
         <div className="lg:hidden flex items-center gap-2.5 mb-9">
-          <img src={logo.jpg} alt="logo" />
+          <img src={logo} alt="logo" className="w-12 h-12" />
           <span className="text-xs font-mono font-semibold tracking-[0.22em] text-slate-500 uppercase">
             Customer Pulse
           </span>
@@ -397,53 +395,13 @@ const AuthShellDark = ({ children }: { children: React.ReactNode }) => (
     <div className="grid-overlay"></div>
     <div className="scanline"></div>
 
-    <div className="schematic">
-      <svg viewBox="0 0 980 900" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="cpPadGlow" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#ff3b4a" />
-            <stop offset="100%" stopColor="#8f0f1a" />
-          </linearGradient>
-          <radialGradient id="cpPadGlowRadial" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#e11c2b" stopOpacity="0.30" />
-            <stop offset="65%" stopColor="#e11c2b" stopOpacity="0.08" />
-            <stop offset="100%" stopColor="#e11c2b" stopOpacity="0" />
-          </radialGradient>
-          <linearGradient id="cpSurfaceFill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#d9dce2" stopOpacity="0.14" />
-            <stop offset="100%" stopColor="#d9dce2" stopOpacity="0.02" />
-          </linearGradient>
-        </defs>
-
-        <ellipse cx="698" cy="800" rx="150" ry="16" fill="url(#cpPadGlowRadial)" />
-
-        <g stroke="#d9dce2" strokeWidth="1.3" opacity="0.85" strokeLinejoin="round" strokeLinecap="round" fill="none">
-          <path d="M683 800 L695 178" />
-          <path d="M713 800 L701 178" />
-          <path d="M655 800 L741 800 L724 762 L672 762 Z" fill="url(#cpSurfaceFill)" />
-          <path d="M691 778 L691 800 L705 800 L705 778" />
-          <path d="M698 160 L748 160 L748 178 L698 178 Z" fill="url(#cpSurfaceFill)" />
-          <path d="M748 165 L760 168 L748 173" />
-        </g>
-        <circle cx="698" cy="168" r="6" stroke="#e11c2b" strokeWidth="1.2" opacity="0.9" fill="none" />
-
-        <g className="turbine-blades" stroke="#e2e4e9" strokeWidth="1.1" opacity="0.85" strokeLinejoin="round" fill="none">
-          <path d="M692 168 L695 66 Q698 58 701 66 L704 168 Z" />
-          <path d="M692 168 L695 66 Q698 58 701 66 L704 168 Z" transform="rotate(120 698 168)" />
-          <path d="M692 168 L695 66 Q698 58 701 66 L704 168 Z" transform="rotate(240 698 168)" />
-        </g>
-        <circle className="node" cx="698" cy="168" r="3" fill="#e11c2b" />
-
-        <circle cx="698" cy="168" r="60" stroke="#e11c2b" strokeWidth="0.7" opacity="0.22" />
-        <circle cx="698" cy="168" r="95" stroke="#e11c2b" strokeWidth="0.6" opacity="0.12" />
-        <circle cx="300" cy="655" r="50" stroke="#e11c2b" strokeWidth="0.7" opacity="0.18" />
-      </svg>
-    </div>
+    
 
     <div className="shell">
       <div className="topbar">
         <div className="brand">
-          <div className="mark">S</div>
+         
+        <img src={logo} className="w-12 h-12" alt="logo" />
           <div>
             <div className="brand-name">SANGHVI MOVERS</div>
             <div className="brand-sub">Heavy Lift &amp; Logistics · Est. Engineering</div>
