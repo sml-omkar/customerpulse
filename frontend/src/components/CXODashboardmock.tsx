@@ -903,7 +903,7 @@ export default function ManagerAnalyticsMock({ token, apiFetch }: ManagerAnalyti
               onChange={setSelectedStatuses}
             />
             <MultiSelectFilter
-              label="Site"
+              label="State"
               icon={<MapPin className="w-3.5 h-3.5" />}
               options={availableStates}
               selected={selectedStates}
@@ -1080,7 +1080,7 @@ export default function ManagerAnalyticsMock({ token, apiFetch }: ManagerAnalyti
           </SectionCard>
 
           <SectionCard
-            title="Average TAT analysis (table)"
+            title="Average TAT analysis"
             subtitle={`Same figures as the chart, in table form — ${rangeLabel}`}
             right={<TableIcon className="w-4 h-4" style={{ color: C.neutral400 }} />}
           >

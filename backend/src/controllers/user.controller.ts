@@ -4,6 +4,7 @@ import { prisma } from "../lib/database";
 import { TicketStatus, UserRole, WindCategory } from "../generated/prisma/enums";
 import { AppError } from "../middleware/errorHandler";
 import { roleChangeReassignmentService } from "../services/Rolechangereassignment.service";
+import { notificationService } from "../services/notification.service";
 import { resolveZone, statesForZone } from "../utils/zoneStateMap";
 
 // Roles that personally work tickets and can hold an `agentsdepartmentId`.
@@ -391,6 +392,32 @@ export const userController = {
         newDepartmentId: user.agentsdepartmentId,
         performedById: req.user!.id,
       });
+    } else {
+      // Not handled by the ticket-handover email above - covers HOD/CXO
+      // promotions and swaps, being reassigned to head a different
+      // department, an AGENT being assigned a department for the first
+      // time (no old department to hand tickets off from), etc. Only
+      // fires when the role and/or department actually changed.
+      const roleChanged = role !== undefined && role !== existing.role;
+      const agentDepartmentChanged =
+        finalRole === UserRole.AGENT && departmentProvided && finalAgentDepartmentId !== oldAgentDepartmentId;
+      const headDepartmentChanged =
+        (finalRole === UserRole.HOD || finalRole === UserRole.CXO) && finalHeadDepartmentId !== currentHeadDepartmentId;
+
+      if (roleChanged || agentDepartmentChanged || headDepartmentChanged) {
+        let departmentChangedTo: string | null = null;
+        if (headDepartmentChanged) {
+          departmentChangedTo = headDepartment?.name ?? null;
+        } else if (agentDepartmentChanged && finalAgentDepartmentId) {
+          const agentDepartment = await prisma.department.findUnique({ where: { id: finalAgentDepartmentId } });
+          departmentChangedTo = agentDepartment?.name ?? null;
+        }
+
+        await notificationService.sendUserProfileUpdated(user, {
+          roleChangedTo: roleChanged ? finalRole : null,
+          departmentChangedTo,
+        });
+      }
     }
 
     res.json({
@@ -467,3 +494,4 @@ export const userController = {
     res.json({ success: true, ticketReassignmentSummary });
   },
 };
+

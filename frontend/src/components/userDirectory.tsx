@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { User as UserType, Department, RequestorDirectoryEntry, UserRole } from "../types";
 import { EditUserModal } from "./EditUserModal";
+import { ConfirmDialog } from "./ConfirmDialog";
 import { MessageSquare, ShieldCheck, ShieldX, Ban, CheckCircle2, Trash2, Upload, FileDown, FileUp } from "lucide-react";
 import * as XLSX from "xlsx";
 import API_BASE from "../lib/api";
@@ -58,6 +59,8 @@ export const UserDirectory = (
     const [showUploadMenu, setShowUploadMenu] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [bulkResult, setBulkResult] = useState<BulkInviteResult | null>(null);
+    const [staffToDelete, setStaffToDelete] = useState<UserType | null>(null);
+    const [requestorToDelete, setRequestorToDelete] = useState<RequestorDirectoryEntry | null>(null);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
 
     const fetchRequestors = async () => {
@@ -146,12 +149,7 @@ export const UserDirectory = (
     };
 
     const handleDeleteStaff = async (u: UserType) => {
-      const warning =
-        u.role === "AGENT"
-          ? `Delete ${u.fullName}? This can't be undone. Any tickets currently assigned to them will be automatically redistributed to other agents in their department.`
-          : `Delete ${u.fullName}? This can't be undone.`;
-      if (!confirm(warning)) return;
-
+      setStaffToDelete(null);
       setError("");
       setSuccess("");
       try {
@@ -197,7 +195,7 @@ export const UserDirectory = (
     };
 
     const handleDelete = async (id: string) => {
-      if (!confirm("Delete this requestor account permanently? This can't be undone.")) return;
+      setRequestorToDelete(null);
       setError("");
       setSuccess("");
       try {
@@ -496,7 +494,7 @@ export const UserDirectory = (
                                     </button>
                                   )}
                                   <button
-                                    onClick={() => handleDeleteStaff(u)}
+                                    onClick={() => setStaffToDelete(u)}
                                     title="Delete"
                                     className="p-1.5 border border-slate-200 text-slate-500 rounded-lg hover:bg-red-50 hover:text-red-600 cursor-pointer"
                                   >
@@ -567,7 +565,7 @@ export const UserDirectory = (
                                     <MessageSquare size={14} />
                                   </button>
                                   <button
-                                    onClick={() => handleDelete(r.id)}
+                                    onClick={() => setRequestorToDelete(r)}
                                     title="Delete"
                                     className="p-1.5 border border-slate-200 text-slate-500 rounded-lg hover:bg-red-50 hover:text-red-600 cursor-pointer"
                                   >
@@ -627,6 +625,33 @@ export const UserDirectory = (
                   </div>
                 </div>
               )}
+
+              <ConfirmDialog
+                open={!!staffToDelete}
+                title="Delete user"
+                message={
+                  staffToDelete
+                    ? staffToDelete.role === "AGENT"
+                      ? `Delete ${staffToDelete.fullName}? This can't be undone. Any tickets currently assigned to them will be automatically redistributed to other agents in their department.`
+                      : `Delete ${staffToDelete.fullName}? This can't be undone.`
+                    : ""
+                }
+                onConfirm={() => staffToDelete && handleDeleteStaff(staffToDelete)}
+                onCancel={() => setStaffToDelete(null)}
+              />
+
+              <ConfirmDialog
+                open={!!requestorToDelete}
+                title="Delete requestor"
+                message={
+                  requestorToDelete
+                    ? `Delete ${requestorToDelete.fullName}? This account will be permanently removed and this can't be undone.`
+                    : ""
+                }
+                onConfirm={() => requestorToDelete && handleDelete(requestorToDelete.id)}
+                onCancel={() => setRequestorToDelete(null)}
+              />
             </div>
     )
 }
+

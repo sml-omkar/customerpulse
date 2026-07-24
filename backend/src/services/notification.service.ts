@@ -122,6 +122,36 @@ export const notificationService = {
   // NOTE(added): fired once per GLOBAL_ADMIN when a HOD/CXO/AGENT raises
   // an AdminTicket - call once per admin recipient (mirrors sendTicketAssigned's
   // one-recipient-per-call shape).
+  // Sent when a GLOBAL_ADMIN edits a user's role and/or department from the
+  // User Directory. This is deliberately separate from the detailed
+  // ticket-handover email in Rolechangereassignment.service.ts (which only
+  // fires when an AGENT's role/department change strands open tickets) -
+  // this one covers every other case that email doesn't: HOD/CXO
+  // promotions and swaps, a department head being reassigned to a
+  // different department, a REQUESTER being promoted, etc. The caller
+  // (userController.update) is responsible for not sending both for the
+  // same change.
+  async sendUserProfileUpdated(
+    user: { fullName: string; email: string; role: string },
+    changes: { roleChangedTo: string | null; departmentChangedTo: string | null }
+  ) {
+    const { roleChangedTo, departmentChangedTo } = changes;
+    const lines: string[] = [];
+    if (roleChangedTo) lines.push(`<p>Your role is now <b>${roleChangedTo}</b>.</p>`);
+    if (departmentChangedTo) lines.push(`<p>You're now assigned to the <b>${departmentChangedTo}</b> department.</p>`);
+
+    await sendMail({
+      to: user.email,
+      subject: `Your account has been updated`,
+      html: layout("Your account has been updated", `
+        <p>Hi ${user.fullName},</p>
+        <p>An administrator has made the following change(s) to your account:</p>
+        ${lines.join("")}
+        <p>If you have any questions about this change, please reach out to your administrator.</p>
+      `),
+    });
+  },
+
   async sendAdminTicketRaised(adminTicket: AdminTicket, raisedBy: { fullName: string; role: string }, admin: User) {
     await sendMail({
       to: admin.email,

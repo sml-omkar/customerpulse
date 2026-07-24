@@ -381,7 +381,6 @@ export const AdvancedTicketFilters: React.FC<AdvancedTicketFiltersProps> = ({
       "Title": t.title,
       "Description": t.description || "",
       "Status": t.status,
-      "Priority": t.priority,
       "Internal Priority": t.internalPriority,
       "Department": t.department?.name || "",
       "Category": t.category?.name || "",
@@ -390,8 +389,6 @@ export const AdvancedTicketFilters: React.FC<AdvancedTicketFiltersProps> = ({
       "Client Email": t.clientEmail,
       "Requester Name": t.requester?.fullName || "",
       "Requester Email": t.requester?.email || "",
-      "Employee ID": t.employeeId || "",
-      "Representative": t.representative || "",
       "Designation": t.designation || "",
       "Assignee": t.assignee?.fullName || "",
       "Assignment Method": t.assignmentMethod || "",
@@ -409,7 +406,6 @@ export const AdvancedTicketFilters: React.FC<AdvancedTicketFiltersProps> = ({
       "Turn Over Time": t.turnOverTime ?? "",
       "Resolved At": t.resolvedAt || "",
       "Closed At": t.closedAt || "",
-      "Tags": (t.tags || []).join(", "),
       "Created At": t.createdAt,
       "Updated At": t.updatedAt,
     }));
@@ -616,3 +612,4 @@ export const AdvancedTicketFilters: React.FC<AdvancedTicketFiltersProps> = ({
     </div>
   );
 };
+
