@@ -34,6 +34,7 @@ app.use(corsMiddleware);
 // Temporary local-storage stand-in for direct-to-S3 uploads (see lib/s3.ts).
 app.use("/uploads", uploadsRouter);
 app.use(express.json());
+app.set("trust proxy", 1);
 app.use(requestLogger);
 
 // app.use(generalLimiter);

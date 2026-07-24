@@ -128,10 +128,7 @@ const AuthShell = ({ children }: { children: React.ReactNode }) => (
           <br />
           has a <span className="text-red-500">pulse.</span>
         </h1>
-        <p className="text-sm text-slate-400 leading-relaxed max-w-sm mb-10">
-          One sign-in for requesters raising issues, agents resolving them, and leaders watching it
-          all move. Customer Pulse keeps everyone on the same beat.
-        </p>
+        
 
         <svg viewBox="0 0 380 56" className="w-full max-w-sm h-12 mb-9" fill="none" aria-hidden="true">
           <path
@@ -425,10 +422,7 @@ const AuthShellDark = ({ children }: { children: React.ReactNode }) => (
             />
           </svg>
 
-          <p className="subcopy">
-            One sign-in for requesters raising issues, agents resolving them, and leaders watching it
-            all move. Customer Pulse keeps everyone on the same beat.
-          </p>
+          
         </div>
 
         <div className="card-col">{children}</div>
