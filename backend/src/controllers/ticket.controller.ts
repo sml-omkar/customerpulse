@@ -103,6 +103,12 @@ export const ticketController = {
             name: true
           }
         },
+        category: {
+          select: {
+            isWorkStopping: true,
+            isSafetyViolation: true
+          }
+        },
         assignee: {
           select: {
             fullName: true
@@ -135,6 +141,12 @@ export const ticketController = {
             name: true
           }
         },
+        category: {
+          select: {
+            isWorkStopping: true,
+            isSafetyViolation: true
+          }
+        },
         assignee: {
           select: {
             fullName: true
@@ -165,6 +177,12 @@ export const ticketController = {
         department: {
           select: {
             name: true
+          }
+        },
+        category: {
+          select: {
+            isWorkStopping: true,
+            isSafetyViolation: true
           }
         },
         assignee: {
@@ -281,7 +299,7 @@ export const ticketController = {
           assignee: { select: { fullName: true, email: true, supportLevel: true } },
           requester: { select: { id: true, fullName: true, email: true, employeeId: true, role: true } },
           department: { select: { id: true, name: true } },
-          category: { select: { id: true, name: true, defaultSlaMinutes: true, defaultPriority: true } },
+          category: { select: { id: true, name: true, defaultSlaMinutes: true, defaultPriority: true, isWorkStopping: true, isSafetyViolation: true } },
           project: { select: { id: true, name: true } },
         },
         orderBy: { createdAt: "desc" },
@@ -316,6 +334,12 @@ export const ticketController = {
         department: {
           select: {
             name: true
+          }
+        },
+        category: {
+          select: {
+            isWorkStopping: true,
+            isSafetyViolation: true
           }
         },
         assignee: {
@@ -353,6 +377,12 @@ export const ticketController = {
         department: {
           select: {
             name: true
+          }
+        },
+        category: {
+          select: {
+            isWorkStopping: true,
+            isSafetyViolation: true
           }
         },
         assignee: {
