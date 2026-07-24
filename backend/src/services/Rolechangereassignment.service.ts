@@ -126,22 +126,33 @@ export const roleChangeReassignmentService = {
       let handled = false;
 
       if (otherAgentCount > 0) {
-        // findBestAgent only ever considers AGENT-role users in the
-        // ticket's own department, and by this point the moved user's role
-        // and/or agentsdepartmentId has already changed in the DB, so they
-        // can't be picked again here. excludeAgentId is passed anyway as a
-        // second safety net.
-        const best = await assignmentService.findBestAgent(ticket.id, { excludeAgentId: movedUserId });
-        if (best) {
-          await assignmentService.autoAssign(ticket.id, performedById, { excludeAgentId: movedUserId });
-          reassigned.push({ ticketNumber: ticket.ticketNumber, title: ticket.title, newAssigneeName: best.agent.fullName });
-          handled = true;
+        try {
+          // findBestAgent only ever considers AGENT-role users in the
+          // ticket's own department, and by this point the moved user's role
+          // and/or agentsdepartmentId has already changed in the DB, so they
+          // can't be picked again here. excludeAgentId is passed anyway as a
+          // second safety net.
+          const best = await assignmentService.findBestAgent(ticket.id, { excludeAgentId: movedUserId });
+          if (best) {
+            await assignmentService.autoAssign(ticket.id, performedById, { excludeAgentId: movedUserId });
+            reassigned.push({ ticketNumber: ticket.ticketNumber, title: ticket.title, newAssigneeName: best.agent.fullName });
+            handled = true;
+          }
+        } catch (err) {
+          // NOTE(added): a failure while searching for/assigning a
+          // replacement agent (e.g. a bad client/category lookup for this
+          // particular ticket) must not abort the loop and strand every
+          // ticket that hasn't been processed yet on the now-deleted/moved
+          // user. Fall through to the unassign branch below for this ticket
+          // and keep going.
+          console.error(`handleAgentTicketReassignment: findBestAgent/autoAssign failed for ticket ${ticket.ticketNumber}, falling back to unassigned`, err);
         }
       }
 
       if (!handled) {
-        // No agents left in the department (or none could be matched) -
-        // clear the assignment instead of leaving it stranded.
+        // No agents left in the department (or none could be matched, or
+        // the reassignment attempt above errored) - clear the assignment
+        // instead of leaving it stranded on the deleted/moved user.
         await prisma.ticket.update({
           where: { id: ticket.id },
           data: { assigneeId: null, assignedById: null, assignmentMethod: null, assignedAt: null },
@@ -152,26 +163,40 @@ export const roleChangeReassignmentService = {
 
     const summary: TicketReassignmentSummary = { reassigned, unassigned };
 
-    await this.notifyMovedUser({
-      movedUserId,
-      movedUserFullName,
-      movedUserEmail,
-      reason,
-      newRole,
-      newDepartmentId,
-      summary,
-      performedById,
-    });
+    // NOTE(added): notification failures (e.g. SMTP misconfigured/down)
+    // must never undo or block on the ticket redistribution above, which
+    // has already been committed to the DB by this point, and must never
+    // prevent the caller (user.controller.ts's update()/remove()) from
+    // completing the role change / department transfer / account deletion
+    // that triggered this in the first place.
+    try {
+      await this.notifyMovedUser({
+        movedUserId,
+        movedUserFullName,
+        movedUserEmail,
+        reason,
+        newRole,
+        newDepartmentId,
+        summary,
+        performedById,
+      });
+    } catch (err) {
+      console.error("handleAgentTicketReassignment: notifyMovedUser failed", err);
+    }
 
-    await this.notifyDepartmentHod({
-      oldDepartmentId,
-      movedUserFullName,
-      reason,
-      newRole,
-      newDepartmentId,
-      summary,
-      performedById,
-    });
+    try {
+      await this.notifyDepartmentHod({
+        oldDepartmentId,
+        movedUserFullName,
+        reason,
+        newRole,
+        newDepartmentId,
+        summary,
+        performedById,
+      });
+    } catch (err) {
+      console.error("handleAgentTicketReassignment: notifyDepartmentHod failed", err);
+    }
 
     return summary;
   },
