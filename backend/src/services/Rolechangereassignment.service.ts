@@ -17,7 +17,7 @@ interface TicketRef {
   title: string;
 }
 
-export type ReassignmentReason = "ROLE_CHANGE" | "DEPARTMENT_TRANSFER";
+export type ReassignmentReason = "ROLE_CHANGE" | "DEPARTMENT_TRANSFER" | "ACCOUNT_DELETED";
 
 export interface TicketReassignmentSummary {
   reassigned: (TicketRef & { newAssigneeName: string })[];
@@ -190,7 +190,11 @@ export const roleChangeReassignmentService = {
     const { reassigned, unassigned } = summary;
 
     const changeDescription =
-      reason === "ROLE_CHANGE" ? `your role has been changed to ${newRole}` : `you've been moved to a different department`;
+      reason === "ROLE_CHANGE"
+        ? `your role has been changed to ${newRole}`
+        : reason === "DEPARTMENT_TRANSFER"
+        ? `you've been moved to a different department`
+        : `your account has been deleted`;
 
     const lines: string[] = [];
     if (reassigned.length > 0) {
@@ -208,13 +212,18 @@ export const roleChangeReassignmentService = {
     const message = `Since ${changeDescription}, here's what happened to your former tickets. ${lines.join(" ")}`;
 
     // In-app notification (surfaced the same way requester notifications are).
-    await prisma.adminMessage.create({
-      data: {
-        userId: movedUserId,
-        fromAdminId: performedById,
-        message,
-      },
-    });
+    // Skipped for ACCOUNT_DELETED - the account is deleted, there's no
+    // notifications panel left for them to see it in; the email below is
+    // the only record this person gets.
+    if (reason !== "ACCOUNT_DELETED") {
+      await prisma.adminMessage.create({
+        data: {
+          userId: movedUserId,
+          fromAdminId: performedById,
+          message,
+        },
+      });
+    }
 
     // Email breakdown.
     await sendMail({
@@ -222,9 +231,15 @@ export const roleChangeReassignmentService = {
       subject:
         reason === "ROLE_CHANGE"
           ? `Your role has changed to ${newRole} - ticket handover summary`
-          : `You've been moved to a new department - ticket handover summary`,
+          : reason === "DEPARTMENT_TRANSFER"
+          ? `You've been moved to a new department - ticket handover summary`
+          : `Your account has been deleted - ticket handover summary`,
       html: layout(
-        reason === "ROLE_CHANGE" ? `You're now a ${newRole}` : `You've changed departments`,
+        reason === "ROLE_CHANGE"
+          ? `You're now a ${newRole}`
+          : reason === "DEPARTMENT_TRANSFER"
+          ? `You've changed departments`
+          : `Your account has been deleted`,
         `
         <p>Hi ${movedUserFullName},</p>
         <p>Since ${changeDescription}, you no longer work the tickets in your former department directly. Here's what happened to the tickets that were assigned to you:</p>
@@ -270,7 +285,9 @@ export const roleChangeReassignmentService = {
     const changeDescription =
       reason === "ROLE_CHANGE"
         ? `${movedUserFullName}'s role was changed to ${newRole}`
-        : `${movedUserFullName} was moved out of ${department.name}`;
+        : reason === "DEPARTMENT_TRANSFER"
+        ? `${movedUserFullName} was moved out of ${department.name}`
+        : `${movedUserFullName}'s account was deleted`;
 
     const lines: string[] = [];
     if (reassigned.length > 0) {
@@ -296,17 +313,16 @@ export const roleChangeReassignmentService = {
       },
     });
 
+    const reasonLabel =
+      reason === "ROLE_CHANGE" ? "role change" : reason === "DEPARTMENT_TRANSFER" ? "department transfer" : "account deletion";
+
     // Email breakdown.
     await sendMail({
       to: hod.email,
       subject:
         unassigned.length > 0
-          ? `[${department.name}] Action needed: ${unassigned.length} ticket(s) left unassigned after ${movedUserFullName}'s ${
-              reason === "ROLE_CHANGE" ? "role change" : "department transfer"
-            }`
-          : `[${department.name}] Tickets auto-reassigned after ${movedUserFullName}'s ${
-              reason === "ROLE_CHANGE" ? "role change" : "department transfer"
-            }`,
+          ? `[${department.name}] Action needed: ${unassigned.length} ticket(s) left unassigned after ${movedUserFullName}'s ${reasonLabel}`
+          : `[${department.name}] Tickets auto-reassigned after ${movedUserFullName}'s ${reasonLabel}`,
       html: layout(
         `Ticket redistribution in ${department.name}`,
         `
