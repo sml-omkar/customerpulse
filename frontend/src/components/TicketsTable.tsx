@@ -74,7 +74,7 @@ export default function TicketsTable({
     return (
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[820px]">
+          <table className="w-full min-w-[960px]">
             <thead className="bg-slate-50">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 whitespace-nowrap">
@@ -89,6 +89,9 @@ export default function TicketsTable({
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 whitespace-nowrap">
                   Priority
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 whitespace-nowrap">
+                  Criticality
                 </th>
                 {currentView != PAGES.ASSINGED_TICKETS && (
                   <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 whitespace-nowrap">
@@ -140,25 +143,32 @@ export default function TicketsTable({
                   </td>
 
                   <td className="px-4 py-3 whitespace-nowrap">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <span
-                        className={`rounded border px-2 py-1 text-xs font-bold ${
-                          priorityColors[ticket.priority] ?? priorityColors.P4
-                        }`}
-                      >
-                        {ticket.internalPriority}
-                      </span>
-                      {ticket.category?.isWorkStopping && (
-                        <span className="rounded border border-red-200 bg-red-50 px-2 py-1 text-xs font-bold text-red-700">
-                          Work Stopping
-                        </span>
-                      )}
-                      {ticket.category?.isSafetyViolation && (
-                        <span className="rounded border border-orange-200 bg-orange-50 px-2 py-1 text-xs font-bold text-orange-700">
-                          Safety Violation
-                        </span>
-                      )}
-                    </div>
+                    <span
+                      className={`rounded border px-2 py-1 text-xs font-bold ${
+                        priorityColors[ticket.priority] ?? priorityColors.P4
+                      }`}
+                    >
+                      {ticket.internalPriority}
+                    </span>
+                  </td>
+
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    {(ticket.category?.isWorkStopping || ticket.category?.isSafetyViolation) ? (
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {ticket.category?.isWorkStopping && (
+                          <span className="rounded border border-red-200 bg-red-50 px-2 py-1 text-xs font-bold text-red-700">
+                            Work Stopping
+                          </span>
+                        )}
+                        {ticket.category?.isSafetyViolation && (
+                          <span className="rounded border border-orange-200 bg-orange-50 px-2 py-1 text-xs font-bold text-orange-700">
+                            Safety Violation
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-slate-300">—</span>
+                    )}
                   </td>
 
 
