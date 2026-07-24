@@ -93,7 +93,7 @@ export const escalationService = {
       }),
     ]);
 
-    const cxo = await prisma.department.findFirst({
+    const department = await prisma.department.findFirst({
       where :  {
          id : ticket.departmentId,
       },
@@ -107,7 +107,25 @@ export const escalationService = {
       }
     })
 
-    await notificationService.sendTicketEscalated(updatedTicket, escalation, cxo?.cxo!);
+    // NOTE(fixed): previously this did `cxo?.cxo!` and passed it straight
+    // into sendTicketEscalated, which reads `cxo.email` unconditionally.
+    // If the department has no CXO assigned, that was `undefined.email`,
+    // throwing before the mail was ever attempted - and since this call
+    // wasn't wrapped in try/catch, the exception bubbled all the way up
+    // through the controller, so the whole /escalate request failed with
+    // an error even though the escalation itself had already been
+    // committed. Guard for a missing CXO, and don't let a notification
+    // failure (of any kind) fail an escalation that already succeeded.
+    if (department?.cxo?.email) {
+      try {
+        await notificationService.sendTicketEscalated(updatedTicket, escalation, department.cxo);
+      } catch (err) {
+        console.error(`[escalate] failed to send escalation email for ticket ${ticketId}:`, err);
+      }
+    } else {
+      console.warn(`[escalate] no CXO assigned to department ${ticket.departmentId} - skipping escalation email`);
+    }
+
     return { escalation, ticket: updatedTicket };
   },
 
@@ -191,4 +209,3 @@ function bumpPriority(p: InternalPriorityLevel): InternalPriorityLevel {
   const idx = order.indexOf(p);
   return order[Math.max(idx - 1, 0)];
 }
-
