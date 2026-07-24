@@ -558,13 +558,6 @@ export const UserDirectory = (
                                     )
                                   )}
                                   <button
-                                    onClick={() => { setMessagingId(r.id); setMessageText(""); }}
-                                    title="Send message"
-                                    className="p-1.5 border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 cursor-pointer"
-                                  >
-                                    <MessageSquare size={14} />
-                                  </button>
-                                  <button
                                     onClick={() => setRequestorToDelete(r)}
                                     title="Delete"
                                     className="p-1.5 border border-slate-200 text-slate-500 rounded-lg hover:bg-red-50 hover:text-red-600 cursor-pointer"

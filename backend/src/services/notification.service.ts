@@ -63,7 +63,7 @@ export const notificationService = {
       html: layout("New assignment", `
         <p>Hi ${assignee.fullName},</p>
         <p>Ticket <b>${ticket.ticketNumber}</b> - "${ticket.title}" </p>
-        ${ticket.slaDeadline ? `<p>SLA deadline: <b>${ticket.slaDeadline.toISOString()}</b></p>` : ""}
+        ${ticket.slaDeadline ? `<p>SLA deadline: <b>${new Date(ticket.slaDeadline).toISOString()}</b></p>` : ""}
         
       `),
     });
@@ -119,18 +119,6 @@ export const notificationService = {
     });
   },
 
-  // NOTE(added): fired once per GLOBAL_ADMIN when a HOD/CXO/AGENT raises
-  // an AdminTicket - call once per admin recipient (mirrors sendTicketAssigned's
-  // one-recipient-per-call shape).
-  // Sent when a GLOBAL_ADMIN edits a user's role and/or department from the
-  // User Directory. This is deliberately separate from the detailed
-  // ticket-handover email in Rolechangereassignment.service.ts (which only
-  // fires when an AGENT's role/department change strands open tickets) -
-  // this one covers every other case that email doesn't: HOD/CXO
-  // promotions and swaps, a department head being reassigned to a
-  // different department, a REQUESTER being promoted, etc. The caller
-  // (userController.update) is responsible for not sending both for the
-  // same change.
   async sendUserProfileUpdated(
     user: { fullName: string; email: string; role: string },
     changes: { roleChangedTo: string | null; departmentChangedTo: string | null }
@@ -183,7 +171,7 @@ export const notificationService = {
       html: layout("Ticket reopened", `
         <p>Hi ${assignee.fullName},</p>
         <p>Ticket <b>${ticket.ticketNumber}</b> - "${ticket.title}" has been reopened and is back on your queue.</p>
-        ${ticket.slaDeadline ? `<p>SLA deadline: <b>${ticket.slaDeadline.toISOString()}</b></p>` : ""}
+        ${ticket.slaDeadline ? `<p>SLA deadline: <b>${new Date(ticket.slaDeadline).toISOString()}</b></p>` : ""}
       `),
     });
   },

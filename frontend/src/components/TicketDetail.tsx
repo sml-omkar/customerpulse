@@ -654,7 +654,7 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
       seconds = ticket.turnOverTime;
     } else {
       const now = Date.now();
-      const createdAt = new Date(ticket.dateOfOccurance).getTime();
+      const createdAt = new Date(ticket.createdAt).getTime();
       const totalHoldMinutes = ticket.totalHoldMinutes ?? 0;
       const ongoingHoldMinutes = ticket.status === "ON_HOLD" && ticket.holdStartedAt
         ? Math.max(0, Math.round((now - new Date(ticket.holdStartedAt).getTime()) / 60000))

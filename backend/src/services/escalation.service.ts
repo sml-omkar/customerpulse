@@ -72,7 +72,7 @@ export const escalationService = {
         data: {
           ticketId,
           fromLevel: 'L1',
-          toLevel: 'L1',
+          toLevel: 'L2',
           escalatedById,
           escalatedToId:ticket.assigneeId!,
           reason,
@@ -83,7 +83,7 @@ export const escalationService = {
       prisma.ticket.update({
         where: { id: ticketId },
         data: {
-          supportLevel: 'L1',
+          supportLevel: 'L2',
           assigneeId: ticket.assigneeId,
           escalatedToId: ticket.assigneeId,
           escalatedAt: new Date(),
@@ -181,14 +181,14 @@ export const escalationService = {
           }
         })
 
-        if(!managerAndCxo || !managerAndCxo.cxo?.email || !managerAndCxo.manager?.email || !breachedTicket.assignee?.fullName){
-          results.push("Manager and CXO doesn't exists for this department")
-          return results
+        if(!managerAndCxo || !managerAndCxo.manager?.email || !breachedTicket.assignee?.fullName){
+          results.push(`Manager doesn't exist for department ${managerAndCxo?.name ?? ticket.departmentId} - skipping breach email`);
+          continue;
         }
 
         await notificationService.sendSlaBreachWarning(ticket,{email:managerAndCxo.manager.email,departmentName:managerAndCxo.name,assigneeName:breachedTicket.assignee?.fullName});
-
         results.push(`Notification has been sent to ${managerAndCxo.manager.fullName}`);
+
       } catch (err) {
         // No agent available at the next level - leave it flagged as
         // breached so it shows up on dashboards even without an escalation record.
@@ -209,3 +209,4 @@ function bumpPriority(p: InternalPriorityLevel): InternalPriorityLevel {
   const idx = order.indexOf(p);
   return order[Math.max(idx - 1, 0)];
 }
+
