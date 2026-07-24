@@ -50,7 +50,7 @@ export const notificationService = {
       html: layout("Ticket received", `
         <p>Hi ${requester.fullName},</p>
         <p>We've logged your ticket <b>${ticket.ticketNumber}</b> - "${ticket.title}".</p>
-        <p>Priority: <b>${ticket.priority}</b></p>
+ .      <p>Priority :${ticket.internalPriority}</p>
         <p>We'll notify you as it progresses.</p>
       `),
     });
