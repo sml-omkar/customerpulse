@@ -22,6 +22,7 @@ import { notificationRouter } from "./routes/notifications";
 import { cxoRouter } from "./routes/cxoDashboard";
 import { agentDashboardRouter } from "./routes/agentDashboard";
 import { uploadsRouter } from "./routes/uploads";
+import { adminTicketRouter } from "./routes/adminTickets";
 import cors from "cors"
 
 const app = express();
@@ -54,6 +55,7 @@ app.use("/admin/requestors", requestorRouter)
 app.use("/notifications", notificationRouter)
 app.use("/cxo-dashboard",cxoRouter)
 app.use("/agent-dashboard", agentDashboardRouter)
+app.use("/admin-tickets", adminTicketRouter)
 // ---- must be last ----
 app.use(notFoundHandler);
 app.use(errorHandler);
