@@ -9,19 +9,19 @@ import { asyncHandler } from "../middleware/asyncHandler";
 export const ticketRouter = Router();
 
 // ---- core ticket lifecycle ----
-ticketRouter.post("/", requireAuth, ticketController.create);
-ticketRouter.get("/", requireAuth, ticketController.list); // only be accessed by global admin for the particular company
-ticketRouter.get("/:id", requireAuth, ticketController.getById);
-ticketRouter.patch("/:id", requireAuth, ticketController.update);
+ticketRouter.post("/", requireAuth, asyncHandler(ticketController.create));
+ticketRouter.get("/", requireAuth,asyncHandler(ticketController.list)); // only be accessed by global admin for the particular company
+ticketRouter.get("/:id", requireAuth, asyncHandler(ticketController.getById));
+ticketRouter.patch("/:id", requireAuth, asyncHandler(ticketController.update));
 // Full ticket edit (title/description/client info/department/category/project) - GLOBAL_ADMIN only.
-ticketRouter.patch("/:id/edit", requireAuth, requireRole(UserRole.GLOBAL_ADMIN), ticketController.editTicket);
-ticketRouter.post("/:id/resolve", requireAuth, ticketController.resolve);
-ticketRouter.get("/assigned/:id",requireAuth,ticketController.getAssigned )
-ticketRouter.get("/breached/:id",requireAuth,ticketController.getBreachedTickets)
-ticketRouter.get("/resolved/:id",requireAuth,ticketController.resolved)
-ticketRouter.get("/onhold/:id",requireAuth,ticketController.onhold)
+ticketRouter.patch("/:id/edit", requireAuth, asyncHandler(ticketController.editTicket));
+ticketRouter.post("/:id/resolve", requireAuth, asyncHandler(ticketController.resolve));
+ticketRouter.get("/assigned/:id",requireAuth,asyncHandler(ticketController.getAssigned ))
+ticketRouter.get("/breached/:id",requireAuth,asyncHandler(ticketController.getBreachedTickets))
+ticketRouter.get("/resolved/:id",requireAuth,asyncHandler(ticketController.resolved))
+ticketRouter.get("/onhold/:id",requireAuth,asyncHandler(ticketController.onhold))
 // get all personal tickets
-ticketRouter.get("/mytickets/:id",requireAuth,ticketController.myTickets)
+ticketRouter.get("/mytickets/:id",requireAuth,asyncHandler(ticketController.myTickets))
 
 /**
   Routes to be added in ticket route along with their controllers
@@ -34,7 +34,7 @@ ticketRouter.get("/mytickets/:id",requireAuth,ticketController.myTickets)
 ticketRouter.post(
   "/:id/escalate",
   requireAuth,
-  ticketController.escalate
+  asyncHandler(ticketController.escalate)
 );
 
 
@@ -45,18 +45,18 @@ ticketRouter.get("/:id/escalations", requireAuth, ticketController.listEscalatio
 ticketRouter.post(
   "/:id/assign",
   requireAuth,
-  ticketController.assign
+  asyncHandler(ticketController.assign)
 );
 ticketRouter.post(
   "/:id/reassign",
   requireAuth,
-  ticketController.autoReassign
+  asyncHandler(ticketController.autoReassign)
 );
 
 
 // status-history
 
-ticketRouter.get("/:id/status-history",requireAuth,ticketController.listStatusHistory)
+ticketRouter.get("/:id/status-history",requireAuth,asyncHandler(ticketController.listStatusHistory))
 
 // ---- manual keyword overrides ----
 
@@ -64,18 +64,18 @@ ticketRouter.post(
   "/:id/keywords",
   requireAuth,
   requireRole(UserRole.AGENT, UserRole.HOD, UserRole.GLOBAL_ADMIN),
-  ticketController.addKeyword
+  asyncHandler(ticketController.addKeyword)
 );
 ticketRouter.delete(
   "/:id/keywords/:keywordId",
   requireAuth,
   requireRole(UserRole.AGENT,  UserRole.HOD, UserRole.GLOBAL_ADMIN),
-  ticketController.removeKeyword
+  asyncHandler(ticketController.removeKeyword)
 );
 
 // ---- nested: comments ----
-ticketRouter.post("/:ticketId/comments", requireAuth, commentController.create);
-ticketRouter.get("/:ticketId/comments", requireAuth, commentController.list);
+ticketRouter.post("/:ticketId/comments", requireAuth,asyncHandler(commentController.create));
+ticketRouter.get("/:ticketId/comments", requireAuth, asyncHandler(commentController.list));
 
 // ---- nested: attachments ----
 // Step 1: client asks for a presigned S3 PUT URL, uploads the file bytes
