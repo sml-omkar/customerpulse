@@ -1,5 +1,5 @@
 import { sendMail } from "../lib/mailer";
-import type { Ticket, User, TicketEscalation } from "../generated/prisma/client";
+import type { Ticket, User, TicketEscalation, AdminTicket } from "../generated/prisma/client";
 
 import {config} from "dotenv"
 config()
@@ -115,6 +115,33 @@ export const notificationService = {
       html: layout("Your ticket was resolved", `
         <p>Hi ${requester.fullName},</p>
         <p>Ticket <b>${ticket.ticketNumber}</b> has been marked resolved. Reply if you need it reopened.</p>
+      `),
+    });
+  },
+
+  // NOTE(added): fired once per GLOBAL_ADMIN when a HOD/CXO/AGENT raises
+  // an AdminTicket - call once per admin recipient (mirrors sendTicketAssigned's
+  // one-recipient-per-call shape).
+  async sendAdminTicketRaised(adminTicket: AdminTicket, raisedBy: { fullName: string; role: string }, admin: User) {
+    await sendMail({
+      to: admin.email,
+      subject: `[${adminTicket.ticketNumber}] New request from ${raisedBy.fullName}: ${adminTicket.subject}`,
+      html: layout("New request raised to admin", `
+        <p>Hi ${admin.fullName},</p>
+        <p>${raisedBy.fullName} (${raisedBy.role}) raised a new request <b>${adminTicket.ticketNumber}</b> - "${adminTicket.subject}".</p>
+        <blockquote style="margin:12px 0;padding:8px 12px;border-left:3px solid #e5e7eb;color:#374151">${adminTicket.description}</blockquote>
+      `),
+    });
+  },
+
+  async sendAdminTicketResolved(adminTicket: AdminTicket, raisedBy: { fullName: string; email: string }) {
+    await sendMail({
+      to: raisedBy.email,
+      subject: `[${adminTicket.ticketNumber}] Update on your request: ${adminTicket.subject}`,
+      html: layout("Your request has an update", `
+        <p>Hi ${raisedBy.fullName},</p>
+        <p>Your request <b>${adminTicket.ticketNumber}</b> - "${adminTicket.subject}" is now marked <b>${adminTicket.status}</b>.</p>
+        ${adminTicket.adminResponse ? `<blockquote style="margin:12px 0;padding:8px 12px;border-left:3px solid #e5e7eb;color:#374151">${adminTicket.adminResponse}</blockquote>` : ""}
       `),
     });
   },
