@@ -62,3 +62,25 @@ export function generateTicketNumber(): string {
 
   return `TCK-${datePart}-${suffix}`;
 }
+
+/**
+ * Same shape as generateTicketNumber() but prefixed ADM- so an internal
+ * "raised to admin" ticket (see AdminTicket model) is visually
+ * distinguishable from a client-facing Ticket (TCK-) at a glance, e.g.
+ * in email subjects or an audit log.
+ */
+export function generateAdminTicketNumber(): string {
+  const now = new Date();
+  const yy = String(now.getFullYear()).slice(-2);
+  const mm = String(now.getMonth() + 1).padStart(2, "0");
+  const dd = String(now.getDate()).padStart(2, "0");
+  const datePart = `${yy}${mm}${dd}`;
+
+  const suffix = crypto
+    .randomBytes(3)
+    .toString("hex")
+    .toUpperCase()
+    .slice(0, 4);
+
+  return `ADM-${datePart}-${suffix}`;
+}
