@@ -109,7 +109,8 @@ export const userController = {
   async list(req: AuthedRequest, res: Response) {
     const users = await prisma.user.findMany({
       where: {
-        role : {notIn : [UserRole.REQUESTER]}
+        role : {notIn : [UserRole.REQUESTER]},
+        deletedAt: null,
       },
       select: {
         id: true, fullName: true, email: true, role: true, 
@@ -399,5 +400,69 @@ export const userController = {
       zone: user.state ? resolveZone(zone) || zone : null,
       ticketReassignmentSummary,
     });
+  },
+
+  // DELETE /users/:id  (GLOBAL_ADMIN only)
+  // Soft-deletes a staff account - see the `deletedAt` NOTE on the User
+  // model for why this isn't a real prisma.user.delete(): Ticket.
+  // requesterId, TicketComment.userId, TicketEscalation.escalatedById/
+  // escalatedToId etc. are required relations to User with no cascade
+  // rule, so a hard delete would throw a foreign-key violation for any
+  // account with real history.
+  //
+  // If the deleted account is an AGENT with open tickets, those tickets
+  // are redistributed across the rest of the department using the exact
+  // same logic a role change / department transfer already gets
+  // (roleChangeReassignmentService.handleAgentTicketReassignment):
+  // category match -> keyword match -> load balance, or left unassigned
+  // if there's nobody else left in that department to pick them up. If
+  // the account currently heads a department as HOD/CXO, that seat is
+  // cleared first so the department isn't left pointing at a deleted user.
+  async remove(req: AuthedRequest, res: Response) {
+    const targetId = req.params.id;
+
+    if (targetId === req.user!.id) {
+      throw new AppError("You can't delete your own account", 400);
+    }
+
+    const existing = await prisma.user.findUnique({ where: { id: targetId } });
+    if (!existing || existing.deletedAt) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const managedDepartments = await prisma.department.findMany({ where: { managerId: existing.id }, select: { id: true } });
+    const cxoDepartments = await prisma.department.findMany({ where: { cxoId: existing.id }, select: { id: true } });
+
+    for (const dept of managedDepartments) {
+      await prisma.department.update({ where: { id: dept.id }, data: { managerId: null } });
+    }
+    for (const dept of cxoDepartments) {
+      await prisma.department.update({ where: { id: dept.id }, data: { cxoId: null } });
+    }
+
+    let ticketReassignmentSummary = null;
+    if (existing.role === UserRole.AGENT && existing.agentsdepartmentId) {
+      ticketReassignmentSummary = await roleChangeReassignmentService.handleAgentTicketReassignment({
+        movedUserId: existing.id,
+        movedUserFullName: existing.fullName,
+        movedUserEmail: existing.email,
+        oldDepartmentId: existing.agentsdepartmentId,
+        reason: "ACCOUNT_DELETED",
+        newRole: existing.role,
+        newDepartmentId: null,
+        performedById: req.user!.id,
+      });
+    }
+
+    await prisma.user.update({
+      where: { id: targetId },
+      data: {
+        isActive: false,
+        isAvailableForAssignment: false,
+        deletedAt: new Date(),
+      },
+    });
+
+    res.json({ success: true, ticketReassignmentSummary });
   },
 };
