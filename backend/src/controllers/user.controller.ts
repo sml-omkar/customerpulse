@@ -418,6 +418,7 @@ export const userController = {
   // if there's nobody else left in that department to pick them up. If
   // the account currently heads a department as HOD/CXO, that seat is
   // cleared first so the department isn't left pointing at a deleted user.
+  // @ts-ignore
   async remove(req: AuthedRequest, res: Response) {
     const targetId = req.params.id;
 

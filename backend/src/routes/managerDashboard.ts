@@ -2,6 +2,7 @@ import { Router } from "express";
 import { UserRole } from "../generated/prisma/client";
 import { requireAuth, requireRole } from "../middleware/auth";
 import { managerDashboardController } from "../controllers/managerDashboard.controller";
+import { asyncHandler } from "../middleware/asyncHandler";
 
 export const managerDashboardRouter = Router();
 
@@ -10,7 +11,7 @@ managerDashboardRouter.get(
   "/team",
   requireAuth,
   requireRole(UserRole.HOD),
-  managerDashboardController.getTeam
+  asyncHandler(managerDashboardController.getTeam)
 );
 
 managerDashboardRouter.get(

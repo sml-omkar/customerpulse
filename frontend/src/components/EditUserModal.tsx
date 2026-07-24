@@ -17,7 +17,7 @@ const ALL_ROLES: UserRole[] = [
   "REQUESTER",
 ] as UserRole[];
 
-const SUPPORT_LEVELS: SupportLevel[] = ["L1", "L2", "L3", "L4"] as SupportLevel[];
+const SUPPORT_LEVELS: SupportLevel[] = ["L1", "L2"] as SupportLevel[];
 
 // Mirrors backend/src/utils/zoneStateMap.ts - kept here only to drive the
 // Zone picker and to reverse-map a stored `state` string back to the Zone
@@ -67,7 +67,7 @@ export const EditUserModal = ({ targetUser, departments, token, onClose, onSaved
   const [headDepartmentId, setHeadDepartmentId] = useState("");
   const [departmentId, setDepartmentId] = useState(targetUser.departmentId || "");
   const [supportLevel, setSupportLevel] = useState<SupportLevel | "">(targetUser.supportLevel || "");
-  const [isActive, setIsActive] = useState(targetUser.isActive);
+  const [isActive, setIsActive] = useState(true);
   const [isAvailableForAssignment, setIsAvailableForAssignment] = useState(targetUser.isAvailableForAssignment);
   const [maxActiveTickets, setMaxActiveTickets] = useState(String(targetUser.maxActiveTickets ?? 0));
   const [windCategory, setWindCategory] = useState<WindCategory | "">(targetUser.windCategory || "");
@@ -397,10 +397,7 @@ export const EditUserModal = ({ targetUser, departments, token, onClose, onSaved
             </select>
           </div>
 
-          <label className="mt-3 flex items-center gap-2 text-xs font-semibold text-slate-600">
-            <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
-            Active
-          </label>
+          
 
           <div className="flex justify-end gap-2 mt-5">
             <button
