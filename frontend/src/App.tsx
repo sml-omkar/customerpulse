@@ -167,6 +167,346 @@ const AuthShell = ({ children }: { children: React.ReactNode }) => (
   </div>
 );
 
+// ====================== AUTH SHELL — DARK / SCHEMATIC (login + forgot-password) ======================
+// Industrial, dark "engineering schematic" front door used specifically for the
+// sign-in and forgot-password screens. `children` renders inside the glass card
+// on the right; the copy column, backdrop and request-lifecycle rail are fixed.
+const AuthShellDark = ({ children }: { children: React.ReactNode }) => (
+  <div className="cp-auth-dark">
+    <style>{`
+      .cp-auth-dark{
+        --black:#08090a;
+        --grey-1:#101113;
+        --grey-2:#1a1c1f;
+        --silver:#b9bcc3;
+        --silver-dim:#6f7178;
+        --white:#f2f3f5;
+        --red:#e11c2b;
+        --red-2:#9c0e1a;
+        --red-glow:rgba(225,28,43,0.55);
+        position:relative;
+        min-height:100vh;
+        width:100%;
+        overflow-x:hidden;
+        background:var(--black);
+        color:var(--white);
+        font-family:'Inter',sans-serif;
+      }
+      .cp-auth-dark *{ box-sizing:border-box; }
+      .cp-auth-dark .backdrop{
+        position:fixed; inset:0; z-index:0;
+        background:
+          radial-gradient(1200px 700px at 78% 15%, rgba(225,28,43,0.10), transparent 60%),
+          radial-gradient(900px 600px at 10% 90%, rgba(255,255,255,0.03), transparent 60%),
+          linear-gradient(160deg, var(--grey-2) 0%, var(--black) 65%);
+      }
+      .cp-auth-dark .grid-overlay{
+        position:fixed; inset:0; z-index:0;
+        background-image:
+          linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+        background-size:56px 56px;
+        mask-image:radial-gradient(ellipse 90% 70% at 60% 40%, black 30%, transparent 78%);
+      }
+      .cp-auth-dark .scanline{
+        position:fixed; left:0; right:0; height:180px; z-index:1;
+        background:linear-gradient(rgba(255,255,255,0.045), transparent);
+        animation:cp-scan 9s linear infinite;
+        pointer-events:none;
+      }
+      @keyframes cp-scan{ 0%{ top:-180px; } 100%{ top:110vh; } }
+      .cp-auth-dark .schematic{
+        position:fixed; top:0; right:0; height:100vh; width:62vw; max-width:980px;
+        z-index:0; opacity:0.9; pointer-events:none;
+      }
+      .cp-auth-dark .schematic svg{ width:100%; height:100%; }
+      .cp-auth-dark .node{ animation:cp-pulse 3.2s ease-in-out infinite; }
+      @keyframes cp-pulse{ 0%,100%{ opacity:0.35; } 50%{ opacity:1; } }
+      .cp-auth-dark .turbine-blades{ transform-origin:698px 168px; animation:cp-spin 14s linear infinite; }
+      @keyframes cp-spin{ to{ transform:rotate(360deg); } }
+      @media (prefers-reduced-motion:reduce){
+        .cp-auth-dark .scanline, .cp-auth-dark .node, .cp-auth-dark .turbine-blades{ animation:none; }
+      }
+
+      .cp-auth-dark .shell{ position:relative; z-index:2; min-height:100vh; display:flex; flex-direction:column; padding:40px 6vw 48px; }
+      .cp-auth-dark .topbar{ display:flex; align-items:center; justify-content:space-between; }
+      .cp-auth-dark .brand{ display:flex; align-items:center; gap:13px; }
+      .cp-auth-dark .mark{
+        width:36px; height:36px; border:1.5px solid var(--red);
+        display:flex; align-items:center; justify-content:center;
+        font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:17px;
+        color:var(--red); position:relative;
+      }
+      .cp-auth-dark .mark::after{ content:""; position:absolute; inset:-5px; border:1px solid rgba(225,28,43,0.25); }
+      .cp-auth-dark .brand-name{ font-family:'Space Grotesk',sans-serif; font-size:14.5px; font-weight:600; letter-spacing:0.06em; color:var(--white); }
+      .cp-auth-dark .brand-sub{ font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.18em; color:var(--silver-dim); text-transform:uppercase; }
+      .cp-auth-dark .pulse-brand{ text-align:right; }
+      .cp-auth-dark .pulse-brand .name{ font-family:'Space Grotesk',sans-serif; font-size:14.5px; font-weight:600; letter-spacing:0.04em; }
+      .cp-auth-dark .pulse-brand .name em{ color:var(--red); font-style:normal; }
+      .cp-auth-dark .pulse-brand .tag{ font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.14em; color:var(--silver-dim); }
+
+      .cp-auth-dark .main{ flex:1; display:flex; align-items:center; margin-top:2vh; gap:40px; flex-wrap:wrap; }
+      .cp-auth-dark .copy-col{ flex:1; max-width:520px; padding-right:40px; min-width:280px; }
+      .cp-auth-dark .eyebrow{
+        font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:0.22em;
+        color:var(--red); text-transform:uppercase; display:flex; align-items:center; gap:10px; margin-bottom:22px;
+      }
+      .cp-auth-dark .eyebrow::before{ content:""; width:26px; height:1px; background:var(--red); }
+      .cp-auth-dark .headline{
+        font-family:'Space Grotesk',sans-serif; font-size:clamp(28px, 3.2vw, 42px); font-weight:500;
+        line-height:1.12; letter-spacing:-0.01em; color:var(--white); margin:0 0 20px;
+      }
+      .cp-auth-dark .headline span{ color:var(--red); }
+      .cp-auth-dark .subcopy{ font-size:14.5px; line-height:1.65; color:var(--silver); max-width:420px; margin-bottom:0; }
+      .cp-auth-dark .pulse-line{ width:220px; height:auto; display:block; margin:2px 0 22px; overflow:visible; }
+      .cp-auth-dark .pulse-line path{
+        stroke-dasharray:44 380; stroke-dashoffset:0;
+        animation:cp-pulse-travel 2.6s linear infinite;
+        filter:drop-shadow(0 0 4px rgba(225,28,43,0.65));
+      }
+      @keyframes cp-pulse-travel{ 0%{ stroke-dashoffset:424; } 100%{ stroke-dashoffset:0; } }
+
+      .cp-auth-dark .card-col{ flex:none; width:400px; max-width:100%; }
+      .cp-auth-dark .card{
+        position:relative; background:rgba(20,21,24,0.65);
+        backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
+        border:1px solid rgba(255,255,255,0.09);
+        padding:34px 32px 28px;
+        box-shadow:0 40px 80px -30px rgba(0,0,0,0.75);
+      }
+      .cp-auth-dark .card::before{
+        content:""; position:absolute; inset:0; padding:1px;
+        background:linear-gradient(135deg, rgba(225,28,43,0.55), rgba(255,255,255,0.05) 40%, transparent 70%);
+        -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+        -webkit-mask-composite:xor; mask-composite:exclude;
+        pointer-events:none;
+      }
+      .cp-auth-dark .corner{ position:absolute; width:14px; height:14px; border:1.5px solid rgba(225,28,43,0.7); }
+      .cp-auth-dark .corner.tl{ top:-1px; left:-1px; border-right:none; border-bottom:none; }
+      .cp-auth-dark .corner.br{ bottom:-1px; right:-1px; border-left:none; border-top:none; }
+      .cp-auth-dark .card-eyebrow{
+        font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:0.16em;
+        color:var(--silver-dim); text-transform:uppercase; margin-bottom:8px;
+      }
+      .cp-auth-dark .card h1{ font-family:'Space Grotesk',sans-serif; font-size:21px; font-weight:600; margin:0 0 10px; color:var(--white); }
+      .cp-auth-dark .card .card-sub{ font-size:12.5px; color:var(--silver); line-height:1.55; margin:0 0 22px; }
+
+      .cp-auth-dark .field{ margin-bottom:18px; }
+      .cp-auth-dark .field label{
+        display:block; font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:0.12em;
+        text-transform:uppercase; color:var(--silver-dim); margin-bottom:8px;
+      }
+      .cp-auth-dark .field input{
+        width:100%; background:rgba(255,255,255,0.035); border:1px solid rgba(255,255,255,0.12);
+        padding:12px 13px; font-family:'Inter',sans-serif; font-size:14px; color:var(--white);
+        outline:none; transition:border-color 0.2s ease, box-shadow 0.2s ease;
+      }
+      .cp-auth-dark .field input::placeholder{ color:#5b5d63; }
+      .cp-auth-dark .field input:focus{ border-color:var(--red); box-shadow:0 0 0 3px rgba(225,28,43,0.15); }
+      .cp-auth-dark .field .hint{ font-size:11px; color:var(--silver-dim); margin-top:6px; }
+
+      .cp-auth-dark .row-between{
+        display:flex; justify-content:flex-end; align-items:center; margin:-6px 0 20px;
+        font-family:'JetBrains Mono',monospace; font-size:10px;
+      }
+      .cp-auth-dark .row-between button.link-btn{
+        background:none; border:none; cursor:pointer; padding:0; font-family:inherit; font-size:inherit;
+        color:var(--silver); border-bottom:1px solid rgba(255,255,255,0.2);
+      }
+      .cp-auth-dark .row-between button.link-btn:hover{ color:var(--red); border-color:var(--red); }
+
+      .cp-auth-dark .login-btn{
+        width:100%; padding:14px; background:linear-gradient(120deg, var(--red), var(--red-2));
+        color:#fff; border:none; font-family:'Space Grotesk',sans-serif; font-size:13.5px; font-weight:600;
+        letter-spacing:0.1em; text-transform:uppercase; cursor:pointer;
+        box-shadow:0 10px 30px -8px var(--red-glow);
+        transition:filter 0.15s ease, transform 0.05s ease;
+      }
+      .cp-auth-dark .login-btn:hover{ filter:brightness(1.12); }
+      .cp-auth-dark .login-btn:active{ transform:translateY(1px); }
+      .cp-auth-dark .login-btn:disabled{ opacity:0.55; cursor:not-allowed; }
+
+      .cp-auth-dark .status-row{
+        display:flex; justify-content:space-between; align-items:center;
+        margin-top:22px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.08);
+        font-family:'JetBrains Mono',monospace; font-size:9.5px; color:var(--silver-dim);
+      }
+      .cp-auth-dark .status-dot{
+        display:inline-block; width:6px; height:6px; border-radius:50%;
+        background:#3ecf6b; margin-right:6px; box-shadow:0 0 6px #3ecf6b;
+      }
+
+      .cp-auth-dark .alert-error{
+        margin-bottom:16px; padding:10px 12px; background:rgba(225,28,43,0.1);
+        border:1px solid rgba(225,28,43,0.35); color:#ffb4ba; font-size:12px;
+        display:flex; align-items:center; gap:8px;
+      }
+      .cp-auth-dark .alert-success{
+        margin-bottom:16px; padding:10px 12px; background:rgba(62,207,107,0.1);
+        border:1px solid rgba(62,207,107,0.35); color:#8ff0af; font-size:12px;
+      }
+
+      .cp-auth-dark .back-link{ margin-top:18px; text-align:center; }
+      .cp-auth-dark .back-link button{
+        background:none; border:none; cursor:pointer;
+        font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:0.1em; text-transform:uppercase;
+        color:var(--silver); border-bottom:1px solid rgba(255,255,255,0.2); padding:0 0 2px;
+      }
+      .cp-auth-dark .back-link button:hover{ color:var(--red); border-color:var(--red); }
+      .cp-auth-dark .back-link button:disabled{ opacity:0.5; cursor:not-allowed; }
+
+      .cp-auth-dark .rail-wrap{ max-width:1180px; margin:56px auto 0; width:100%; }
+      .cp-auth-dark .rail-label{
+        font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:0.2em; text-transform:uppercase;
+        color:var(--silver-dim); margin-bottom:18px;
+      }
+      .cp-auth-dark .rail{ position:relative; display:flex; justify-content:space-between; }
+      .cp-auth-dark .rail::before{
+        content:""; position:absolute; left:18px; right:18px; top:11px; height:1px;
+        background:linear-gradient(90deg, var(--red), rgba(255,255,255,0.15));
+      }
+      .cp-auth-dark .rstep{ position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; gap:10px; flex:1; }
+      .cp-auth-dark .rstep .dot{
+        width:22px; height:22px; border-radius:50%; background:var(--grey-1);
+        border:1.5px solid var(--red); display:flex; align-items:center; justify-content:center;
+      }
+      .cp-auth-dark .rstep .dot svg{ width:11px; height:11px; }
+      .cp-auth-dark .rstep .lbl{
+        font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:0.08em; text-transform:uppercase;
+        color:var(--silver-dim); text-align:center;
+      }
+
+      @media (max-width:980px){
+        .cp-auth-dark .schematic{ opacity:0.35; width:100vw; }
+        .cp-auth-dark .main{ flex-direction:column; align-items:stretch; gap:36px; }
+        .cp-auth-dark .copy-col{ max-width:none; padding-right:0; }
+        .cp-auth-dark .card-col{ width:100%; max-width:420px; margin:0 auto; }
+      }
+      @media (max-width:620px){
+        .cp-auth-dark .topbar{ flex-direction:column; align-items:flex-start; gap:14px; }
+        .cp-auth-dark .pulse-brand{ text-align:left; }
+        .cp-auth-dark .rail{ flex-wrap:wrap; row-gap:22px; }
+        .cp-auth-dark .rail::before{ display:none; }
+        .cp-auth-dark .rstep{ flex:1 1 33%; }
+      }
+    `}</style>
+
+    <div className="backdrop"></div>
+    <div className="grid-overlay"></div>
+    <div className="scanline"></div>
+
+    <div className="schematic">
+      <svg viewBox="0 0 980 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="cpPadGlow" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#ff3b4a" />
+            <stop offset="100%" stopColor="#8f0f1a" />
+          </linearGradient>
+          <radialGradient id="cpPadGlowRadial" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#e11c2b" stopOpacity="0.30" />
+            <stop offset="65%" stopColor="#e11c2b" stopOpacity="0.08" />
+            <stop offset="100%" stopColor="#e11c2b" stopOpacity="0" />
+          </radialGradient>
+          <linearGradient id="cpSurfaceFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#d9dce2" stopOpacity="0.14" />
+            <stop offset="100%" stopColor="#d9dce2" stopOpacity="0.02" />
+          </linearGradient>
+        </defs>
+
+        <ellipse cx="698" cy="800" rx="150" ry="16" fill="url(#cpPadGlowRadial)" />
+
+        <g stroke="#d9dce2" strokeWidth="1.3" opacity="0.85" strokeLinejoin="round" strokeLinecap="round" fill="none">
+          <path d="M683 800 L695 178" />
+          <path d="M713 800 L701 178" />
+          <path d="M655 800 L741 800 L724 762 L672 762 Z" fill="url(#cpSurfaceFill)" />
+          <path d="M691 778 L691 800 L705 800 L705 778" />
+          <path d="M698 160 L748 160 L748 178 L698 178 Z" fill="url(#cpSurfaceFill)" />
+          <path d="M748 165 L760 168 L748 173" />
+        </g>
+        <circle cx="698" cy="168" r="6" stroke="#e11c2b" strokeWidth="1.2" opacity="0.9" fill="none" />
+
+        <g className="turbine-blades" stroke="#e2e4e9" strokeWidth="1.1" opacity="0.85" strokeLinejoin="round" fill="none">
+          <path d="M692 168 L695 66 Q698 58 701 66 L704 168 Z" />
+          <path d="M692 168 L695 66 Q698 58 701 66 L704 168 Z" transform="rotate(120 698 168)" />
+          <path d="M692 168 L695 66 Q698 58 701 66 L704 168 Z" transform="rotate(240 698 168)" />
+        </g>
+        <circle className="node" cx="698" cy="168" r="3" fill="#e11c2b" />
+
+        <circle cx="698" cy="168" r="60" stroke="#e11c2b" strokeWidth="0.7" opacity="0.22" />
+        <circle cx="698" cy="168" r="95" stroke="#e11c2b" strokeWidth="0.6" opacity="0.12" />
+        <circle cx="300" cy="655" r="50" stroke="#e11c2b" strokeWidth="0.7" opacity="0.18" />
+      </svg>
+    </div>
+
+    <div className="shell">
+      <div className="topbar">
+        <div className="brand">
+          <div className="mark">S</div>
+          <div>
+            <div className="brand-name">SANGHVI MOVERS</div>
+            <div className="brand-sub">Heavy Lift &amp; Logistics · Est. Engineering</div>
+          </div>
+        </div>
+        <div className="pulse-brand">
+          <div className="name">Customer <em>Pulse</em></div>
+          <div className="tag">WE LISTEN. WE ACT.</div>
+        </div>
+      </div>
+
+      <div className="main">
+        <div className="copy-col">
+          <div className="eyebrow">Service Portal</div>
+          <h1 className="headline">Every ticket <span>has a pulse.</span></h1>
+
+          <svg className="pulse-line" viewBox="0 0 420 46" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M0 23 H150 L165 23 L175 6 L188 40 L198 12 L208 30 L218 23 H420"
+              stroke="#e11c2b" strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round"
+            />
+          </svg>
+
+          <p className="subcopy">
+            One sign-in for requesters raising issues, agents resolving them, and leaders watching it
+            all move. Customer Pulse keeps everyone on the same beat.
+          </p>
+        </div>
+
+        <div className="card-col">{children}</div>
+      </div>
+
+      <div className="rail-wrap">
+        <div className="rail-label">Request Lifecycle</div>
+        <div className="rail">
+          <div className="rstep">
+            <div className="dot"><svg viewBox="0 0 24 24" fill="none" stroke="#e11c2b" strokeWidth="2"><path d="M4 21V5a2 2 0 0 1 2-2h8l6 6v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z" /></svg></div>
+            <div className="lbl">Log</div>
+          </div>
+          <div className="rstep">
+            <div className="dot"><svg viewBox="0 0 24 24" fill="none" stroke="#e11c2b" strokeWidth="2"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></svg></div>
+            <div className="lbl">Track</div>
+          </div>
+          <div className="rstep">
+            <div className="dot"><svg viewBox="0 0 24 24" fill="none" stroke="#e11c2b" strokeWidth="2"><path d="M6 8a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6Z" /></svg></div>
+            <div className="lbl">Updates</div>
+          </div>
+          <div className="rstep">
+            <div className="dot"><svg viewBox="0 0 24 24" fill="none" stroke="#e11c2b" strokeWidth="2"><path d="M4 4h16v12H8l-4 4Z" /></svg></div>
+            <div className="lbl">Communicate</div>
+          </div>
+          <div className="rstep">
+            <div className="dot"><svg viewBox="0 0 24 24" fill="none" stroke="#e11c2b" strokeWidth="2"><path d="M7 11v9H4v-9Z" /><path d="M7 11l3-8a2 2 0 0 1 4 1v5h4a2 2 0 0 1 2 2l-1.5 6a2 2 0 0 1-2 1.5H7" /></svg></div>
+            <div className="lbl">Feedback</div>
+          </div>
+          <div className="rstep">
+            <div className="dot"><svg viewBox="0 0 24 24" fill="none" stroke="#e11c2b" strokeWidth="2"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.3 5.9 20.6l1.4-6.8-5.1-4.7 6.9-.8Z" /></svg></div>
+            <div className="lbl">Resolved</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
 // Single sidebar navigation entry. Shows icon + label expanded, icon only
 // (centered, with a hover tooltip via `title`) when the sidebar is
 // collapsed.
@@ -1260,217 +1600,192 @@ export default function App() {
     // 2. Forgot Password (OTP request -> verify + reset)
     if (forgotMode) {
       return (
-        <AuthShell>
-          <span className="inline-flex p-2.5 bg-red-50 border border-red-100 text-red-600 rounded-xl mb-4">
-            <Key size={20} />
-          </span>
-          <h1 className="font-display text-2xl font-semibold text-slate-900 tracking-tight">Reset password</h1>
-          <p className="text-sm text-slate-500 mt-1.5 mb-7">
-            {forgotStep === "request"
-              ? "Enter your account email and we'll send you a verification code."
-              : forgotOtpVerified
-              ? "Choose a new password for your account."
-              : "Enter the 6-digit code we emailed you."}
-          </p>
+        <AuthShellDark>
+          <div className="card">
+            <div className="corner tl"></div>
+            <div className="corner br"></div>
+            <div className="card-eyebrow">Account Recovery</div>
+            <h1>Reset password</h1>
+            <p className="card-sub">
+              {forgotStep === "request"
+                ? "Enter your account email and we'll send you a verification code."
+                : forgotOtpVerified
+                ? "Choose a new password for your account."
+                : "Enter the 6-digit code we emailed you."}
+            </p>
 
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-800 text-xs flex items-center gap-2 rounded-lg">
-              <ShieldAlert size={16} />
-              {error}
+            {error && (
+              <div className="alert-error">
+                <ShieldAlert size={14} />
+                {error}
+              </div>
+            )}
+
+            {success && <div className="alert-success">{success}</div>}
+
+            {forgotStep === "request" && (
+              <form onSubmit={handleRequestOtp}>
+                <div className="field">
+                  <label htmlFor="cp-forgot-email">Corporate email</label>
+                  <input
+                    id="cp-forgot-email"
+                    type="email"
+                    placeholder="you@company.com"
+                    value={forgotEmail}
+                    onChange={(e) => setForgotEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <button type="submit" disabled={loading} className="login-btn">
+                  {loading ? "Sending code…" : "Send verification code"}
+                </button>
+              </form>
+            )}
+
+            {forgotStep === "verify" && !forgotOtpVerified && (
+              <form onSubmit={handleVerifyOtp}>
+                <div className="field">
+                  <label htmlFor="cp-forgot-otp">Verification code</label>
+                  <input
+                    id="cp-forgot-otp"
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
+                    placeholder="6-digit code"
+                    value={forgotOtp}
+                    onChange={(e) => setForgotOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    style={{ letterSpacing: "0.3em", textAlign: "center", fontWeight: 600 }}
+                    required
+                  />
+                  <p className="hint">Sent to {forgotEmail}. Expires in 10 minutes.</p>
+                </div>
+                <button type="submit" disabled={loading || forgotOtp.length !== 6} className="login-btn">
+                  {loading ? "Verifying…" : "Verify code"}
+                </button>
+                <div className="back-link">
+                  <button type="button" onClick={handleRequestOtp} disabled={loading}>
+                    Resend code
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {forgotStep === "verify" && forgotOtpVerified && (
+              <form onSubmit={handleResetPassword}>
+                <div className="field">
+                  <label htmlFor="cp-forgot-newpass">New password</label>
+                  <input
+                    id="cp-forgot-newpass"
+                    type="password"
+                    placeholder="Choose a new password"
+                    value={forgotNewPassword}
+                    onChange={(e) => setForgotNewPassword(e.target.value)}
+                    required
+                    minLength={8}
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor="cp-forgot-confirmpass">Confirm new password</label>
+                  <input
+                    id="cp-forgot-confirmpass"
+                    type="password"
+                    placeholder="Re-enter new password"
+                    value={forgotConfirmPassword}
+                    onChange={(e) => setForgotConfirmPassword(e.target.value)}
+                    required
+                    minLength={8}
+                  />
+                </div>
+                <button type="submit" disabled={loading} className="login-btn">
+                  {loading ? "Resetting…" : "Reset password"}
+                </button>
+              </form>
+            )}
+
+            <div className="back-link">
+              <button onClick={exitForgotPasswordFlow}>Back to sign in</button>
             </div>
-          )}
-
-          {success && (
-            <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2 rounded-lg">
-              {success}
-            </div>
-          )}
-
-          {forgotStep === "request" && (
-            <form onSubmit={handleRequestOtp} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Corporate email</label>
-                <input
-                  type="email"
-                  placeholder="you@company.com"
-                  value={forgotEmail}
-                  onChange={(e) => setForgotEmail(e.target.value)}
-                  className="w-full text-sm p-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all duration-200"
-                  required
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-[#E1352A] hover:bg-[#c62a20] text-white font-medium text-sm py-2.5 rounded-lg transition-all duration-200 cursor-pointer disabled:opacity-60"
-              >
-                {loading ? "Sending code…" : "Send verification code"}
-              </button>
-            </form>
-          )}
-
-          {forgotStep === "verify" && !forgotOtpVerified && (
-            <form onSubmit={handleVerifyOtp} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Verification code</label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={6}
-                  placeholder="6-digit code"
-                  value={forgotOtp}
-                  onChange={(e) => setForgotOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                  className="w-full text-sm p-2.5 border border-slate-200 rounded-lg bg-white tracking-[0.3em] text-center font-semibold focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all duration-200"
-                  required
-                />
-                <p className="text-[11px] text-slate-400 mt-1">Sent to {forgotEmail}. Expires in 10 minutes.</p>
-              </div>
-              <button
-                type="submit"
-                disabled={loading || forgotOtp.length !== 6}
-                className="w-full bg-[#E1352A] hover:bg-[#c62a20] text-white font-medium text-sm py-2.5 rounded-lg transition-all duration-200 cursor-pointer disabled:opacity-50"
-              >
-                {loading ? "Verifying…" : "Verify code"}
-              </button>
-              <button
-                type="button"
-                onClick={handleRequestOtp}
-                disabled={loading}
-                className="w-full text-xs text-red-600 hover:text-red-700 font-semibold hover:underline"
-              >
-                Resend code
-              </button>
-            </form>
-          )}
-
-          {forgotStep === "verify" && forgotOtpVerified && (
-            <form onSubmit={handleResetPassword} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">New password</label>
-                <input
-                  type="password"
-                  placeholder="Choose a new password"
-                  value={forgotNewPassword}
-                  onChange={(e) => setForgotNewPassword(e.target.value)}
-                  className="w-full text-sm p-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all duration-200"
-                  required
-                  minLength={8}
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Confirm new password</label>
-                <input
-                  type="password"
-                  placeholder="Re-enter new password"
-                  value={forgotConfirmPassword}
-                  onChange={(e) => setForgotConfirmPassword(e.target.value)}
-                  className="w-full text-sm p-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all duration-200"
-                  required
-                  minLength={8}
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-[#E1352A] hover:bg-[#c62a20] text-white font-medium text-sm py-2.5 rounded-lg transition-all duration-200 cursor-pointer disabled:opacity-60"
-              >
-                {loading ? "Resetting…" : "Reset password"}
-              </button>
-            </form>
-          )}
-
-          <div className="mt-5 text-center">
-            <button
-              onClick={exitForgotPasswordFlow}
-              className="text-xs text-red-600 hover:text-red-700 font-semibold hover:underline"
-            >
-              Back to sign in
-            </button>
           </div>
-        </AuthShell>
+        </AuthShellDark>
       );
     }
 
     // 3. Main Login / Public Requester Signup
       return (
-      <AuthShell>
-        <h1 className="font-display text-2xl font-semibold text-slate-900 tracking-tight">
-          {signupMode ? "Create your account" : "Welcome back"}
-        </h1>
-        <p className="text-sm text-slate-500 mt-1.5 mb-7">
-          {signupMode
-            ? "Self-register as a requester to raise, view, and track tickets."
-            : "Sign in to Customer Pulse — for requesters, agents, and leadership alike."}
-        </p>
+      <AuthShellDark>
+        <div className="card">
+          <div className="corner tl"></div>
+          <div className="corner br"></div>
+          <div className="card-eyebrow">Authenticated Access</div>
+          <h1>{signupMode ? "Create your account" : "Sign in to your account"}</h1>
+          <p className="card-sub">
+            {signupMode
+              ? "Self-register as a requester to raise, view, and track tickets."
+              : "For requesters, agents, and leadership alike."}
+          </p>
 
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-800 text-xs flex items-center gap-2 rounded-lg">
-            <ShieldAlert size={16} />
-            {error}
-          </div>
-        )}
+          {error && (
+            <div className="alert-error">
+              <ShieldAlert size={14} />
+              {error}
+            </div>
+          )}
 
-        {success && (
-          <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2 rounded-lg">
-            {success}
-          </div>
-        )}
+          {success && <div className="alert-success">{success}</div>}
 
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Email</label>
+          <form onSubmit={handleLogin}>
+            <div className="field">
+              <label htmlFor="cp-login-email">Username or email</label>
               <input
+                id="cp-login-email"
                 type="email"
-                placeholder="admin@company.com"
+                placeholder="you@company.com"
                 value={loginEmail}
                 onChange={(e) => setLoginEmail(e.target.value)}
-                className="w-full text-sm p-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all duration-200"
                 required
               />
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Password</label>
+            <div className="field">
+              <label htmlFor="cp-login-password">Password</label>
               <input
+                id="cp-login-password"
                 type="password"
-                placeholder="••••••••"
+                placeholder="••••••••••"
                 value={loginPassword}
                 onChange={(e) => setLoginPassword(e.target.value)}
-                className="w-full text-sm p-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all duration-200"
                 required
               />
             </div>
 
-            <div className="flex justify-end -mt-2">
+            <div className="row-between">
               <button
                 type="button"
+                className="link-btn"
                 onClick={() => {
                   setForgotMode(true);
                   setForgotEmail(loginEmail);
                   setError("");
                   setSuccess("");
                 }}
-                className="text-[11px] text-red-600 hover:text-red-700 font-semibold hover:underline"
               >
                 Forgot password?
               </button>
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-[#E1352A] hover:bg-[#c62a20] text-white font-medium text-sm py-2.5 rounded-lg transition-all duration-200 cursor-pointer disabled:opacity-60"
-            >
-              {loading ? "Signing in…" : "Sign in to Customer Pulse"}
+            <button type="submit" disabled={loading} className="login-btn">
+              {loading ? "Signing in…" : "Log in"}
             </button>
-
-            
           </form>
 
-          <p className="mt-7 text-center text-[11px] text-slate-400">
-            Trouble getting in? Contact your department admin for access.
-          </p>
-      </AuthShell>
+          <div className="status-row">
+            <span>
+              <span className="status-dot"></span>Secure connection
+            </span>
+            <span>v3.2</span>
+          </div>
+        </div>
+      </AuthShellDark>
     );
   }
 
