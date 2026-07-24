@@ -1238,15 +1238,24 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
                 {/* Category-driven flags - only rendered when the ticket's
                     category actually has them set, so they never show up
                     as empty/false badges. */}
-                {ticket.category?.isWorkStopping && (
-                  <span className="text-xs font-bold px-2.5 py-1 border font-mono rounded-md bg-red-50 text-red-800 border-red-200 whitespace-nowrap">
-                    Work Stopping
-                  </span>
-                )}
-                {ticket.category?.isSafetyViolation && (
-                  <span className="text-xs font-bold px-2.5 py-1 border font-mono rounded-md bg-orange-50 text-orange-800 border-orange-200 whitespace-nowrap">
-                    Safety Violation
-                  </span>
+                {(ticket.category?.isWorkStopping || ticket.category?.isSafetyViolation) && (
+                  <div className="flex flex-col items-start sm:items-end gap-1">
+                    <span className="text-[10px] font-sans font-bold uppercase tracking-wider text-slate-400">
+                      Criticality
+                    </span>
+                    <div className="flex flex-wrap items-center gap-1.5 sm:justify-end">
+                      {ticket.category?.isWorkStopping && (
+                        <span className="text-xs font-bold px-2.5 py-1 border font-mono rounded-md bg-red-50 text-red-800 border-red-200 whitespace-nowrap">
+                          Work Stopping
+                        </span>
+                      )}
+                      {ticket.category?.isSafetyViolation && (
+                        <span className="text-xs font-bold px-2.5 py-1 border font-mono rounded-md bg-orange-50 text-orange-800 border-orange-200 whitespace-nowrap">
+                          Safety Violation
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 )}
 
                 {/* Internal-only triage metric - separate from the customer-facing
