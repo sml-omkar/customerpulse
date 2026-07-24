@@ -1214,8 +1214,21 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
               </div>
 
               {/* Priority Badges */}
-              <div className="flex flex-row sm:flex-col items-start sm:items-end gap-1.5 shrink-0">
-               
+              <div className="flex flex-row flex-wrap sm:flex-col items-start sm:items-end gap-1.5 shrink-0">
+
+                {/* Category-driven flags - only rendered when the ticket's
+                    category actually has them set, so they never show up
+                    as empty/false badges. */}
+                {ticket.category?.isWorkStopping && (
+                  <span className="text-xs font-bold px-2.5 py-1 border font-mono rounded-md bg-red-50 text-red-800 border-red-200 whitespace-nowrap">
+                    Work Stopping
+                  </span>
+                )}
+                {ticket.category?.isSafetyViolation && (
+                  <span className="text-xs font-bold px-2.5 py-1 border font-mono rounded-md bg-orange-50 text-orange-800 border-orange-200 whitespace-nowrap">
+                    Safety Violation
+                  </span>
+                )}
 
                 {/* Internal-only triage metric - separate from the customer-facing
                     Priority above, purely informational, never manually overridden. */}
