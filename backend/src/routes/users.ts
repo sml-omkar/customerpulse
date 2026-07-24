@@ -21,4 +21,8 @@ userRouter.get('/metric/:id',requireAuth,userController.metric)
 
 userRouter.patch("/:id", requireAuth, requireRole(UserRole.GLOBAL_ADMIN), userController.update);
 
+// Soft-deletes a staff account (redistributes their open tickets if
+// they're an AGENT - see user.controller.ts's remove() for details).
+userRouter.delete("/:id", requireAuth, requireRole(UserRole.GLOBAL_ADMIN), userController.remove);
+
 userRouter.get("/manageddepartments/:id",requireAuth,userController.managedDepartments)
