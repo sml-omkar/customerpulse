@@ -11,7 +11,7 @@ function layout(title: string, bodyHtml: string) {
       <h2 style="color:#111827">${title}</h2>
       ${bodyHtml}
       <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0" />
-      <p style="font-size:12px;color:#9ca3af">This is an automated message from the Helpdesk system.</p>
+      <p style="font-size:12px;color:#9ca3af">This is an automated message from the customer pules application.</p>
     </div>
   `;
 }
@@ -62,7 +62,7 @@ export const notificationService = {
       subject: `[${ticket.ticketNumber}] New ticket assigned to you: ${ticket.title}`,
       html: layout("New assignment", `
         <p>Hi ${assignee.fullName},</p>
-        <p>Ticket <b>${ticket.ticketNumber}</b> - "${ticket.title}" (Priority ${ticket.priority}) has been assigned to you.</p>
+        <p>Ticket <b>${ticket.ticketNumber}</b> - "${ticket.title}" </p>
         ${ticket.slaDeadline ? `<p>SLA deadline: <b>${ticket.slaDeadline.toISOString()}</b></p>` : ""}
         
       `),
