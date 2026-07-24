@@ -280,6 +280,12 @@ model User {
   // notifications panel.
   messagesReceived AdminMessage[] @relation("MessageRecipient")
   messagesSent     AdminMessage[] @relation("MessageSender")
+
+  // NOTE(added): internal tickets raised by this user directly to the
+  // GLOBAL_ADMIN (HOD/CXO/AGENT only), and - for a GLOBAL_ADMIN - the ones
+  // they've responded to/resolved.
+  adminTicketsRaised   AdminTicket[] @relation("AdminTicketRaisedBy")
+  adminTicketsResolved AdminTicket[] @relation("AdminTicketResolvedBy")
 }
 
 model Keyword {
@@ -631,6 +637,44 @@ model PasswordResetOtp {
   @@index([email])
 }
 
+// NOTE(added): status lifecycle for AdminTicket (see below) - deliberately
+// smaller than TicketStatus since there's no SLA/assignment/reopen flow here.
+enum AdminTicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+}
+
+// NOTE(added): lightweight internal ticket that a HOD, CXO, or AGENT can
+// raise directly to the GLOBAL_ADMIN - e.g. an access request or an
+// internal issue that isn't a client complaint. Deliberately separate from
+// the client-facing Ticket model above: no department/client/category/SLA
+// routing, just a subject/description raised by staff and a response from
+// whichever GLOBAL_ADMIN picks it up.
+model AdminTicket {
+  id           String            @id @default(uuid())
+  ticketNumber String            @unique
+
+  subject      String
+  description  String
+  status       AdminTicketStatus @default(OPEN)
+
+  raisedById   String
+  raisedBy     User              @relation("AdminTicketRaisedBy", fields: [raisedById], references: [id])
+
+  // NOTE(added): set once a GLOBAL_ADMIN responds/resolves it.
+  adminResponse String?
+  resolvedById  String?
+  resolvedBy    User?            @relation("AdminTicketResolvedBy", fields: [resolvedById], references: [id])
+  resolvedAt    DateTime?
+
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  @@index([raisedById, createdAt])
+  @@index([status, createdAt])
+}
+
 // NOTE(added): lets a GLOBAL_ADMIN send a message to a specific user
 // (primarily requesters), surfaced in that user's notifications panel.
 model AdminMessage {
@@ -646,6 +690,20 @@ model AdminMessage {
 
   @@index([userId, createdAt])
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
