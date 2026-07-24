@@ -217,6 +217,18 @@ model User {
   isActive        Boolean      @default(true)
   onboardedById   String?
 
+  // NOTE(added): soft-delete marker for the "Delete" action in the User
+  // Directory. A real prisma.user.delete() isn't safe here - Ticket.
+  // requesterId, TicketComment.userId, TicketEscalation.escalatedById/
+  // escalatedToId etc. are all required relations to User with no cascade
+  // rule, so a hard delete would either throw a foreign-key violation (if
+  // the account has any history at all) or require cascades that would
+  // wipe out real ticket/comment history along with the account. Setting
+  // deletedAt instead keeps every historical record intact, redistributes
+  // the account's open tickets (see user.controller.ts remove()), and just
+  // hides the account from the directory / login / assignment pools.
+  deletedAt       DateTime?
+
   // NOTE(added): gates login + ticket creation for self-registered
   // requesters until a GLOBAL_ADMIN reviews and approves the account.
   approvalStatus  ApprovalStatus @default(APPROVED)
@@ -634,6 +646,8 @@ model AdminMessage {
 
   @@index([userId, createdAt])
 }
+
+
 
 
 
