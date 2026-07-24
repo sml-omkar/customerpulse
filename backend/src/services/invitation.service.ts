@@ -56,7 +56,7 @@ export const invitationService = {
     });
 
     if (existingPending) throw new InvitationError("An active invitation already exists for this email");
-    const password = "12345"
+    const password = generateRandomString(14)
     const passwordHash = await bcrypt.hash(password, 10);
     let invitation
     if (role == UserRole.CXO || role == UserRole.HOD) {

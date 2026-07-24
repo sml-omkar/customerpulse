@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import packageJson from '../package.json'
 import API_BASE from "./lib/api";
 import {
   Activity,
@@ -81,6 +82,7 @@ import CXODashboardMock from "./components/CXODashboardmock";
 import { CXODashboard } from "./components/CxoDashboard";
 import { ConfirmDialog } from "./components/ConfirmDialog";
 import logo from "../assets/logo.jpg"
+import { loginCraneHero } from "../assets/loginCraneHero"
 
 export const SanghviLogo = ({ className = "w-6 h-6" }: { className?: string }) => (
   <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -263,6 +265,13 @@ const AuthShellDark = ({ children }: { children: React.ReactNode }) => (
       }
       @keyframes cp-pulse-travel{ 0%{ stroke-dashoffset:424; } 100%{ stroke-dashoffset:0; } }
 
+      .cp-auth-dark .crane-hero{
+        width:100%; max-width:460px; height:auto; display:block; margin-top:6px;
+        filter:drop-shadow(0 20px 30px rgba(0,0,0,0.45));
+      }
+      .cp-auth-dark .holo-line{ filter:drop-shadow(0 0 2px rgba(217,220,226,0.25)); }
+      .cp-auth-dark .holo-glow{ filter:drop-shadow(0 0 5px rgba(225,28,43,0.55)); }
+
       .cp-auth-dark .card-col{ flex:none; width:400px; max-width:100%; }
       .cp-auth-dark .card{
         position:relative; background:rgba(20,21,24,0.65);
@@ -303,9 +312,11 @@ const AuthShellDark = ({ children }: { children: React.ReactNode }) => (
       .cp-auth-dark .field .hint{ font-size:11px; color:var(--silver-dim); margin-top:6px; }
 
       .cp-auth-dark .row-between{
-        display:flex; justify-content:flex-end; align-items:center; margin:-6px 0 20px;
+        display:flex; justify-content:space-between; align-items:center; margin:-6px 0 20px;
         font-family:'JetBrains Mono',monospace; font-size:10px;
       }
+      .cp-auth-dark .row-between label{ display:flex; align-items:center; gap:7px; color:var(--silver-dim); cursor:pointer; }
+      .cp-auth-dark .row-between input[type=checkbox]{ accent-color:var(--red); }
       .cp-auth-dark .row-between button.link-btn{
         background:none; border:none; cursor:pointer; padding:0; font-family:inherit; font-size:inherit;
         color:var(--silver); border-bottom:1px solid rgba(255,255,255,0.2);
@@ -392,7 +403,55 @@ const AuthShellDark = ({ children }: { children: React.ReactNode }) => (
     <div className="grid-overlay"></div>
     <div className="scanline"></div>
 
-    
+    <div className="schematic">
+      <svg viewBox="0 0 980 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="edgeGradRed" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#ff3b4a" />
+            <stop offset="100%" stopColor="#8f0f1a" />
+          </linearGradient>
+          <radialGradient id="padGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#e11c2b" stopOpacity="0.30" />
+            <stop offset="65%" stopColor="#e11c2b" stopOpacity="0.08" />
+            <stop offset="100%" stopColor="#e11c2b" stopOpacity="0" />
+          </radialGradient>
+          <linearGradient id="surfaceFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#d9dce2" stopOpacity="0.14" />
+            <stop offset="100%" stopColor="#d9dce2" stopOpacity="0.02" />
+          </linearGradient>
+        </defs>
+
+        {/* holographic projection pad */}
+        <ellipse cx="698" cy="800" rx="150" ry="16" fill="url(#padGlow)" />
+
+        {/* wind turbine, holographic: tapered tower, nacelle, hub, shaped blades */}
+        <g stroke="#d9dce2" strokeWidth="1.3" opacity="0.85" strokeLinejoin="round" strokeLinecap="round" fill="none" className="holo-line">
+          {/* tapered tower */}
+          <path d="M683 800 L695 178" />
+          <path d="M713 800 L701 178" />
+          {/* foundation */}
+          <path d="M655 800 L741 800 L724 762 L672 762 Z" fill="url(#surfaceFill)" />
+          {/* access door */}
+          <path d="M691 778 L691 800 L705 800 L705 778" />
+          {/* nacelle */}
+          <path d="M698 160 L748 160 L748 178 L698 178 Z" fill="url(#surfaceFill)" />
+          <path d="M748 165 L760 168 L748 173" />
+        </g>
+        <circle cx="698" cy="168" r="6" stroke="#e11c2b" strokeWidth="1.2" opacity="0.9" fill="none" className="holo-glow" />
+
+        <g className="turbine-blades" stroke="#e2e4e9" strokeWidth="1.1" opacity="0.85" strokeLinejoin="round" fill="none">
+          <path d="M692 168 L695 66 Q698 58 701 66 L704 168 Z" />
+          <path d="M692 168 L695 66 Q698 58 701 66 L704 168 Z" transform="rotate(120 698 168)" />
+          <path d="M692 168 L695 66 Q698 58 701 66 L704 168 Z" transform="rotate(240 698 168)" />
+        </g>
+        <circle className="node d2" cx="698" cy="168" r="3" fill="#e11c2b"><title>Turbine hub — 14 rpm, nominal</title></circle>
+
+        {/* radar-style holographic rings */}
+        <circle cx="698" cy="168" r="60" stroke="#e11c2b" strokeWidth="0.7" opacity="0.22" className="holo-glow" />
+        <circle cx="698" cy="168" r="95" stroke="#e11c2b" strokeWidth="0.6" opacity="0.12" />
+        <circle cx="300" cy="655" r="50" stroke="#e11c2b" strokeWidth="0.7" opacity="0.18" className="holo-glow" />
+      </svg>
+    </div>
 
     <div className="shell">
       <div className="topbar">
@@ -422,7 +481,7 @@ const AuthShellDark = ({ children }: { children: React.ReactNode }) => (
             />
           </svg>
 
-          
+          <img className="crane-hero" src={loginCraneHero} alt="Sanghvi Movers mobile crane" />
         </div>
 
         <div className="card-col">{children}</div>
@@ -520,6 +579,7 @@ export default function App() {
   // Auth Forms State
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(true);
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
   const [signupFullName, setSignupFullName] = useState("");
@@ -680,8 +740,8 @@ export default function App() {
       setInviteToken(tok);
     }
 
-    const savedToken = localStorage.getItem("service_now_token");
-    const savedUser = localStorage.getItem("service_now_user");
+    const savedToken = localStorage.getItem("service_now_token") || sessionStorage.getItem("service_now_token");
+    const savedUser = localStorage.getItem("service_now_user") || sessionStorage.getItem("service_now_user");
     if (savedToken && savedUser) {
       setToken(savedToken);
       setUser(JSON.parse(savedUser));
@@ -910,8 +970,9 @@ export default function App() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Login failed");
 
-      localStorage.setItem("service_now_token", data.token);
-      localStorage.setItem("service_now_user", JSON.stringify(data.user));
+      const storage = rememberMe ? localStorage : sessionStorage;
+      storage.setItem("service_now_token", data.token);
+      storage.setItem("service_now_user", JSON.stringify(data.user));
       setToken(data.token);
       setUser(data.user);
       setCurrentView(PAGES.DASHBOARD);
@@ -1094,6 +1155,8 @@ export default function App() {
   const handleLogout = () => {
     localStorage.removeItem("service_now_token");
     localStorage.removeItem("service_now_user");
+    sessionStorage.removeItem("service_now_token");
+    sessionStorage.removeItem("service_now_user");
     setUser(null);
     setToken("");
     setCompany(null);
@@ -1736,7 +1799,7 @@ export default function App() {
             <span>
               <span className="status-dot"></span>Secure connection
             </span>
-            <span>v3.2</span>
+            <span>v{packageJson.version}</span>
           </div>
         </div>
       </AuthShellDark>
@@ -3266,3 +3329,4 @@ export default function App() {
     </div>
   );
 }
+
