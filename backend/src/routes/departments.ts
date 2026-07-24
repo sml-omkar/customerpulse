@@ -9,8 +9,8 @@ import { uploadSpreadsheet } from "../middleware/upload";
 
 export const departmentRouter = Router();
 
-departmentRouter.post("/", requireAuth, requireRole(UserRole.GLOBAL_ADMIN), departmentController.create);
-departmentRouter.get("/", requireAuth, departmentController.list);
+departmentRouter.post("/", requireAuth, requireRole(UserRole.GLOBAL_ADMIN), asyncHandler(departmentController.create));
+departmentRouter.get("/", requireAuth, asyncHandler(departmentController.list));
 
 // Bulk upload (GLOBAL_ADMIN only) - registered ahead of "/:id" so
 // "bulk-upload" isn't swallowed by the :id param route.

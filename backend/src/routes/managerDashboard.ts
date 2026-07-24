@@ -18,27 +18,27 @@ managerDashboardRouter.get(
   "/tickets",
   requireAuth,
   requireRole(UserRole.HOD),
-  managerDashboardController.getDepartmentTickets
+  asyncHandler(managerDashboardController.getDepartmentTickets)
 );
 
 managerDashboardRouter.get(
   "/user/:userId/tickets",
   requireAuth,
   requireRole(UserRole.HOD),
-  managerDashboardController.getUserTickets
+  asyncHandler(managerDashboardController.getUserTickets)
 );
 
 managerDashboardRouter.post(
   "/reassign",
   requireAuth,
   requireRole(UserRole.HOD),
-  managerDashboardController.reassignTicket
+  asyncHandler(managerDashboardController.reassignTicket)
 );
 
 managerDashboardRouter.post(
   "/set-manager",
   requireAuth,
   requireRole(UserRole.GLOBAL_ADMIN),
-  managerDashboardController.setDepartmentManager
+  asyncHandler(managerDashboardController.setDepartmentManager)
 );
 
