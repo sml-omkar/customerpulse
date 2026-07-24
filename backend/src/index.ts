@@ -32,6 +32,7 @@ app.use(securityHeaders);
 app.use(corsMiddleware);
 // Mounted before express.json() so raw file bytes PUT here aren't parsed as JSON.
 // Temporary local-storage stand-in for direct-to-S3 uploads (see lib/s3.ts).
+app.use(cors({origin: 'https://customerpulse.sanghvimovers.com'}));
 app.use("/uploads", uploadsRouter);
 app.use(express.json());
 app.set("trust proxy", 1);
