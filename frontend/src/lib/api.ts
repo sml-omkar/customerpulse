@@ -1,3 +1,3 @@
-const dev = false
-const API_BASE = dev ? "http://localhost:3000" : "https://customerpulse.sanghvimovers.com/api" ;
+
+const API_BASE = "http://localhost:3000" 
 export default API_BASE;

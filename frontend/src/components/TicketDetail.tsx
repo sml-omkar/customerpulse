@@ -206,7 +206,7 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
       
 
       // Fetch agents in the department for manual assignment
-      if (isStaff && ticketRes) {
+      
         const agentsRes = await fetch(`${API_BASE}/users?departmentId=${ticketData.departmentId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -214,7 +214,7 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
           const agentsData: UserType[] = await agentsRes.json();
           setAvailableAgents(agentsData.filter(u => u.isActive && ["AGENT", "TEAM_LEAD", "MANAGER", "DEPT_MANAGER", "DEPT_ADMIN"].includes(u.role)));
         }
-      }
+     
 
 
     } catch (err: any) {
@@ -226,7 +226,7 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
 
   useEffect(() => {
     fetchTicketDetails();
-    console.log(clients)
+    console.log(availableAgents)
   }, [ticketId]);
 
   // Action: Add Comment
@@ -786,6 +786,45 @@ export default function TicketDetail({ ticketId, token, currentUser, onBack,metr
               Resolve Ticket
             </button>
           )}
+
+
+              {(isAdmin || isStaff) && ticket.assignee == undefined ? <div className="pt-3 border-t border-slate-100  space-y-2 w-full">
+                <div className="flex w-full">
+                    <button
+                      onClick={() => setShowAssignForm(!showAssignForm)}
+                      className="flex justify-center w-full items-center gap-1 border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs py-2 rounded-lg cursor-pointer font-semibold transition-colors"
+                    >
+                     Assign 
+                    </button>
+                  </div>
+
+                  {/* Agent Selector form dropdown */}
+                  {showAssignForm && (
+                    <form onSubmit={handleAssignAgent} className="p-3 bg-slate-50 border border-slate-100 rounded-xl mt-2 space-y-2.5">
+                      <label className="block text-[10px] font-mono font-bold uppercase text-slate-500">Select Available Agent</label>
+                      <select
+                        value={selectedAgentId}
+                        onChange={(e) => setSelectedAgentId(e.target.value)}
+                        className="w-full text-xs p-2 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                        required
+                      >
+                        <option value="">-- Choose Agent --</option>
+                        {availableAgents.filter(agent => agent.id !== currentUser.id).map((agent) => (
+                          <option key={agent.id} value={agent.id}>
+                            {agent.fullName} ({agent.role} - {agent.supportLevel || "L1"})
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="submit"
+                        className="w-full bg-slate-900 text-white text-xs py-2 rounded-lg font-semibold hover:bg-slate-800 transition-colors cursor-pointer"
+                      >
+                        Confirm Assignment
+                      </button>
+                    </form>
+                  )}
+                </div>: null }
+              
 
           {/* Quick status transitions for Staff */}
           {(isStaff || isdepartmentHeads) && ticket.requesterId !== currentUser.id && !["RESOLVED", "CLOSED"].includes(ticket.status) && (
