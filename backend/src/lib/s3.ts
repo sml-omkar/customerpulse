@@ -33,7 +33,7 @@ import path from "path";
 // ---- local storage config (temporary stand-in for S3) ----
 // All attachments are written to <backend>/attachment/<key> on disk.
 const LOCAL_ATTACHMENTS_DIR = path.join(__dirname, "..", "..", "attachment");
-const LOCAL_BASE_URL = process.env.API_BASE_URL || `http://localhost:${process.env.PORT ?? 3000}`;
+const LOCAL_BASE_URL = "https://customerpulse.sanghvimovers.com/api";
 
 // ---- upload rules: xlsx / pdf / image, under 20MB ----
 export const MAX_ATTACHMENT_SIZE_BYTES = 20 * 1024 * 1024; // 20 MB
