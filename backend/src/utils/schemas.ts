@@ -156,6 +156,26 @@ export const categoryAgentSchema = z.object({
   proficiency: z.number().int().min(1).max(10).optional(),
 });
 
+// POST /admin-tickets  (HOD, CXO, AGENT only) - a lightweight internal
+// ticket raised directly to the GLOBAL_ADMIN. See prisma/schema.prisma
+// AdminTicket model comments for why this is separate from createTicketSchema.
+export const createAdminTicketSchema = z.object({
+  subject: z.string().min(1).max(200),
+  description: z.string().min(1).max(10_000),
+});
+
+// PATCH /admin-tickets/:id  (GLOBAL_ADMIN only) - respond to / resolve an
+// admin ticket. status defaults to RESOLVED when an adminResponse is given
+// and no explicit status is passed, but either can be sent independently
+// (e.g. moving OPEN -> IN_PROGRESS with no response yet).
+export const resolveAdminTicketSchema = z.object({
+  adminResponse: z.string().min(1).max(10_000).optional(),
+  status: z.enum(["OPEN", "IN_PROGRESS", "RESOLVED"]).optional(),
+}).refine(
+  (data) => data.adminResponse !== undefined || data.status !== undefined,
+  { message: "Provide at least a status update or a response", path: ["status"] }
+);
+
 // POST /audit-logs - lets the frontend explicitly report an action it
 // took (e.g. "opened ticket detail", "downloaded attachment") that
 // wouldn't otherwise generate a server-side AuditLog row on its own.
