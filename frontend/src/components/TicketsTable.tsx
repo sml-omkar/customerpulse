@@ -140,13 +140,25 @@ export default function TicketsTable({
                   </td>
 
                   <td className="px-4 py-3 whitespace-nowrap">
-                    <span
-                      className={`rounded border px-2 py-1 text-xs font-bold ${
-                        priorityColors[ticket.priority] ?? priorityColors.P4
-                      }`}
-                    >
-                      {ticket.internalPriority}
-                    </span>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span
+                        className={`rounded border px-2 py-1 text-xs font-bold ${
+                          priorityColors[ticket.priority] ?? priorityColors.P4
+                        }`}
+                      >
+                        {ticket.internalPriority}
+                      </span>
+                      {ticket.category?.isWorkStopping && (
+                        <span className="rounded border border-red-200 bg-red-50 px-2 py-1 text-xs font-bold text-red-700">
+                          Work Stopping
+                        </span>
+                      )}
+                      {ticket.category?.isSafetyViolation && (
+                        <span className="rounded border border-orange-200 bg-orange-50 px-2 py-1 text-xs font-bold text-orange-700">
+                          Safety Violation
+                        </span>
+                      )}
+                    </div>
                   </td>
 
 
